@@ -19,7 +19,7 @@ for name in expo-dev-client expo-dev-launcher expo-dev-menu; do
   [[ ! -d "node_modules/$name" ]] || { echo "Standalone preview contains $name" >&2; exit 1; }
 done
 # npm ci postinstall copies the pinned worker, its shared module and BSD notice.
-node "$ROOT/scripts/check-android-preview-config.cjs" --json > "$OUT/app-identity.json"
+node "$ROOT/scripts/check-android-preview-config.cjs" --release-only --json > "$OUT/app-identity.json"
 VERSION="$(node -p "require('./package.json').version")"
 VERSION_CODE="$(node -p "require(process.argv[1]).release.version_code" "$OUT/app-identity.json")"
 PACKAGE="$(node -p "require(process.argv[1]).release.package" "$OUT/app-identity.json")"

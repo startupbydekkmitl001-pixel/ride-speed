@@ -10,7 +10,9 @@ const [run, attempt, patch] = buildNumber.split('.').map(Number);
 const expectedCode = run * 10000 + attempt * 100 + patch;
 const identities = {};
 try {
-  for (const variant of ['release', 'development']) {
+  // The release builder deliberately omits development-native dependencies.
+  // Full matrix verification runs in verify, before npm ci --omit=dev.
+  for (const variant of process.argv.includes('--release-only') ? ['release'] : ['release', 'development']) {
     process.env.APP_VARIANT = variant;
     const { exp } = getConfig(project);
     const plugins = exp.plugins.map(value => Array.isArray(value) ? value[0] : value);
