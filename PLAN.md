@@ -24,11 +24,11 @@ The user has authorized native implementation and chosen MapLibre/OpenFreeMap + 
 
 ## M1 — accounts, profile and schema
 
-- [ ] `features/onboarding`, Auth/RiderProfile/AppState: returning users map-first; language/location rationale/profile/optional vehicle flow; persistent secure session and account-scoped local data migration.
-- [ ] Additive profile/preferences/avatar/deletion migration: owner RPCs/RLS, private avatar upload, idempotent deletion cleanup, resolve cross-owner challenge/result references. Do not reapply already-deployed foundation.
-- [ ] Auth UI: real Google, configured email recovery/signup availability, Apple adapter/provider capability gate; profile card photo edits; legal/privacy/settings/delete UI with localized errors.
-- [ ] Test A→B→A delayed work/cache isolation, handle collision, interrupted onboarding, avatar/path authorization, restart session and deletion retry/RLS. Hosted acceptance for available providers only.
-- [ ] Commit M1; report five lines.
+- [x] `features/onboarding`, Auth/RiderProfile/AppState: returning users map-first; language/location rationale/profile/optional vehicle flow; persistent secure session and account-scoped local data migration.
+- [x] Additive profile/preferences/avatar/deletion migration: owner RPCs/RLS, private avatar upload, idempotent deletion cleanup, resolve cross-owner challenge/result references. Deployed once; foundation preserved.
+- [x] Auth UI: real Google, configured email recovery/signup availability, Apple adapter/provider capability gate; profile card photo edits; legal/privacy/settings/delete UI with localized errors.
+- [x] Test A→B→A delayed work/cache isolation, handle collision, interrupted onboarding, avatar/path authorization, browser restart session and deletion retry/RLS. Hosted Google acceptance passes; native/disposable-account gates recorded in `docs/design/m1-acceptance-v5.md`.
+- [x] Commit M1; report five lines.
 
 ## M2 — fullscreen map, speed and recording
 

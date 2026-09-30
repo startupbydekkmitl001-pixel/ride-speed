@@ -34,3 +34,23 @@ The non-secret `ALLOWED_ORIGINS` function environment setting is `http://localho
 Google OAuth was enabled by the project owner and confirmed by the live Auth settings endpoint (`external.google: true`). Only basic identity scopes are requested (`openid email profile`). On 1 October 2026 (Asia/Bangkok), the owner completed Google consent, the local app displayed successful authentication, and the requested rider name/handle were saved through the authenticated profile flow and retained after a full reload. Community, friends and challenge screens opened under this account without a profile gate. Default email delivery remains restricted to the project team until a custom SMTP provider is configured. No production course approvals, synthetic ride records, user posts or friend relationships were seeded.
 
 Remaining acceptance requires two-account friend/media flows and a real iPhone capture in an approved closed-course session. See `README.md` for the checklist and operational limits.
+
+## V5 M1 — 1 October 2026
+
+Applied the following additive transactions once through the authenticated SQL editor, each returning **Success. No rows returned.** They are immutable deployment sources; make future changes in new migrations.
+
+| Migration | SHA-256 |
+| --- | --- |
+| 202610010002_profile_account_lifecycle.sql | `0AB2C8FBB5F448A3769044C2FBA76A0044D4F4976DE9CB1DEA666FD1E8B0A282` |
+| 202610010003_deletion_receipt_lookup.sql | `DC7BEED0D2F9ED7A26F4C0498CC49284268C13E3011DA71B439914B7B9CD106A` |
+
+Deployed canonical account function bundles generated with `node scripts/bundle-edge-dashboard.cjs`; generated source/hash manifest remains in ignored build/deploy-m1. Both passed Deno checks before deployment. Reloaded function settings confirm the legacy-secret gateway is off; handlers independently validate project Auth. The completed deletion receipt fallback verifies the original unexpired token cryptographically and performs only the exact completed receipt lookup.
+
+| Function | Bundle SHA-256 | Live check |
+| --- | --- | --- |
+| profile-avatar-url | `6B0F4241E4DCAB40F69FC19C5F42DE2802264F673DB8FDDD04F9625446FAF96E` | POST without token: 401 AUTH_REQUIRED |
+| delete-account | `F894176D1950568EE73F77E88292A0E42E034A9631F247C0FC40443BF068B3F4` | POST without token: 401 AUTH_REQUIRED |
+
+Allowed localhost and 127.0.0.1:8082 CORS preflights return 200 with the exact requesting allowed Origin. Real Google sign-in, profile read, ghost preference read and browser session reload pass against this schema. No actual owner deletion, private photo upload, synthetic users or rides occurred. Automated backend acceptance passes 45 tests. Native and disposable-account checks remain explicit gates.
+
+The owner saved GEOAPIFY_API_KEY in private function secrets; only its presence was inspected. Route-service deployment belongs to M4. The secret is never bundled into client/public source.

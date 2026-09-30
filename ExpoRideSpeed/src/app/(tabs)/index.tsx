@@ -19,6 +19,8 @@ import { useApp } from "../../state/AppState";
 import { useRideSession } from "../../useRideSession";
 import { RideControls } from "../../components/RideControls";
 import { errorKey, useI18n } from "../../lib/i18n";
+import { OnboardingEntry } from "../../features/onboarding";
+import { useAuth } from "../../state/AuthState";
 function Awake() {
   useKeepAwake();
   return null;
@@ -79,10 +81,11 @@ function Dial({ value }: { value: number | null }) {
     </View>
   );
 }
-export default function SpeedScreen() {
+function SpeedContent() {
   const app = useApp(),
     { data, colors, update, vehicle } = app;
   const { t } = useI18n();
+  const { session } = useAuth();
   const ride = useRideSession();
   const params = useLocalSearchParams<{ challengeId?: string | string[] }>();
   const challengeId =
@@ -97,7 +100,7 @@ export default function SpeedScreen() {
     );
     return () => clearInterval(timer);
   }, [ride.active]);
-  if (!data.welcomeDone)
+  if (!data.welcomeDone && !session)
     return (
       <Screen style={{ paddingTop: 80, gap: 30 }}>
         <Row>
@@ -290,4 +293,8 @@ export default function SpeedScreen() {
       <Note>{t("speed.recordingNote")}</Note>
     </Screen>
   );
+}
+
+export default function SpeedScreen() {
+  return <OnboardingEntry><SpeedContent /></OnboardingEntry>;
 }

@@ -33,6 +33,7 @@ import {
 } from "../data/vehicleCatalog";
 import { uid, type GarageVehicle } from "../lib/domain";
 import { useApp } from "../state/AppState";
+import { errorKey, useI18n } from "../lib/i18n";
 import { GarageWelcome } from "../features/garage/GarageWelcome";
 
 type Step = "garage" | "category" | "catalog" | "details" | "manual";
@@ -105,6 +106,7 @@ function CategoryGlyph({
 }
 
 export default function GarageScreen({ embedded = false }: { embedded?: boolean } = {}) {
+  const { t } = useI18n();
   const state = useApp(),
     { colors, data } = state,
     insets = useSafeAreaInsets();
@@ -241,10 +243,16 @@ export default function GarageScreen({ embedded = false }: { embedded?: boolean 
     saveLock.current = true;
     setSaving(true);
     setError(null);
-    state.update({
+    const accepted = state.update({
       vehicles: [...data.vehicles, vehicle],
       selectedVehicleId: vehicle.id,
     });
+    if (!accepted) {
+      saveLock.current = false;
+      setSaving(false);
+      setError(t(errorKey(state.storageError ?? "ACCOUNT_CHANGED", "storage")));
+      return;
+    }
     dismiss();
   }
 
@@ -419,7 +427,7 @@ export default function GarageScreen({ embedded = false }: { embedded?: boolean 
   return (
     <Screen style={{ gap: 24 }}>
       {header}
-      {state.storageError ? <Note error>{state.storageError}</Note> : null}
+      {state.storageError ? <Note error>{t(errorKey(state.storageError, "storage"))}</Note> : null}
       {step === "garage" ? (
         <>
           {data.vehicles.length === 0 ? (

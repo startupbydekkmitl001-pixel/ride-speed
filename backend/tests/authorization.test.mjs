@@ -1,6 +1,6 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 
 let db;
@@ -32,7 +32,10 @@ before(async () => {
     insert into auth.users values ('${A}'),('${B}'),('${C}');
   `);
   // These stubs exercise real PostgreSQL grants/RLS, not a Supabase network service.
-  await db.exec(await readFile(new URL('../migrations/202609300001_online_foundation.sql', import.meta.url), 'utf8'));
+  const migrations = new URL('../migrations/', import.meta.url);
+  for (const file of (await readdir(migrations)).filter(name => name.endsWith('.sql')).sort()) {
+    await db.exec(await readFile(new URL(file, migrations), 'utf8'));
+  }
 });
 after(async () => { await db?.close(); });
 

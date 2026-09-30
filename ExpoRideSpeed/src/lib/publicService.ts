@@ -1,6 +1,8 @@
 // Publishable client configuration. Authorization is enforced by database RLS.
 // Never put a secret/service-role key in this file or in EXPO_PUBLIC variables.
 export const publicService = {
+  // Enable only after the Apple provider/App ID is configured and tested.
+  appleSignInEnabled: false,
   // Enable these only after custom SMTP and public confirmation/recovery delivery are verified.
   publicEmailRegistration: false,
   publicEmailDelivery: false,

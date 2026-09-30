@@ -33,6 +33,7 @@ import {
 import { supabase } from "../../lib/supabase";
 import { useApp } from "../../state/AppState";
 import { accountRpc, isAccountCurrent, useAuth } from "../../state/AuthState";
+import { errorKey, useI18n } from "../../lib/i18n";
 
 type Category = "scooter" | "motorcycle" | "car" | "bicycle";
 type CloudRoute = {
@@ -95,6 +96,7 @@ function routeFromCloud(row: CloudRoute, localId?: string): SavedRoute {
 }
 
 function RoutesEditor() {
+  const { t } = useI18n();
   const { data, update, colors, vehicle, ready, storageError, motion } =
     useApp();
   const { session, scope } = useAuth();
@@ -144,8 +146,12 @@ function RoutesEditor() {
   const distance = routeDistanceKm(draft.stops);
 
   const storeRoutes = (routes: SavedRoute[]) => {
+    if (!update({ routes })) {
+      setMessage({ error: true, text: t(errorKey(storageError ?? "ACCOUNT_CHANGED", "storage")) });
+      return false;
+    }
     routesRef.current = routes;
-    update({ routes });
+    return true;
   };
   const change = (patch: Partial<SavedRoute>) => {
     setDraft((current) => ({ ...current, ...patch }));
@@ -279,10 +285,10 @@ function RoutesEditor() {
       setMessage({ error: true, text: invalid });
       return;
     }
-    storeRoutes([
+    if (!storeRoutes([
       route,
       ...routesRef.current.filter((item) => item.id !== route.id),
-    ]);
+    ])) return;
     setDraft(route);
     setBaseline(JSON.stringify(route));
     setMessage({
@@ -360,9 +366,9 @@ function RoutesEditor() {
         cloudRevision: row.revision,
         category: row.category,
       };
-      storeRoutes(
+      if (!storeRoutes(
         routesRef.current.map((item) => (item.id === route.id ? saved : item)),
-      );
+      )) return;
       if (draft.id === route.id && !dirty) {
         setDraft(copyRoute(saved));
         setBaseline(JSON.stringify(saved));
@@ -421,11 +427,11 @@ function RoutesEditor() {
         if (!rows?.length)
           throw new Error("ไม่พบเส้นทางนี้บนคลาวด์ สำเนาในเครื่องยังคงอยู่");
         const route = routeFromCloud(rows[0] as CloudRoute, replace.id);
-        storeRoutes(
+        if (!storeRoutes(
           routesRef.current.map((item) =>
             item.id === route.id ? route : item,
           ),
-        );
+        )) return;
         if (draft.id === route.id) {
           setDraft(copyRoute(route));
           setBaseline(JSON.stringify(route));
@@ -439,7 +445,7 @@ function RoutesEditor() {
               !routesRef.current.some((route) => route.cloudId === row.id),
           )
           .map((row) => routeFromCloud(row));
-        storeRoutes([...additions, ...routesRef.current]);
+        if (!storeRoutes([...additions, ...routesRef.current])) return;
         setMessage({
           text: additions.length
             ? `เพิ่ม ${additions.length} เส้นทางจากคลาวด์แล้ว`
@@ -464,7 +470,7 @@ function RoutesEditor() {
         : "เส้นทางนี้มีเฉพาะในเครื่อง การลบจะนำชื่อและจุดที่บันทึกไว้ออก",
       label: "ลบจากเครื่อง",
       action: () => {
-        storeRoutes(routesRef.current.filter((item) => item.id !== route.id));
+        if (!storeRoutes(routesRef.current.filter((item) => item.id !== route.id))) return;
         if (draft.id === route.id) {
           setDraft(newRoute());
           setBaseline("");
@@ -500,7 +506,7 @@ function RoutesEditor() {
       );
       if (!applicable()) return;
       if (removed !== true) throw new Error("เซิร์ฟเวอร์ยังไม่ยืนยันการลบ");
-      storeRoutes(routesRef.current.filter((item) => item.id !== route.id));
+      if (!storeRoutes(routesRef.current.filter((item) => item.id !== route.id))) return;
       if (draft.id === route.id) {
         setDraft(newRoute());
         setBaseline("");
@@ -573,7 +579,7 @@ function RoutesEditor() {
         onChange={setTab}
       />
       {message && <Note error={message.error}>{message.text}</Note>}
-      {!!storageError && <Note error>{storageError}</Note>}
+      {!!storageError && <Note error>{t(errorKey(storageError, "storage"))}</Note>}
 
       {tab === "build" ? (
         <>

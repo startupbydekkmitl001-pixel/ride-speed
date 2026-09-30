@@ -1,7 +1,7 @@
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
-import { router } from "expo-router";
-import { useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
 import { Platform, View } from "react-native";
 import {
   Button,
@@ -17,34 +17,38 @@ import {
 import { configured, supabase } from "../../lib/supabase";
 import { publicService } from "../../lib/publicService";
 import { errorKey, useI18n, type TranslationKey } from "../../lib/i18n";
-import { useApp } from "../../state/AppState";
+import { useAuth } from "../../state/AuthState";
 
 const publicRegistrationAvailable =
   publicService.publicEmailRegistration && publicService.publicEmailDelivery;
 
 export default function AuthScreen() {
-  const { data, update } = useApp();
+  const { ready, session, error: sessionError } = useAuth();
+  const params = useLocalSearchParams<{ deletion?: string }>();
   const { t } = useI18n();
   const [mode, setMode] = useState<"login" | "signup" | "reset">("login");
   const [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
-    [pending, setPending] = useState<"google" | "email" | null>(null),
+    [pending, setPending] = useState<"google" | "apple" | "email" | null>(null),
     [message, setMessage] = useState<TranslationKey | null>(null),
     [failed, setFailed] = useState(false);
   const busy = pending !== null;
-  async function google() {
+  const [finished, setFinished] = useState(false);
+  useEffect(() => { if (finished && ready && session) router.replace("/"); }, [finished, ready, session]);
+  async function oauthSignIn(provider: "google" | "apple") {
     if (!supabase || busy) return;
-    setPending("google");
+    if (provider === "apple" && !publicService.appleSignInEnabled) return;
+    setPending(provider);
     setMessage(null);
     setFailed(false);
     try {
       const redirectTo = Linking.createURL("auth/callback");
       const { data: oauth, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
+        provider,
         options: {
           redirectTo,
           skipBrowserRedirect: Platform.OS !== "web",
-          scopes: "openid email profile",
+          scopes: provider === "google" ? "openid email profile" : "name email",
         },
       });
       if (error) throw error;
@@ -68,7 +72,7 @@ export default function AuthScreen() {
       }
     } catch (e) {
       setFailed(true);
-      setMessage(errorKey(e, "google", publicService));
+      setMessage(errorKey(e, provider, publicService));
     } finally {
       setPending(null);
     }
@@ -128,8 +132,7 @@ export default function AuthScreen() {
     }
   }
   function finish() {
-    update({ welcomeDone: true });
-    router.replace(data.vehicles.length ? "/profile" : "/garage");
+    setFinished(true); // Wait for AuthProvider to publish the account scope before entry routing.
   }
   return (
     <Screen>
@@ -153,13 +156,16 @@ export default function AuthScreen() {
         }
       />
       <T muted>{t("auth.googleIntro")}</T>
+      {sessionError && <Note error>{t(errorKey(sessionError, "login"))}</Note>}
+      {params.deletion === "unconfirmed" && <Note>{t("delete.sessionEnded")}</Note>}
       <Button
         label={t("auth.googleContinue")}
         icon="logo-google"
-        onPress={google}
+        onPress={() => { void oauthSignIn("google"); }}
         busy={pending === "google"}
-        disabled={!configured || pending === "email"}
+        disabled={!configured || (pending !== null && pending !== "google")}
       />
+      {publicService.appleSignInEnabled && <Button secondary label={t("auth.appleContinue")} icon="logo-apple" onPress={() => { void oauthSignIn("apple"); }} busy={pending === "apple"} disabled={!configured || (pending !== null && pending !== "apple")} />}
       {!publicRegistrationAvailable && (
         <Note>{t("auth.googleRegistration")}</Note>
       )}
@@ -234,7 +240,7 @@ export default function AuthScreen() {
         busy={pending === "email"}
         disabled={
           !configured ||
-          pending === "google" ||
+          (pending !== null && pending !== "email") ||
           !email.trim() ||
           (mode !== "reset" && !password) ||
           (mode === "signup" && !publicRegistrationAvailable)

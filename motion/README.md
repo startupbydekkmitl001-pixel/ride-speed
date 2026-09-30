@@ -65,6 +65,8 @@ playIfAllowed(() => player.play());
 
 The `playIfAllowed` guard prevents a stale mount from starting a player after its lease was revoked. The mounted player should be created paused with `useVideoPlayer`, whose hook owns native disposal. On SDK 57 web, `VideoView` registers its HTML element in a passive effect; `VideoPlayer.play()` only forwards to already mounted elements and does not remember play intent. Starting from the parent layout effect silently loses playback. The separate passive effect runs after the child view attaches, while the early pause binding still enforces immediate budget revocation.
 
+The video and poster explicitly fill their card with `width: "100%"` and `height: "100%"` in addition to absolute positioning. HTML video is a replaced element and otherwise keeps its intrinsic 1280 × 720 dimensions, placing the warm edge outside a small card. Real browser QA confirmed active playback for both Garage and profile, no mounted videos under manual Reduce Motion, and disposal when changing tabs; physical-device acceptance remains separate.
+
 Android uses `textureView` for the clipped decorative background because Expo documents an overlapping `cover` surface rendering issue. This is a deliberate compatibility tradeoff; the real-device GPU/battery baseline still needs measurement. Neither the still renders nor passing JS tests prove 60 fps on a device.
 
 ## Tests and remaining scope

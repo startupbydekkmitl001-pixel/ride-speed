@@ -1,4 +1,7 @@
+import { m1En, m1Th } from "./m1";
+
 const en = {
+  ...m1En,
   "common.close": "Close",
   "common.retry": "Try again",
   "common.wait": "Just a moment",
@@ -154,6 +157,7 @@ const en = {
 
 export type TranslationKey = keyof typeof en;
 const th: Record<TranslationKey, string> = {
+  ...m1Th,
   "common.close": "ปิด",
   "common.retry": "ลองอีกครั้ง",
   "common.wait": "รอสักครู่",

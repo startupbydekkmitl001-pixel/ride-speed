@@ -63,7 +63,8 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
-        "npm:@electric-sql/pglite@0.3.14"
+        "npm:@electric-sql/pglite@0.3.14",
+        "npm:@supabase/supabase-js@2.117.2"
       ]
     }
   }

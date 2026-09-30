@@ -94,3 +94,15 @@ test('auth and profile failures map stable codes without exposing arbitrary back
   assert.equal(key(new Error('บัญชีเปลี่ยนแล้ว กรุณาลองใหม่ในบัญชีปัจจุบัน'), 'profile'), 'errors.accountChanged');
   assert.equal(key(new Error('หยุด GPS ไม่สำเร็จ ปิดแล้วเปิดแอปใหม่ก่อนเริ่มอีกครั้ง'), 'ride'), 'errors.gpsStop');
 });
+
+test('account setup, photo retries, device storage and deletion failures have bilingual bounded copy',()=>{
+  const key=callable(errors,'errorKey');
+  for(const [code,context,expected] of [
+    ['LOCAL_READ_FAILED','storage','errors.localRead'],['LOCAL_WRITE_FAILED','storage','errors.localWrite'],['ACCOUNT_CHANGED','profile','errors.accountChanged'],
+    ['ACCOUNT_STATE_CONFLICT','onboarding','errors.stateConflict'],['AVATAR_PROFILE_REQUIRED','avatar','errors.avatarNeedsProfile'],['AVATAR_REVISION_CONFLICT','avatar','profile.photoConflict'],
+    ['DELETION_STATUS_UNAVAILABLE','deletion','errors.deletion'],['AUTH_REQUIRED','deletion','errors.deletionAuth'],['AUTH_CALLBACK_EXPIRED','callback','errors.callbackExpired'],
+  ]) {
+    assert.equal(key(new Error(code),context),expected);
+    assert.ok(resources.messages.th[expected]);assert.ok(resources.messages.en[expected]);
+  }
+});

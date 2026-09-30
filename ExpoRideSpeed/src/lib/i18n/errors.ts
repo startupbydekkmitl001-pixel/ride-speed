@@ -1,13 +1,22 @@
 import type { TranslationKey } from "./resources";
 
-type ErrorContext = "google" | "login" | "signup" | "reset" | "password" | "callback" | "profile" | "photo" | "logout" | "online" | "storage" | "ride";
+type ErrorContext = "google" | "apple" | "onboarding" | "avatar" | "deletion" | "login" | "signup" | "reset" | "password" | "callback" | "profile" | "photo" | "logout" | "online" | "storage" | "ride";
 const fallback: Record<ErrorContext, TranslationKey> = {
-  google: "errors.googleLogin", login: "errors.connection", signup: "errors.connection",
+  google: "errors.googleLogin", apple: "errors.appleLogin", onboarding: "errors.onboarding", avatar: "errors.avatarUnavailable", deletion: "errors.deletion", login: "errors.connection", signup: "errors.connection",
   reset: "errors.connection", password: "errors.passwordSave", callback: "errors.callbackExpired",
   profile: "errors.profileSave", photo: "errors.photoOpen", logout: "errors.signOut",
   online: "errors.connection", storage: "errors.localRead", ride: "errors.gpsStart",
 };
 const codes: Record<string, TranslationKey> = {
+  ACCOUNT_CHANGED: "errors.accountChanged", LOCAL_READ_FAILED: "errors.localRead", LOCAL_WRITE_FAILED: "errors.localWrite",
+  AUTH_NOT_READY: "errors.connection", AUTH_CALLBACK_EXPIRED: "errors.callbackExpired", AUTH_CALLBACK_CONNECTION: "errors.connection", AUTH_SESSION_READ_FAILED: "errors.accountChanged",
+  ACCOUNT_STATE_CONFLICT: "errors.stateConflict", ACCOUNT_STATE_INVALID: "errors.onboarding", ACCOUNT_STATE_UNAVAILABLE: "errors.onboarding",
+  PROFILE_CLOUD_UNAVAILABLE: "errors.profileLoad", AVATAR_REVISION_CONFLICT: "profile.photoConflict",
+  AVATAR_UPLOAD_REQUIRED: "errors.avatarUnavailable", AVATAR_INVALID_OBJECT: "errors.avatarInvalid", AVATAR_UNAVAILABLE: "errors.avatarUnavailable",
+  AVATAR_LOOKUP_FAILED: "errors.avatarUnavailable", AVATAR_PROFILE_REQUIRED: "errors.avatarNeedsProfile",
+  PROFILE_REQUIRED: "errors.avatarNeedsProfile", ACCOUNT_DELETION_PENDING: "errors.deletionInProgress",
+  DELETION_IN_PROGRESS: "errors.deletionInProgress", DELETION_STORAGE_FAILED: "errors.deletion", DELETION_DATABASE_FAILED: "errors.deletion", DELETION_AUTH_FAILED: "errors.deletion",
+  DELETION_STATUS_UNAVAILABLE: "errors.deletion",
   invalid_credentials: "errors.invalidCredentials",
   over_request_rate_limit: "errors.rateLimited", over_email_send_rate_limit: "errors.rateLimited",
   over_sms_send_rate_limit: "errors.rateLimited", rate_limit_exceeded: "errors.rateLimited",
@@ -50,8 +59,11 @@ export function errorKey(
   if (code === "email_not_confirmed")
     return options.publicEmailDelivery ? "errors.emailUnconfirmed" : "errors.emailTeamOnly";
   if (context === "profile" && code === "23505") return "errors.usernameTaken";
+  if (context === "deletion" && code === "AUTH_REQUIRED") return "errors.deletionAuth";
   if (Object.hasOwn(codes, code)) return codes[code];
   const message = typeof error === "string" ? error : object && "message" in object ? String(object.message) : "";
+  if (context === "deletion" && message === "AUTH_REQUIRED") return "errors.deletionAuth";
+  if (Object.hasOwn(codes, message)) return codes[message];
   if (Object.hasOwn(legacy, message)) return legacy[message];
   if (context === "reset" && options.publicEmailDelivery === false) return "errors.resetTeamOnly";
   return fallback[context];

@@ -2,7 +2,6 @@ import { useLocalSearchParams, router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Button, Field, Heading, Note, Screen } from "../../components/ui";
 import { supabase } from "../../lib/supabase";
-import { useApp } from "../../state/AppState";
 import { errorKey, useI18n, type TranslationKey } from "../../lib/i18n";
 import {
   changeAccountPassword,
@@ -42,8 +41,7 @@ function CallbackFlow({
   flowId?: string;
   error?: string;
 }) {
-  const { update } = useApp(),
-    { session, scope } = useAuth();
+  const { session, scope } = useAuth();
   const { t } = useI18n();
   const [message, setMessage] = useState<TranslationKey>(
     code && supabase
@@ -69,18 +67,18 @@ function CallbackFlow({
         setMessage("errors.accountChanged");
         return;
       }
-      update({ welcomeDone: true });
       setRecoveryScope(result.recovery ? result.scope : null);
       setMessage(
         result.recovery
           ? "auth.recoveryVerified"
           : "auth.accountVerified",
       );
+      if (!result.recovery) router.replace("/");
     });
     return () => {
       alive = false;
     };
-  }, [code, flowId, update]);
+  }, [code, flowId]);
   const recovery = recoveryScope === scope && !!session;
   async function reset() {
     if (
@@ -130,7 +128,7 @@ function CallbackFlow({
       <Button
         secondary
         label={t("auth.backToApp")}
-        onPress={() => router.replace("/profile")}
+        onPress={() => router.replace("/")}
       />
     </Screen>
   );

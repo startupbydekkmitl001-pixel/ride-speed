@@ -4,42 +4,22 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
+  useSyncExternalStore,
 } from "react";
 import { AccessibilityInfo, Platform, useColorScheme } from "react-native";
-import type { GarageVehicle, SavedRoute } from "../lib/domain";
+import type { GarageVehicle } from "../lib/domain";
 import { theme, type ThemeColors } from "../lib/theme";
-import { parsePreferences, resolveDarkTheme } from "../lib/preferences";
+import { resolveDarkTheme } from "../lib/preferences";
 import { I18nProvider } from "../lib/i18n";
+import { AccountLocalStore, emptyOwned, type DevicePreferences, type OwnedLocalData } from "../lib/accountLocalStore";
+import { isAccountCurrent, useAuth } from "./AuthState";
 
-type LocalData = {
-  theme: "dark" | "light" | "system";
-  language: "system" | "th" | "en";
-  reduceMotion: boolean;
-  reduceGlass: boolean;
-  welcomeDone: boolean;
-  vehicles: GarageVehicle[];
-  selectedVehicleId: string | null;
-  routes: SavedRoute[];
-  displayName: string;
-  photoUri: string | null;
-  unit: "kmh" | "mph";
-};
-const initial: LocalData = {
-  ...parsePreferences(null),
-  reduceMotion: false,
-  reduceGlass: false,
-  welcomeDone: false,
-  vehicles: [],
-  selectedVehicleId: null,
-  routes: [],
-  displayName: "Rider",
-  photoUri: null,
-  unit: "kmh",
-};
+type LocalData = DevicePreferences & OwnedLocalData;
 type State = {
   data: LocalData;
-  update: (patch: Partial<LocalData>) => void;
+  update: (patch: Partial<LocalData>) => boolean;
   ready: boolean;
   dark: boolean;
   colors: ThemeColors;
@@ -47,31 +27,26 @@ type State = {
   glass: boolean;
   vehicle?: GarageVehicle;
   storageError: string | null;
+  guestAvailable: boolean;
+  importGuest: () => Promise<void>;
+  retryStorage: () => Promise<void>;
+  forgetLocalAccount: () => Promise<void>;
 };
 const Context = createContext<State | null>(null);
-const KEY = "ridespeed.local.v4";
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [data, setData] = useState(initial),
-    [ready, setReady] = useState(false),
-    [storageError, setStorageError] = useState<string | null>(null);
+  const { scope, ready: authReady } = useAuth();
+  const [store] = useState(() => new AccountLocalStore(AsyncStorage, isAccountCurrent));
+  const snapshot = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+  const ready = authReady && snapshot.scope === scope && snapshot.ready;
+  const data = useMemo(() => ({ ...snapshot.preferences, ...(snapshot.scope === scope ? snapshot.owned : emptyOwned()) }), [scope, snapshot]);
+  const storageError = snapshot.scope === scope ? snapshot.error : null;
   const [systemReduce, setSystemReduce] = useState(true),
     [systemGlass, setSystemGlass] = useState(Platform.OS !== "web");
   const systemTheme = useColorScheme();
   useEffect(() => {
-    AsyncStorage.getItem(KEY)
-      .then((raw) => {
-        if (raw) {
-          const value = JSON.parse(raw);
-          if (
-            value &&
-            Array.isArray(value.vehicles) &&
-            Array.isArray(value.routes)
-          )
-            setData({ ...initial, ...value, ...parsePreferences(value) });
-        }
-      })
-      .catch(() => setStorageError("อ่านข้อมูลในเครื่องไม่สำเร็จ"))
-      .finally(() => setReady(true));
+    if (authReady) void store.hydrate(scope);
+  }, [authReady, scope, store]);
+  useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled().then(setSystemReduce).catch(() => {});
     if (Platform.OS !== "web") AccessibilityInfo.isReduceTransparencyEnabled?.().then(setSystemGlass).catch(() => {});
     const transparency = Platform.OS === "web" && typeof window !== "undefined"
@@ -93,17 +68,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       transparency?.removeEventListener?.("change", browserTransparencyChanged);
     };
   }, []);
-  useEffect(() => {
-    if (ready)
-      AsyncStorage.setItem(KEY, JSON.stringify(data)).catch(() =>
-        setStorageError("บันทึกข้อมูลในเครื่องไม่สำเร็จ"),
-      );
-  }, [data, ready]);
   const dark = resolveDarkTheme(data.theme, systemTheme);
   const update = useCallback(
-    (patch: Partial<LocalData>) =>
-      setData((current) => ({ ...current, ...patch })),
-    [],
+    (patch: Partial<LocalData>) => store.update(scope, patch),
+    [scope, store],
   );
   return (
     <Context.Provider
@@ -116,6 +84,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         glass: !data.reduceGlass && !systemGlass,
         vehicle: data.vehicles.find((v) => v.id === data.selectedVehicleId),
         storageError,
+        guestAvailable: ready && snapshot.guestAvailable,
+        importGuest: () => store.importGuest(scope),
+        retryStorage: () => store.retry(scope),
+        forgetLocalAccount: () => store.forgetAccount(scope),
         update,
       }}
     >

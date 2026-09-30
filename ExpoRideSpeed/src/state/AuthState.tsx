@@ -8,7 +8,7 @@ export type AuthScope = Readonly<{ userId: string | null; generation: number }>;
 let currentScope: AuthScope = { userId: null, generation: 0 };
 export const isAccountCurrent = (scope: AuthScope) => scope === currentScope;
 const accountChanged = () =>
-  new Error("บัญชีเปลี่ยนแล้ว กรุณาลองใหม่ในบัญชีปัจจุบัน");
+  new Error("ACCOUNT_CHANGED");
 const scopedClients = new WeakMap<
   AuthScope,
   { token: string; client: NonNullable<typeof supabase> }
@@ -110,7 +110,7 @@ export function exchangeAuthCodeOnce(
     return Promise.resolve({
       userId: null,
       recovery: false,
-      error: "ระบบบัญชียังไม่พร้อม",
+      error: "AUTH_NOT_READY",
       scope: currentScope,
     });
   const client = supabase;
@@ -122,14 +122,14 @@ export function exchangeAuthCodeOnce(
       userId: data.session?.user.id ?? null,
       recovery: "redirectType" in data && data.redirectType === "recovery",
       error: error
-        ? "ยืนยันไม่สำเร็จ กรุณาเปิดลิงก์บนเครื่องที่ขอ หรือขอลิงก์ใหม่"
+        ? "AUTH_CALLBACK_EXPIRED"
         : null,
       scope: currentScope,
     }))
     .catch(() => ({
       userId: null,
       recovery: false,
-      error: "เชื่อมต่อไม่สำเร็จ กรุณาขอลิงก์ใหม่",
+      error: "AUTH_CALLBACK_CONNECTION",
       scope: currentScope,
     }));
   for (const [key, value] of codeExchanges)
@@ -186,7 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       .catch(() => {
         if (authEvents === hydrationVersion)
-          accept(null, "เปิดบัญชีที่บันทึกไว้ไม่สำเร็จ กรุณาเข้าสู่ระบบใหม่");
+          accept(null, "AUTH_SESSION_READ_FAILED");
       });
     const appState = AppState.addEventListener("change", (next) =>
       next === "active"

@@ -4,6 +4,8 @@ import { readFileSync } from 'node:fs';
 import { Buffer } from 'node:buffer';
 import { createRequire } from 'node:module';
 import vm from 'node:vm';
+import { blankProfile, readStoredProfile } from '../src/features/profile/model.ts';
+import { syncAvatarUpload } from '../src/features/profile/avatarPipeline.ts';
 const require = createRequire(import.meta.url);
 const ts = require('typescript');
 const deferred = () => { let resolve; const promise = new Promise(r => { resolve = r; }); return { promise, resolve }; };
@@ -111,9 +113,9 @@ test('real SDK Storage, Edge and database requests retain their account token th
   const newScope = h.states[0].scope;
   assert.notEqual(newScope, scope);
   const createdBeforeStaleCall = h.clients.length;
-  assert.throws(() => h.exports.accountClient(scope, initial), /บัญชี/);
-  assert.throws(() => h.exports.accountClient(newScope, sdkSession('B', 1)), /บัญชี/);
-  assert.throws(() => h.exports.accountClient(newScope, null), /บัญชี/);
+  assert.throws(() => h.exports.accountClient(scope, initial), /ACCOUNT_CHANGED/);
+  assert.throws(() => h.exports.accountClient(newScope, sdkSession('B', 1)), /ACCOUNT_CHANGED/);
+  assert.throws(() => h.exports.accountClient(newScope, null), /ACCOUNT_CHANGED/);
   assert.equal(h.clients.length, createdBeforeStaleCall);
   // A request already holding an old client cannot turn into a B/new-A write.
   await requestSdkServices(first);
@@ -141,7 +143,7 @@ test('a retained SDK client snapshots its token even when a caller reuses and mu
 function loadRider() {
   const cells=[],effects=[];let index=0,auth={scope:{userId:'A',generation:1},session:session('A'),ready:true};
   const values=new Map([['ride.profile.A',JSON.stringify({displayName:'Alice',photoUri:'file://alice.jpg'})],['ride.profile.B',JSON.stringify({displayName:'Bob',photoUri:'file://bob.jpg'})]]);
-  let holdWrite=null;
+  let holdWrite=null, failRead=false, nextCloud=null;
   const React={createContext:v=>({Provider:'Provider',value:v}),useContext:c=>c.value,
     useState(value){const i=index++;if(!(i in cells))cells[i]=value;return[cells[i],value=>{cells[i]=typeof value==='function'?value(cells[i]):value;}];},
     useRef(value){const i=index++;if(!(i in cells))cells[i]={current:value};return cells[i];},
@@ -150,13 +152,22 @@ function loadRider() {
     createElement:(_type,props)=>props,
   };
   const imports={react:React,'./AuthState':{useAuth:()=>auth,isAccountCurrent:scope=>scope===auth.scope},
-    '@react-native-async-storage/async-storage':{getItem:async key=>values.get(key)??null,setItem:async(key,value)=>{if(holdWrite)await holdWrite.promise;values.set(key,value);}},
-    '../lib/supabase':{supabase:{from(){return{select(){return this;},eq(){return this;},setHeader(){return this;},maybeSingle:async()=>({data:null,error:null})};}}},
+    '@react-native-async-storage/async-storage':{getItem:async key=>{if(failRead)throw new Error('read failed');return values.get(key)??null;},setItem:async(key,value)=>{if(holdWrite)await holdWrite.promise;values.set(key,value);},removeItem:async key=>{values.delete(key);}},
+    'expo-crypto':{randomUUID:()=> '00000000-0000-4000-8000-000000000001'},
+    '../lib/photos':{pictureBytes:value=>Uint8Array.from(Buffer.from(value,'base64')).buffer},
+    '../features/profile/model':{blankProfile,readStoredProfile},
+    '../features/profile/avatarPipeline':{syncAvatarUpload},
+    '../features/profile/service':{
+      avatarCache:{clear(){}},getPrivateAvatar:async()=>null,
+      getCloudProfile:async()=>{const pending=nextCloud;nextCloud=null;return pending?pending.promise:null;},
+      ensureProfileAccount:scope=>{if(scope!==auth.scope)throw new Error('ACCOUNT_CHANGED');},
+      avatarTransport:()=>({current:async()=>({revision:0,avatar_id:null})}),
+    },
   };
   const source=readFileSync(new URL('../src/state/RiderProfile.tsx',import.meta.url),'utf8');
   const js=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React,esModuleInterop:true,target:ts.ScriptTarget.ES2022}}).outputText;
   const module={exports:{}};vm.runInNewContext(js,{require:name=>imports[name],module,exports:module.exports,Promise,JSON,Error});
-  return { values, hold(){holdWrite=deferred();return holdWrite;}, switch(id){auth={scope:{userId:id,generation:auth.scope.generation+1},session:session(id),ready:true};},render(){index=0;const result=module.exports.RiderProfileProvider({children:null});while(effects.length)effects.shift()();return result.value;} };
+  return { values, hold(){holdWrite=deferred();return holdWrite;}, failRead(value){failRead=value;},cloud(){nextCloud=deferred();return nextCloud;}, switch(id){auth={scope:{userId:id,generation:auth.scope.generation+1},session:session(id),ready:true};},render(){index=0;const result=module.exports.RiderProfileProvider({children:null});while(effects.length)effects.shift()();return result.value;} };
 }
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 test('in-flight local profile save stays with A and cannot replace B after account switch',async()=>{
@@ -164,7 +175,7 @@ test('in-flight local profile save stays with A and cannot replace B after accou
   assert.equal(view.displayName,'Alice');assert.equal(view.photoUri,'file://alice.jpg');
   const hold=h.hold(),pending=view.save({displayName:'Alice changed'});await flush();
   h.switch('B');view=h.render();assert.equal(view.photoUri,null);assert.equal(view.ready,false);
-  hold.resolve();await assert.rejects(pending,/บัญชี/i);await flush();view=h.render();
+  hold.resolve();await assert.rejects(pending,/ACCOUNT_CHANGED/);await flush();view=h.render();
   assert.equal(view.displayName,'Bob');assert.equal(view.photoUri,'file://bob.jpg');
   assert.equal(JSON.parse(h.values.get('ride.profile.A')).displayName,'Alice changed');
   assert.equal(JSON.parse(h.values.get('ride.profile.B')).displayName,'Bob');
@@ -173,4 +184,38 @@ test('overlapping profile name and photo saves preserve both fields',async()=>{
   const h=loadRider();h.render();await flush();const view=h.render();
   await Promise.all([view.save({displayName:'A new name'}),view.save({photoUri:'file://new.jpg'})]);
   const final=h.render();assert.equal(final.displayName,'A new name');assert.equal(final.photoUri,'file://new.jpg');
+});
+
+test('failed profile cache read permits cloud display but cannot overwrite saved local photo; reload unlocks writes',async()=>{
+  const h=loadRider(), original=h.values.get('ride.profile.A');
+  h.failRead(true); const cloud=h.cloud(); h.render(); await flush();
+  cloud.resolve({display_name:'Cloud Alice',handle:'alice'}); await flush();
+  let view=h.render();
+  assert.equal(view.displayName,'Cloud Alice');assert.equal(view.error,'LOCAL_READ_FAILED');
+  await assert.rejects(view.save({displayName:'overwrite'}),/LOCAL_READ_FAILED/);
+  assert.equal(h.values.get('ride.profile.A'),original);
+  h.failRead(false);view.reload();h.render();await flush();view=h.render();
+  assert.equal(view.photoUri,'file://alice.jpg');
+  await view.save({displayName:'Recovered Alice'});
+  assert.equal(JSON.parse(h.values.get('ride.profile.A')).displayName,'Recovered Alice');
+});
+
+test('confirmed profile cleanup fences delayed and retained saves before removing only that owner',async()=>{
+  const h=loadRider();h.render();await flush();const view=h.render(), hold=h.hold();
+  const save=view.save({displayName:'delayed'});await flush();
+  const clear=view.clearAccount();
+  await assert.rejects(view.save({photoUri:'file://late.jpg'}),/ACCOUNT_CHANGED/);
+  hold.resolve();await save;await clear;
+  assert.equal(h.values.has('ride.profile.A'),false);
+  assert.equal(JSON.parse(h.values.get('ride.profile.B')).displayName,'Bob');
+  await assert.rejects(view.save({displayName:'resurrect'}),/ACCOUNT_CHANGED/);
+});
+
+test('a delayed first-A cloud load cannot replace a later A generation after A→B→A',async()=>{
+  const h=loadRider(), old=h.cloud();h.render();await flush();
+  h.switch('B');h.render();await flush();
+  h.switch('A');h.render();await flush();let view=h.render();
+  await view.save({displayName:'New A'});
+  old.resolve({display_name:'Old A cloud',handle:'alice'});await flush();view=h.render();
+  assert.equal(view.displayName,'New A');assert.equal(JSON.parse(h.values.get('ride.profile.A')).displayName,'New A');
 });

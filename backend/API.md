@@ -1,6 +1,55 @@
-# Native client contract (v4)
+# Native client contract (v5)
 
-Status: SQL foundation is locally executable; deployment and live integration are separate. Use the project URL + **publishable** key in the app. Keep secret/service credentials only in Edge Functions. All RPCs derive the acting UID from the authenticated session.
+Status: the v4 foundation is deployed. Additive M1 account/avatar lifecycle source is locally verified; hosted acceptance is recorded separately in DEPLOYMENT.md. Use the project URL + **publishable** key in the app. Keep secret/service credentials only in Edge Functions. All owner RPCs derive the acting UID from the authenticated session.
+
+## M1 onboarding, privacy and profile avatar
+
+Account state and profile existence are separate. `rs_get_account_state()` creates an owner-only state if absent and returns:
+
+```ts
+{
+  revision: number,
+  onboarding_version: 1,
+  onboarding_step: 'language' | 'location' | 'profile' | 'vehicle' | 'complete',
+  location_choice: 'unknown' | 'granted' | 'denied',
+  preferences: {
+    ghost_mode: boolean,
+    route_audience: 'friends' | 'private',
+    notifications_enabled: boolean
+  },
+  updated_at: string // UTC ISO timestamp
+}
+```
+
+Fresh defaults: `language`, `unknown`, `{ghost_mode:true, route_audience:'friends', notifications_enabled:false}`. Only profiles present when the additive migration executes receive completed onboarding version 1; existing explicit presence opt-in is preserved. Creating a profile later does not complete onboarding. Location/profile/vehicle may be skipped: completion describes the wizard, not online sharing authorization. Native permission checks and the existing profile gate still apply. Offline completion is a local pending draft until synced.
+
+`rs_update_account_state({p_expected_revision,p_onboarding_step,p_location_choice,p_preferences})` returns the same object. Preferences is a partial object containing only the three keys above; types and unknown keys are validated. Revision conflicts require fetching and reconciling current state. Language, theme, units and accessibility overrides remain device-local.
+
+Saving `ghost_mode:true` immediately disables server presence, removes the heartbeat session and rotates friend topics. Saving `ghost_mode:false` is explicit presence opt-in; the next foreground heartbeat publishes online status. No location is broadcast. Existing `rs_set_presence(true|false)` remains compatible and synchronizes ghost mode; it may advance the account-state revision, so refresh state afterward. Notifications false is a preference; push delivery is a later milestone. Route audience is a composer default, not retroactive modification of explicitly shared routes/posts.
+
+Avatar flow (saved profile required):
+
+1. Read `rs_get_avatar()` → `{revision:0,avatar_id:null}` or current `{revision,avatar_id}`. Persist an upload UUID for response-loss retries.
+2. `rs_reserve_avatar({p_id:<UUID>,p_mime:'image/jpeg'|'image/png'|'image/webp'})` → `{upload_id,bucket:'ride-avatars',path,expires_at}`. Server path: `<authenticated UID>/<upload UUID>.jpg` (`.png`/`.webp` for matching MIME). Reservation expires after one hour; same UUID/MIME returns the original path/expiry without extending it. Up to 20 new reservations/day. Use a new UUID after expiry.
+3. Resize/compress/strip EXIF locally; upload to that private bucket/path, maximum **1 MiB**, `upsert:false`. Only a live owner reservation can insert. Client UPDATE/DELETE are denied; owner Storage `info(path)` supports ambiguous upload recovery.
+4. `rs_commit_avatar({p_id,p_expected_revision})` checks actual object size/MIME and returns `{revision,avatar_id}`. Repeating the current committed UUID is idempotent even with its old revision. A different upload requires the latest revision. Old avatars become obsolete.
+5. `profile-avatar-url` POST `{}` for self or `{userId:<UUID>}` for an accepted, unblocked friend → `{url:null|string,expiresIn:60,avatarId:null|UUID}`. The request never supplies a path. URLs use the project's HTTPS `/storage/v1/object/sign/ride-avatars/` prefix, valid for 60 seconds. Blocking cannot revoke an already-issued URL before expiry. Self-refresh opportunistically removes at most 20 obsolete/expired objects through Storage API. Periodic off-device cleanup remains an operational gate.
+
+Stable RPC errors: `ACCOUNT_STATE_INVALID`, `ACCOUNT_STATE_CONFLICT`, `ACCOUNT_DELETION_PENDING`, `AVATAR_PROFILE_REQUIRED`, `AVATAR_UNAVAILABLE`, `AVATAR_UPLOAD_REQUIRED`, `AVATAR_INVALID_OBJECT`, `AVATAR_REVISION_CONFLICT`. Profile handle collision remains SQLSTATE `23505`. Signer errors: `AVATAR_LOOKUP_FAILED` (503), `AVATAR_UNAVAILABLE` (404 denied/no profile; 503 signing outage). Map these to localized client messages, never raw backend text.
+
+## M1 account deletion
+
+Require typing **DELETE** in the destructive confirmation sheet, then invoke `delete-account` POST `{confirmation:'DELETE',requestId:<persisted UUID>}` with the access token. Reject all extra fields, especially owner ID. Keep the same UUID through retry/restart.
+
+Success: `{state:'deleted',requestId}`. Retry failures: `{error,requestId,retryable:true}` with `DELETION_IN_PROGRESS` (409), `DELETION_STORAGE_FAILED`, `DELETION_DATABASE_FAILED`, `DELETION_AUTH_FAILED` or `DELETION_STATUS_UNAVAILABLE` (503). An existing job with a different UUID returns `DELETION_REQUEST_CONFLICT` (409, `retryable:false`): recover the original UUID. Invalid schema/confirmation: `INVALID_REQUEST` (400); oversized body: `REQUEST_TOO_LARGE` (413); invalid session: `AUTH_REQUIRED` (401).
+
+The service quarantines the account, hides sharing/presence/posts, cancels creator challenges and fences verification jobs. It snapshots **other owners' evidence** referenced by those challenges, all owned Storage objects and owner-prefix orphans in app buckets. Storage API removes binaries first; production SQL never deletes Storage metadata alone. After proving no queued/owned objects remain, SQL removes other-owner challenge-dependent records/submissions and the owner's profile data. Auth admin deletion is last. Other accounts and unrelated submissions remain intact. An Auth DELETE trigger completes the minimal private receipt in the same transaction, even if the final HTTP response is lost.
+
+After success, clear this account's session and local namespace. A lost final response can be recovered by repeating the POST with the **original unexpired access token** and saved request UUID. After `getUser` fails, the narrow read-only fallback verifies that JWT's signature, project issuer, authenticated audience/role, expiry and UUID subject, then checks only the exact completed receipt. It cannot begin, purge or resume deletion. Supabase `getClaims` uses project JWKS for asymmetric signatures; symmetric signing falls back to Auth. Recovery therefore requires an available asymmetric key and unexpired token. Current project's public JWKS reported ES256/EC on 1 October; no key material is stored in our sources. [Supabase getClaims](https://supabase.com/docs/reference/javascript/auth-getclaims), [JWT verification and expiry](https://supabase.com/docs/guides/auth/jwts).
+
+Do not save an access token in the deletion-request record; the existing secure Auth session owns it. If no valid token remains, 401 is not proof of completion: sign out/quarantine that pending identity and offer truthful recovery guidance. Operators can inspect the receipt. Storage/DB/Auth failures retain a retryable job with a five-minute lease. Each invocation allows five 100-object batches and requests retry if no empty batch was observed. Completed receipts contain UID, request UUID, timestamps and status/error codes only; operate a seven-day receipt purge policy before broad release. Automated/live QA must not delete the real user's account.
+
+`rs_begin_account_deletion`, `rs_account_deletion_objects`, `rs_release_account_deletion`, `rs_purge_account_data`, `rs_completed_account_deletion` and `rs_avatar_cleanup_objects` are **service-only**. The receipt RPC returns a boolean only for exact owner/request + completed/deleted state. Never call Auth deletion directly or expose a service key in the app.
 
 ## Account and friends
 

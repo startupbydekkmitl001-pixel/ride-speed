@@ -11,10 +11,13 @@ import { AppProvider, useApp } from "../state/AppState";
 import { AuthProvider } from "../state/AuthState";
 import { OnlineProvider } from "../state/OnlineState";
 import { RiderProfileProvider } from "../state/RiderProfile";
+import { Button, T } from "../components/ui";
+import { errorKey, useI18n } from "../lib/i18n";
 
 void SplashScreen.preventAutoHideAsync();
 function Navigation() {
-  const { ready, dark, colors, motion } = useApp();
+  const { ready, dark, colors, motion, storageError, retryStorage } = useApp();
+  const { t } = useI18n();
   const [fonts, fontError] = useFonts({
     "Anuphan-400": require("../../assets/fonts/Anuphan-400.ttf"),
     "Anuphan-500": require("../../assets/fonts/Anuphan-500.ttf"),
@@ -33,6 +36,12 @@ function Navigation() {
         style={{ flex: 1, width: "100%", maxWidth: Platform.OS === "web" ? 560 : undefined, alignSelf: "center" }}
       >
         <StatusBar style={dark ? "light" : "dark"} />
+        {!!storageError && (
+          <View accessibilityRole="alert" style={{ paddingTop: 32, paddingHorizontal: 16, paddingBottom: 8, gap: 8, borderBottomColor: colors.line, borderBottomWidth: 1 }}>
+            <T size={13}>{t(errorKey(storageError, "storage"))}</T>
+            <Button small secondary label={t("common.retry")} onPress={() => { void retryStorage(); }} />
+          </View>
+        )}
         <Stack
           screenOptions={{
             headerShown: false,
@@ -53,15 +62,15 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
     <SafeAreaProvider>
-      <AppProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <AppProvider>
           <OnlineProvider>
             <RiderProfileProvider>
               <MotionProvider><Navigation /></MotionProvider>
             </RiderProfileProvider>
           </OnlineProvider>
-        </AuthProvider>
-      </AppProvider>
+        </AppProvider>
+      </AuthProvider>
     </SafeAreaProvider>
     </GestureHandlerRootView>
   );
