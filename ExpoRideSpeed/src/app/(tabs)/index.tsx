@@ -1,300 +1,68 @@
-import { useKeepAwake } from "expo-keep-awake";
-import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
-import { Linking, View } from "react-native";
-import Svg, { Circle, Line, Path } from "react-native-svg";
-import {
-  Button,
-  Glass,
-  Heading,
-  Icon,
-  IconButton,
-  Note,
-  Panel,
-  Row,
-  Screen,
-  T,
-} from "../../components/ui";
-import { useApp } from "../../state/AppState";
-import { useRideSession } from "../../useRideSession";
-import { RideControls } from "../../components/RideControls";
-import { errorKey, useI18n } from "../../lib/i18n";
-import { OnboardingEntry } from "../../features/onboarding";
-import { useAuth } from "../../state/AuthState";
-function Awake() {
-  useKeepAwake();
-  return null;
+import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
+import { router,useFocusEffect } from 'expo-router';
+import { ActivityIndicator,Platform,Pressable,StyleSheet,View } from 'react-native';
+import * as Location from 'expo-location';
+import * as Orientation from 'expo-screen-orientation';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Glass,Icon,Button,Note,Row,T,type IconName } from '../../components/ui';
+import MapSurface from '../../features/map/MapSurface';
+import type { MapHandle,MapStatus,MapCamera,MapTrack,MapPeer,MapPin } from '../../features/map/MapSurface.types';
+import { SpeedometerHUD } from '../../features/speedometer';
+import { OnboardingEntry } from '../../features/onboarding';
+import { useApp } from '../../state/AppState';
+import { useRide } from '../../state/RideState';
+import { useOnline } from '../../state/OnlineState';
+import { useAuth } from '../../state/AuthState';
+import { errorKey,useI18n,type TranslationKey } from '../../lib/i18n';
+const initialCamera:MapCamera={center:{latitude:13.7563,longitude:100.5018},zoom:11,bearing:0,pitch:0};
+const noPeers:MapPeer[]=[];
+const noPins:MapPin[]=[];
+function MapControl({label,icon,onPress,disabled=false}:{label:string;icon:IconName;onPress:()=>void;disabled?:boolean}){
+ return <Glass style={{borderRadius:28}}><Pressable accessibilityRole="button" accessibilityLabel={label} disabled={disabled} onPress={onPress} style={({pressed})=>({width:52,height:52,alignItems:'center',justifyContent:'center',opacity:disabled?.4:pressed?.6:1})}><Icon name={icon}/></Pressable></Glass>;
 }
-function Dial({ value }: { value: number | null }) {
-  const { colors } = useApp();
-  const { t } = useI18n();
-  const progress = Math.min(Math.max(value ?? 0, 0) / 240, 1);
-  return (
-    <View
-      style={{
-        width: "100%",
-        height: 236,
-        alignItems: "center",
-        justifyContent: "flex-end",
-      }}
-    >
-      <Svg
-        width="100%"
-        height="220"
-        viewBox="0 0 340 220"
-        style={{ position: "absolute", top: 0 }}
-      >
-        <Path
-          d="M 26 187 A 149 149 0 1 1 314 187"
-          fill="none"
-          stroke={colors.line}
-          strokeWidth="1"
-        />
-        {Array.from({ length: 49 }, (_, i) => {
-          const a = ((166 + (i * 208) / 48) * Math.PI) / 180;
-          const r = i % 4 === 0 ? 136 : 143;
-          return (
-            <Line
-              key={i}
-              x1={170 + r * Math.cos(a)}
-              y1={160 + r * Math.sin(a)}
-              x2={170 + 148 * Math.cos(a)}
-              y2={160 + 148 * Math.sin(a)}
-              stroke={
-                i <= progress * 48 && value !== null
-                  ? colors.accent
-                  : colors.line
-              }
-              strokeWidth={i % 4 === 0 ? 2 : 1}
-            />
-          );
-        })}
-        <Circle cx="26" cy="187" r="4" fill={colors.accent} />
-        <Circle cx="314" cy="187" r="3" fill={colors.line} />
-      </Svg>
-      <T size={104} numeric weight="medium" style={{ lineHeight: 123 }}>
-        {value === null ? "—" : Math.round(value)}
-      </T>
-      <T size={12} muted style={{ marginBottom: 27 }}>
-        {t("speed.current")}
-      </T>
-    </View>
-  );
+function MapHome(){
+ const app=useApp(),ride=useRide(),online=useOnline(),{t,language}=useI18n(),insets=useSafeAreaInsets();
+ const map=useRef<MapHandle>(null),centered=useRef(false),follow=useRef(false);
+ const [status,setStatus]=useState<MapStatus>({state:'loading'}),[retry,setRetry]=useState(0),[expanded,setExpanded]=useState(false),[layers,setLayers]=useState(false),[permission,setPermission]=useState<TranslationKey|null>(null);
+ const moving=ride.movingLocked;
+ const captureMessage=ride.message?errorKey(ride.message,'ride'):null;
+ const {ready:rideReady,locate:locateOnce}=ride;
+ useFocusEffect(useCallback(()=>{if(rideReady)void locateOnce();},[rideReady,locateOnce]));
+ useEffect(()=>{const fix=ride.userFix;if(!fix)return;if(!centered.current||follow.current){centered.current=true;map.current?.setCamera({center:fix.coordinate,zoom:15,durationMs:app.motion?550:0});}},[ride.userFix,app.motion]);
+ useEffect(()=>{if(Platform.OS==='web')return;void(expanded?Orientation.unlockAsync():Orientation.lockAsync(Orientation.OrientationLock.PORTRAIT_UP)).catch(()=>{});return()=>{void Orientation.lockAsync(Orientation.OrientationLock.PORTRAIT_UP).catch(()=>{});};},[expanded]);
+ const fragments=ride.ride?.fragments;
+ const track=useMemo<MapTrack|null>(()=>fragments?.length?{kind:'recorded',segments:fragments.map(f=>f.points)}:null,[fragments]);
+ const bottom=insets.bottom+92;
+ const contentInsets=useMemo(()=>({top:insets.top+90,right:20,bottom:bottom+260,left:20}),[insets.top,bottom]);
+ const onUserGesture=useCallback(()=>{follow.current=false;},[]);
+ const locate=async()=>{if(moving)return;follow.current=true;setPermission(null);const p=await Location.requestForegroundPermissionsAsync();if(!p.granted){setPermission('m2.map.locationDenied');return;}if(Platform.OS==='ios'&&p.ios?.accuracy==='reduced'){setPermission('m2.map.preciseRequired');return;}await ride.locate();if(ride.userFix)map.current?.setCamera({center:ride.userFix.coordinate,zoom:15,durationMs:app.motion?400:0});};
+ const onStatus=useCallback((value:MapStatus)=>setStatus(value),[]);
+ const compactControls=<Row style={{gap:8}}>{ride.active?<><Button secondary style={{flex:1}} label={t('m2.ride.pause')} icon="pause" busy={ride.busy} onPress={()=>{void ride.pause().catch(()=>setPermission('m2.ride.stopError'));}}/><Button style={{flex:1}} label={t('m2.ride.finish')} icon="stop" busy={ride.busy} onPress={()=>{void ride.finish();}}/></>:<Button style={{flex:1}} label={t(ride.ride&&ride.ride.status!=='complete'?'m2.ride.resume':'m2.ride.start')} icon="play" busy={ride.busy} disabled={!ride.ready||!!ride.error} onPress={()=>{void ride.start();}}/>}{!ride.active&&ride.ride&&ride.ride.status!=='complete'&&<Button secondary label={t('m2.ride.finish')} busy={ride.busy} onPress={()=>{void ride.finish();}}/>}</Row>;
+ return <View style={{flex:1,backgroundColor:app.colors.bg}}>
+  <View pointerEvents={expanded?'none':'auto'} accessibilityElementsHidden={expanded} importantForAccessibility={expanded?'no-hide-descendants':'auto'} style={[StyleSheet.absoluteFill,{opacity:expanded?0:1}]}><MapSurface ref={map} theme={app.dark?'dark':'light'} locale={language} initialCamera={initialCamera} contentInsets={contentInsets} mode={moving?'glance':'browse'} reducedMotion={!app.motion} online={true} retryToken={retry} track={track} pins={noPins} selectedPinId={null} peers={noPeers} userFix={ride.userFix} onStatus={onStatus} onUserGesture={onUserGesture}/></View>
+  {!expanded&&<>
+   <View pointerEvents="box-none" style={{position:'absolute',top:insets.top+16,left:20,right:20,gap:12}}>
+    <Glass style={{borderRadius:28}}><Pressable accessibilityRole="button" accessibilityLabel={t('m2.map.planRoute')} disabled={moving} onPress={()=>router.push('/routes')} style={{minHeight:56,paddingHorizontal:18,flexDirection:'row',alignItems:'center',gap:12}}><Icon name="search-outline"/><T muted style={{flex:1}}>{t('m2.map.planRoute')}</T><Icon name="arrow-forward" size={18}/></Pressable></Glass>
+    {status.state==='loading'&&<Row><ActivityIndicator color={app.colors.accent}/><T size={12} muted>{t('m2.map.loading')}</T></Row>}
+   </View>
+   <View pointerEvents="box-none" style={{position:'absolute',top:insets.top+96,left:20}}><MapControl label={t('m2.map.friendsOnline')} icon="people-outline" disabled={moving} onPress={()=>router.push('/friends')}/>{!!online.presence.filter(p=>p.online).length&&<View style={{position:'absolute',top:-3,right:-3,borderRadius:10,backgroundColor:app.colors.good,paddingHorizontal:5}}><T numeric size={11} style={{color:app.colors.bg}}>{online.presence.filter(p=>p.online).length}</T></View>}</View>
+   <View pointerEvents="box-none" style={{position:'absolute',top:insets.top+96,right:20,gap:12}}>
+    <MapControl label={t('m2.map.recenter')} icon="locate-outline" disabled={moving||ride.locating} onPress={()=>{void locate().catch(()=>setPermission('m2.map.locationDenied'));}}/>
+    <MapControl label={t('m2.map.layers')} icon="layers-outline" disabled={moving} onPress={()=>setLayers(!layers)}/>
+    <MapControl label={t('m2.ride.history')} icon="time-outline" disabled={moving} onPress={()=>router.push('/ride-history')}/>
+   </View>
+  </>}
+  {expanded&&<View pointerEvents="none" style={[StyleSheet.absoluteFill,{backgroundColor:app.colors.bg}]}/>}
+  <View pointerEvents="box-none" style={{position:'absolute',left:20,right:20,bottom:bottom,gap:12,...(expanded?{top:insets.top+12,justifyContent:'center' as const}:{})}}>
+   {(permission||ride.error||captureMessage||status.state==='error'||status.state==='unsupported'||status.state==='degraded')&&<View style={{backgroundColor:app.colors.bg,borderRadius:16,padding:12,gap:8}}><T size={13}>{t(permission??(ride.error as TranslationKey)??captureMessage??'m2.map.mapError')}</T><Button small secondary label={t('common.retry')} onPress={()=>{setPermission(null);setRetry(n=>n+1);void ride.retrySave();}}/></View>}
+   {ride.ride?.status==='interrupted'&&<Note>{t('m2.ride.recoveryBody')}</Note>}
+   <SpeedometerHUD snapshot={ride.snapshot} metrics={ride.metrics} units={app.data.unit} expanded={expanded} onToggleExpanded={()=>setExpanded(v=>!v)} onUnitsChange={unit=>app.update({unit})}/>
+   {compactControls}
+   {!expanded&&<Row style={{gap:8}}><Button small secondary style={{flex:1}} label={t('m2.map.planRoute')} icon="git-branch-outline" disabled={moving} onPress={()=>router.push('/routes')}/><Button small secondary style={{flex:1}} label={t('m2.map.challenge')} icon="flag-outline" disabled={moving} onPress={()=>router.push('/challenges')}/></Row>}
+   <T size={11} style={{textAlign:'center',color:app.colors.muted}}>{t('m2.ride.foregroundOnly')}</T>
+   {moving&&<Button small secondary label={t('m2.ride.passengerOverride')} onPress={ride.setPassengerOverride}/>}
+  </View>
+  {layers&&<View style={{position:'absolute',top:insets.top+165,left:20,right:84,backgroundColor:app.colors.surface,borderRadius:24,padding:20,gap:12,borderWidth:1,borderColor:app.colors.line}}><T weight="semibold">{t('m2.map.layers')}</T><T muted size={13}>{t('m2.map.baseStyle')}</T><Button small label={t(app.dark?'profile.themeLight':'profile.themeDark')} onPress={()=>{app.update({theme:app.dark?'light':'dark'});setLayers(false);}}/><Button small secondary label={t('m2.map.close')} onPress={()=>setLayers(false)}/></View>}
+ </View>;
 }
-function SpeedContent() {
-  const app = useApp(),
-    { data, colors, update, vehicle } = app;
-  const { t } = useI18n();
-  const { session } = useAuth();
-  const ride = useRideSession();
-  const params = useLocalSearchParams<{ challengeId?: string | string[] }>();
-  const challengeId =
-    typeof params.challengeId === "string" ? params.challengeId : undefined;
-  const [seconds, setSeconds] = useState(0);
-  useEffect(() => {
-    if (!ride.active) return;
-    const start = Date.now();
-    const timer = setInterval(
-      () => setSeconds(Math.floor((Date.now() - start) / 1000)),
-      1000,
-    );
-    return () => clearInterval(timer);
-  }, [ride.active]);
-  if (!data.welcomeDone && !session)
-    return (
-      <Screen style={{ paddingTop: 80, gap: 30 }}>
-        <Row>
-          <Icon name="navigate" color={colors.accent} />
-          <T numeric size={16} weight="semibold">
-            ride speed
-          </T>
-        </Row>
-        <View style={{ marginTop: 34 }}>
-          <T size={42} weight="semibold">
-            {t("onboarding.title")}
-          </T>
-          <T muted size={16} style={{ marginTop: 20 }}>
-            {t("onboarding.body")}
-          </T>
-        </View>
-        <Panel style={{ marginTop: 24 }}>
-          <Row>
-            <Icon name="map-outline" color={colors.accent} />
-            <View style={{ flex: 1 }}>
-              <T weight="semibold">{t("onboarding.routeTitle")}</T>
-              <T size={13} muted>
-                {t("onboarding.routeBody")}
-              </T>
-            </View>
-          </Row>
-          <Row>
-            <Icon name="people-outline" color={colors.accent} />
-            <View style={{ flex: 1 }}>
-              <T weight="semibold">{t("onboarding.friendTitle")}</T>
-              <T size={13} muted>
-                {t("onboarding.friendBody")}
-              </T>
-            </View>
-          </Row>
-        </Panel>
-        <Button
-          label={t("onboarding.signIn")}
-          onPress={() => router.push("/auth")}
-          icon="arrow-forward"
-        />
-        <Button
-          secondary
-          label={t("onboarding.tryFirst")}
-          onPress={() => {
-            update({ welcomeDone: true });
-            router.push("/garage");
-          }}
-        />
-        <Note>{t("onboarding.locationNote")}</Note>
-      </Screen>
-    );
-  const multiplier = data.unit === "kmh" ? 3.6 : 2.236936;
-  const value =
-    ride.snapshot.liveMps === null ? null : ride.snapshot.liveMps * multiplier;
-  const maximum =
-    ride.snapshot.maxMps === null
-      ? "—"
-      : Math.round(ride.snapshot.maxMps * multiplier).toString();
-  const signal = !ride.active
-    ? t("speed.ready")
-    : ride.snapshot.quality === "good"
-      ? value === null
-        ? t("speed.confirming")
-        : t("speed.gpsReady")
-      : ride.snapshot.quality === "weak"
-        ? t("speed.weak")
-        : t("speed.searching");
-  return (
-    <Screen style={{ gap: 22 }}>
-      {ride.active && <Awake />}
-      <Heading
-        eyebrow={t("speed.eyebrow")}
-        title={t("speed.title")}
-        right={
-          <IconButton
-            name={app.dark ? "sunny-outline" : "moon-outline"}
-            label={t("speed.changeTheme")}
-            onPress={() => update({ theme: app.dark ? "light" : "dark" })}
-          />
-        }
-      />
-      <Row style={{ justifyContent: "space-between" }}>
-        <Row>
-          <View
-            style={{
-              width: 6,
-              height: 6,
-              borderRadius: 3,
-              backgroundColor:
-                ride.active && ride.snapshot.quality === "good"
-                  ? colors.good
-                  : colors.muted,
-            }}
-          />
-          <T size={12} muted>
-            {signal}
-          </T>
-        </Row>
-        <T size={12} muted>
-          {vehicle ? `${vehicle.brand} ${vehicle.model}` : t("speed.noVehicle")}
-        </T>
-      </Row>
-      <View>
-        <Dial value={value === null ? null : value} />
-        <Row style={{ justifyContent: "center", marginTop: -12 }}>
-          <Glass style={{ flexDirection: "row", padding: 4 }}>
-            <Button
-              small
-              secondary={data.unit !== "kmh"}
-              label={t("common.kmh")}
-              onPress={() => update({ unit: "kmh" })}
-            />
-            <Button
-              small
-              secondary={data.unit !== "mph"}
-              label={t("common.mph")}
-              onPress={() => update({ unit: "mph" })}
-            />
-          </Glass>
-        </Row>
-      </View>
-      <Row
-        style={{
-          borderTopColor: colors.line,
-          borderTopWidth: 1,
-          borderBottomColor: colors.line,
-          borderBottomWidth: 1,
-          paddingVertical: 22,
-        }}
-      >
-        <View style={{ flex: 1 }}>
-          <T numeric size={29}>
-            {maximum}
-          </T>
-          <T muted size={12}>
-            {t("speed.filteredMax")}
-          </T>
-        </View>
-        <View style={{ width: 1, height: 42, backgroundColor: colors.line }} />
-        <View style={{ flex: 1, paddingLeft: 20 }}>
-          <T numeric size={29}>
-            {String(Math.floor(seconds / 60)).padStart(2, "0")}:
-            {String(seconds % 60).padStart(2, "0")}
-          </T>
-          <T muted size={12}>
-            {t("speed.sessionTime")}
-          </T>
-        </View>
-      </Row>
-      <Row style={{ justifyContent: "space-between" }}>
-        <View style={{ flex: 1 }}>
-          <T weight="medium">
-            {data.routes.at(-1)?.name || t("speed.nextRoute")}
-          </T>
-          <T size={12} muted>
-            {data.routes.length
-              ? t("speed.latestRoute")
-              : t("speed.pinRoute")}
-          </T>
-        </View>
-        <IconButton
-          name="arrow-forward"
-          label={t("speed.openMap")}
-          onPress={() => router.push("/routes")}
-        />
-      </Row>
-      {!!ride.message && <Note>{t(errorKey(ride.message, "ride"))}</Note>}
-      <RideControls
-        ride={ride}
-        challengeId={challengeId}
-        onSessionStart={() => setSeconds(0)}
-      />
-      {ride.permissionState === "denied" ||
-      ride.permissionState === "preciseRequired" ? (
-        <Button
-          secondary
-          small
-          label={t("speed.locationSettings")}
-          onPress={() => void Linking.openSettings()}
-        />
-      ) : ride.snapshot.maxMps !== null ? (
-        <Button
-          secondary
-          small
-          label={t("speed.resetMax")}
-          onPress={ride.resetMax}
-        />
-      ) : null}
-      <Note>{t("speed.recordingNote")}</Note>
-    </Screen>
-  );
-}
-
-export default function SpeedScreen() {
-  return <OnboardingEntry><SpeedContent /></OnboardingEntry>;
-}
+export default function MapScreen(){const {scope}=useAuth();return <OnboardingEntry><MapHome key={scope.generation}/></OnboardingEntry>;}

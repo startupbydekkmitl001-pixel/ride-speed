@@ -23,6 +23,7 @@ if [[ "$VARIANT" == release ]]; then
 else
   npm ci --include=dev
 fi
+node "$ROOT/scripts/prepare-native-libraries.cjs" ios > "$OUT/native-libraries.json"
 # Do not set NODE_ENV=production for Debug; dependencies differ via npm omit only.
 CI=1 npx --no-install expo prebuild --platform ios --clean --no-install
 python3 "$ROOT/scripts/install-pods.py" --project-directory ios --log-directory "$OUT"

@@ -2,7 +2,7 @@
 
 **Map-first expansion in progress:** the owner selected MapLibre + OpenFreeMap with server-side Geoapify routing/search for iOS and Android. See [design brief](DESIGN_BRIEF.md), [milestone plan](PLAN.md), [decisions](DECISIONS.md) and [setup](docs/map-first-setup.md). Published build 9 below predates this expansion; milestone checks and release evidence are recorded separately.
 
-V5 source has completed M0 (black glass, bilingual theme and motion budget) and M1 (owner-isolated onboarding/profile/privacy/avatar/deletion). M1 passes 125 app and 45 backend tests plus typecheck/lint/build configuration and browser Google-session checks. Its additive schema and account functions are deployed. See [M1 acceptance](docs/design/m1-acceptance-v5.md). These changes are not yet in a published IPA; map/recording work starts in M2.
+V5 source includes M0 (black glass, bilingual theme and motion budget), M1 (owner-isolated onboarding/profile/privacy/avatar/deletion) and M2 (real fullscreen MapLibre maps, compact/expanded animated HUD, durable local rides and private summary/history sync). M2 passes 193 app and 55 backend tests, typecheck/lint, 21 Expo doctor checks and browser map/history checks. Additive account/ride schemas and account functions are deployed. See [M1 acceptance](docs/design/m1-acceptance-v5.md) and [M2 acceptance](docs/design/m2-acceptance-v5.md). Published build 9 still predates V5; new native compilation and physical-device results are separate gates.
 
 A Thai-first iPhone speed and ride recorder for a private group of friends. Target: iOS 17+, Windows development, free-Apple-ID Sideloadly installs, and free server tiers.
 
@@ -34,7 +34,7 @@ A Thai-first iPhone speed and ride recorder for a private group of friends. Targ
 - Expo/TypeScript UI and analysis, plus a Swift module that records native sensor payloads **before** batching them to JavaScript.
 - Core Location speed and uncertainty; no claimed raw iPhone satellite access or guaranteed 1 Hz/Doppler implementation.
 - A confirmed maximum, visible gaps and `—` for unreliable values. Replay uses the same versioned analysis and is excluded from rankings.
-- Planned: local raw session journals, SQLite history/index/summaries, share-sheet reports and full backups. The current pilot holds pending capture evidence in memory.
+- V5 source persists raw ride receipts and checkpoints in SQLite on native, IndexedDB on web; compressed private summaries sync independently of competition evidence. Share-sheet reports/full backups remain pending. Published build 9 holds pending evidence in memory.
 - Unsigned device builds on a cloud Mac, followed by each person's own Sideloadly signing. Initial installation/update/expiry behavior is still untested.
 - Supabase Free is deployed for accounts, private friend presence, routes, posts and verified rankings. Google is the public sign-in route; default Supabase email delivery is limited to the project team until custom SMTP is configured. See [deployment evidence](backend/DEPLOYMENT.md).
 - Public competition only on approved closed courses, split by vehicle and evidence class. Recomputing sensor data cannot prove authenticity by itself.
@@ -64,7 +64,7 @@ The owner explicitly authorized native implementation after the revised design r
 
 ## Current app on Windows
 
-The app uses Expo SDK 57, Expo Router, a local Swift Core Location module and Node tests. Core Location evidence preserves native timestamps, accuracy and source flags. Recording is foreground-only and pending evidence is held in memory: do not use this build as the sole archive of important rides. The sample GPX is not a replay feature.
+The app uses Expo SDK 57, Expo Router, a local Swift Core Location module and Node tests. V5 preserves timestamps, accuracy/source flags and local journal receipts; recording remains foreground-only. Raw proof is separate from a self-reported cloud summary, and no display animation changes evidence. Published build 9 retains its earlier memory-only limitation. The sample GPX is not a replay feature.
 
 With a compatible Node version and dependencies available, open PowerShell here:
 
@@ -74,7 +74,7 @@ npm ci
 npm start
 ```
 
-Use a custom development build for native GPS, Apple Maps and glass effects. The web preview shows the real UI and online flows, but uses a coordinate editor in place of Apple Maps. Expo fallback samples do not contain native speed uncertainty and cannot qualify for rankings. Keep the app open and unlocked while recording.
+Use a freshly rebuilt custom development app for native GPS, MapLibre, SQLite and glass effects. Expo Go cannot load these native additions. The web preview shows real vector maps and online flows; it uses IndexedDB for local ride storage. Expo fallback samples do not contain native speed uncertainty and cannot qualify for rankings. Keep the app open and unlocked while recording. Start the development preview with `npm run start:dev -- --web --port 8082`; web export copies the pinned worker modules automatically.
 
 Existing checks:
 

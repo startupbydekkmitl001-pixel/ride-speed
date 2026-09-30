@@ -10,13 +10,14 @@ import { supabase } from "../../lib/supabase";
 import { useApp } from "../../state/AppState";
 import { accountClient, isAccountCurrent, useAuth } from "../../state/AuthState";
 import { useRiderProfile } from "../../state/RiderProfile";
+import { clearRideAccount,useRide } from "../../state/RideState";
 
 export default function DeleteAccountScreen() {
   const { scope } = useAuth();
   return <AccountDeletion key={scope.generation} />;
 }
 function AccountDeletion() {
-  const { session, scope } = useAuth(), { forgetLocalAccount } = useApp(), rider = useRiderProfile(), { t } = useI18n();
+  const { session, scope } = useAuth(), { forgetLocalAccount } = useApp(), rider = useRiderProfile(), ride = useRide(), { t } = useI18n();
   const [confirmation, setConfirmation] = useState(""), [receipt, setReceipt] = useState<DeletionReceipt | null>(null), [loaded, setLoaded] = useState(false), [busy, setBusy] = useState(false), [message, setMessage] = useState<TranslationKey | null>(null);
   const [readVersion, setReadVersion] = useState(0);
   const key = `ride.deletion.v1.${scope.userId}`;
@@ -51,8 +52,10 @@ function AccountDeletion() {
           await AsyncStorage.setItem(key, JSON.stringify(value));
           ensure(); requested = value; setReceipt(value);
         }, async () => {
+          await ride.stopAsync(); ensure();
           await rider.clearAccount(); ensure();
           await clearOnboardingAccount(scope); ensure();
+          await clearRideAccount(scope); ensure();
           await forgetLocalAccount(); ensure();
         });
       await AsyncStorage.removeItem(key);

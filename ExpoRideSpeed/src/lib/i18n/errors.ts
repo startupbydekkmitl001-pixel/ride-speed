@@ -1,11 +1,12 @@
 import type { TranslationKey } from "./resources";
 
-type ErrorContext = "google" | "apple" | "onboarding" | "avatar" | "deletion" | "login" | "signup" | "reset" | "password" | "callback" | "profile" | "photo" | "logout" | "online" | "storage" | "ride";
+type ErrorContext = "google" | "apple" | "onboarding" | "avatar" | "deletion" | "login" | "signup" | "reset" | "password" | "callback" | "profile" | "photo" | "logout" | "online" | "storage" | "ride" | "rideSync";
 const fallback: Record<ErrorContext, TranslationKey> = {
   google: "errors.googleLogin", apple: "errors.appleLogin", onboarding: "errors.onboarding", avatar: "errors.avatarUnavailable", deletion: "errors.deletion", login: "errors.connection", signup: "errors.connection",
   reset: "errors.connection", password: "errors.passwordSave", callback: "errors.callbackExpired",
   profile: "errors.profileSave", photo: "errors.photoOpen", logout: "errors.signOut",
   online: "errors.connection", storage: "errors.localRead", ride: "errors.gpsStart",
+  rideSync: "m2.sync.unavailable",
 };
 const codes: Record<string, TranslationKey> = {
   ACCOUNT_CHANGED: "errors.accountChanged", LOCAL_READ_FAILED: "errors.localRead", LOCAL_WRITE_FAILED: "errors.localWrite",
@@ -17,6 +18,11 @@ const codes: Record<string, TranslationKey> = {
   PROFILE_REQUIRED: "errors.avatarNeedsProfile", ACCOUNT_DELETION_PENDING: "errors.deletionInProgress",
   DELETION_IN_PROGRESS: "errors.deletionInProgress", DELETION_STORAGE_FAILED: "errors.deletion", DELETION_DATABASE_FAILED: "errors.deletion", DELETION_AUTH_FAILED: "errors.deletion",
   DELETION_STATUS_UNAVAILABLE: "errors.deletion",
+  RIDE_SUMMARY_INVALID: "m2.sync.invalid", RIDE_SUMMARY_TOO_LARGE: "m2.sync.tooLarge",
+  RIDE_OPERATION_CONFLICT: "m2.sync.operationConflict", RIDE_REVISION_CONFLICT: "m2.sync.revisionConflict",
+  RIDE_SNAPSHOT_CONFLICT: "m2.sync.snapshotConflict", RIDE_UNAVAILABLE: "m2.sync.unavailable",
+  RIDE_SYNC_UNAVAILABLE: "m2.sync.unavailable", RIDE_SYNC_AUTH_REQUIRED: "m2.sync.authRequired",
+  RIDE_SYNC_RATE_LIMITED: "m2.sync.rateLimited", RIDE_SYNC_INVALID_RESPONSE: "m2.sync.invalidResponse",
   invalid_credentials: "errors.invalidCredentials",
   over_request_rate_limit: "errors.rateLimited", over_email_send_rate_limit: "errors.rateLimited",
   over_sms_send_rate_limit: "errors.rateLimited", rate_limit_exceeded: "errors.rateLimited",

@@ -23,6 +23,9 @@ module.exports = ({ config }) => {
       th: "./locales/th.json",
     },
     plugins: [
+      "@maplibre/maplibre-react-native",
+      "expo-sqlite",
+      ["expo-screen-orientation", { initialOrientation: "PORTRAIT_UP" }],
       "expo-router",
       "expo-font",
       "expo-localization",
@@ -63,6 +66,12 @@ module.exports = ({ config }) => {
       ...(development ? [["expo-dev-client", { launchMode: "launcher" }]] : []),
     ],
     userInterfaceStyle: "automatic",
+    orientation: "default",
+    android: {
+      ...config.android,
+      package: development ? "com.arnalxz.ridespeed.dev" : "com.arnalxz.ridespeed",
+      versionCode: Number(buildNumber.split(".")[0]) * 10000 + Number(buildNumber.split(".")[1]) * 100 + Number(buildNumber.split(".")[2]),
+    },
     web: { ...config.web, bundler: "metro" },
     ios: {
       ...config.ios,

@@ -32,12 +32,13 @@ The user has authorized native implementation and chosen MapLibre/OpenFreeMap + 
 
 ## M2 — fullscreen map, speed and recording
 
-- [ ] MapLibre v11 native + v6 web adapters with shared black/light style, Thai glyph coverage, attribution, real pan/zoom and start centered on permitted user position. Offline/denied/loading states must be useful.
-- [ ] Map Home: search/recenter/layers/friends toggle/route/challenge controls, compact HUD and expanded landscape mode; map renderer independent of GPS display updates.
-- [ ] Reanimated shared-value needle/rolling digits/glow preserving SpeedEngine quality/stale/zero/max semantics; never generate evidence from display interpolation.
-- [ ] One ride provider above routes; durable SQLite journal with owner/capture IDs, append/checkpoint, pause segments, crash recovery, saved summaries and compressed geometry. Android native/expo capability adapter must honestly mark verification limits.
-- [ ] Start/pause/resume/stop/save, keep awake, offline outbox and idempotent cloud ride summary sync; foreground interruption policy visible. Glance lock >10 km/h with passenger override.
-- [ ] Meaningful tests: smoothing/stopped/stale/order/mock/poor-accuracy, journal restart/pause/no fake bridge/account isolation and retry. Run map/HUD web interactions and CI native builds; physical GPS/50-marker/2 s map/FPS/battery acceptance remains measured gate.
+- [x] MapLibre v11 native + v6 web adapters with shared black/light style, Thai glyph coverage, attribution, real pan/zoom and permitted user positioning; denied/loading/retry states.
+- [x] Map Home: recenter/layers/friends/history and route/challenge entry controls, compact HUD and expanded native landscape mode; actual search and peer positions follow in M4/M5.
+- [x] Reanimated shared-value needle/rolling digits preserving SpeedEngine quality/stale/zero/max semantics; never generate evidence from display interpolation.
+- [x] One ride provider above routes; durable SQLite/IndexedDB journal with owner/capture IDs, append/checkpoint, pause segments, crash recovery, saved summaries and compressed disconnected geometry. Provider limits remain explicit.
+- [x] Start/pause/resume/stop/save, keep awake, offline outbox and idempotent cloud ride summary sync; foreground interruption policy visible. Glance lock >10 km/h with passenger override.
+- [x] Meaningful unit/adapter tests, browser map/HUD/history interactions, lint/typecheck and all-platform export. See `docs/design/m2-acceptance-v5.md` for exact evidence.
+- [ ] Fresh iOS/Android native CI compilation and physical GPS/50-marker/2 s map/FPS/battery acceptance. Source implementation is complete; these results must be measured separately.
 - [ ] Commit M2; report five lines.
 
 ## M3 — garage/catalog

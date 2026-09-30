@@ -45,6 +45,7 @@ jobs:
         working-directory: backend
       - run: node scripts/check-build-config.cjs
       - run: python3 -m unittest discover -s scripts -p 'test_*.py'
+      - run: node --test scripts/test_native_libraries.cjs scripts/test_native_preview_gate.cjs
       - run: bash -n scripts/build-ios-unsigned.sh
       - name: Validate version and assign build identity
         id: metadata
@@ -98,6 +99,7 @@ jobs:
           path: |
             build/${{ matrix.variant }}/*.log
             build/${{ matrix.variant }}/workspace.json
+            build/${{ matrix.variant }}/native-libraries.json
             build/${{ matrix.variant }}/dSYMs.zip
           if-no-files-found: warn
           retention-days: 3

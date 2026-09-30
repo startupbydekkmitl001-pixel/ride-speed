@@ -1,0 +1,19 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { DatabaseSync } from 'node:sqlite';
+import vm from 'node:vm';
+import { IDBFactory } from 'fake-indexeddb';
+import * as model from '../src/features/rides/journalModel.ts';
+const require=createRequire(import.meta.url),ts=require('typescript');
+const copy=value=>JSON.parse(JSON.stringify(value));
+function load(name,imports,globals={}){const module={exports:{}};vm.runInNewContext(ts.transpileModule(readFileSync(new URL(name,import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{module,exports:module.exports,require:key=>{if(!(key in imports))throw Error(key);return imports[key];},...globals});return module.exports.journalPort;}
+function native(){const db=new DatabaseSync(':memory:');const portDb={execAsync:async sql=>db.exec(sql),runAsync:async(sql,...args)=>db.prepare(sql).run(...args),getAllAsync:async(sql,...args)=>db.prepare(sql).all(...args)};portDb.withExclusiveTransactionAsync=async fn=>{db.exec('BEGIN IMMEDIATE');try{await fn(portDb);db.exec('COMMIT');}catch(error){db.exec('ROLLBACK');throw error;}};const create=()=>load('../src/features/rides/journalPort.ts',{'expo-sqlite':{openDatabaseAsync:async()=>portDb},'./journalModel':model});return{create,close:()=>db.close()};}
+function web(){const indexedDB=new IDBFactory();return{create:()=>load('../src/features/rides/journalPort.web.ts',{'./journalModel':model},{indexedDB}),close:()=>{}};}
+const ride=(id,owner='A')=>model.createRide(id,owner,1700000000000,null);
+for(const [name,build]of[['SQLite',native],['IndexedDB',web]]){
+ test(`${name}: fresh adapter recovers an interrupted path from exact receipts`,async()=>{const store=build();try{const first=store.create(),r=ride('recover');model.beginCapture(r,'capture','segment',0,'expo_location');for(let seq=0;seq<2;seq++){const receipt=model.acceptSample(r,{timestampMs:1700000000000+seq*1000,latitude:13,longitude:100+seq*.0001,speedMps:10,horizontalAccuracyM:5,speedAccuracyMps:null,mocked:false},1700000000000+seq*1000);await first.save(copy(model.persistedRide(r)),copy(receipt));}const restored=await store.create().list('A');assert.equal(restored.length,1);assert.equal(restored[0].rawCount,2);assert.equal(restored[0].fragments.length,1);assert.deepEqual(copy(restored[0].fragments[0].points),[{latitude:13,longitude:100},{latitude:13,longitude:100.0001}]);assert.equal((await first.receipts('B','recover','capture')).length,0);}finally{store.close();}});
+ test(`${name}: a colliding foreign owner cannot replace a row or append receipts`,async()=>{const store=build();try{const port=store.create(),a=ride('collision'),b=ride('collision','B');await port.save(a);await assert.rejects(port.save(b,{seq:0,captureId:'foreign',segmentId:'foreign',sample:{},accepted:false,receivedAtMs:1700000000000}));assert.equal((await port.list('A')).length,1);assert.equal((await port.list('B')).length,0);assert.equal((await port.receipts('A','collision','foreign')).length,0);}finally{store.close();}});
+ test(`${name}: confirmed cleanup removes all 501 owner rows and receipts, preserving another owner`,async()=>{const store=build();try{const port=store.create();for(let index=0;index<501;index++)await port.save(ride('a-'+index),{seq:0,captureId:'capture',segmentId:'segment',sample:{},accepted:false,receivedAtMs:1700000000000});await port.save(ride('other','B'));assert.equal((await port.list('A')).length,500);await port.removeOwner('A');assert.equal((await port.list('A')).length,0);assert.equal((await port.receipts('A','a-500','capture')).length,0);assert.equal((await port.list('B'))[0].id,'other');await port.removeOwner('A');}finally{store.close();}});
+}

@@ -1,0 +1,23 @@
+{
+  "capturedAt": "2026-10-01",
+  "provider": "OpenFreeMap",
+  "upstreamRepository": "https://github.com/hyperknot/openfreemap-styles",
+  "sources": [
+    {
+      "url": "https://tiles.openfreemap.org/styles/liberty",
+      "file": "openfreemap-liberty.json",
+      "sha256": "6010998863b4876911ac9a2d62c9a28d97c8877f6d20cd158b74808572257b60"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hyperknot/openfreemap-styles/main/LICENSE.md",
+      "file": "OPENFREEMAP-LICENSE.md",
+      "sha256": "d1754e5d291e4e8b9b0047ddba0a6ec75e1046ccd61a02c2cea3dac58f3fe355"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/maputnik/osm-liberty/gh-pages/LICENSE.md",
+      "file": "OSM-LIBERTY-LICENSE.md",
+      "sha256": "932694202d771c52089e87f13105e02f2b68341f584b0f3d8adc557c9d7cefa3"
+    }
+  ],
+  "changes": "Derived at runtime in mapStyle.ts: neutral black/light palette, local-language name fallback, transitions. Upstream JSON remains unmodified."
+}

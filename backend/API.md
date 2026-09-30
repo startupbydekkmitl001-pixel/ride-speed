@@ -1,6 +1,52 @@
 # Native client contract (v5)
 
-Status: the v4 foundation is deployed. Additive M1 account/avatar lifecycle source is locally verified; hosted acceptance is recorded separately in DEPLOYMENT.md. Use the project URL + **publishable** key in the app. Keep secret/service credentials only in Edge Functions. All owner RPCs derive the acting UID from the authenticated session.
+Status: the foundation and additive M1 account/avatar lifecycle are deployed; hosted acceptance is recorded separately in DEPLOYMENT.md. Additive M2 private-summary source is locally verified and awaits its separate hosted review/deployment. Use the project URL + **publishable** key in the app. Keep secret/service credentials only in Edge Functions. All owner RPCs derive the acting UID from the authenticated session.
+
+## M2 private ride summaries
+
+The journal/outbox is separate from native competition evidence. `202610010004_private_ride_summaries.sql` adds `rs_rides` and private operation receipts. Auth-only users can sync without creating a profile. Every summary, vehicle/class hint and statistic remains **self-reported and private**. These rows cannot populate ranks, friend presence or community posts. No raw GPS sample arrays, accuracy/source evidence or Storage upload is part of summary sync.
+
+```ts
+rs_sync_ride_summary({
+  p_operation: UUID, // persist once; reuse after timeout/restart
+  p_ride: UUID,      // logical ride, independent of capture IDs
+  p_expected_revision: 0 | number,
+  p_payload: RideSummaryV1
+}) -> {
+  operation_id: UUID, ride_id: UUID,
+  applied_revision: number, current_revision: number,
+  payload_sha256: string, // SHA-256 of PostgreSQL jsonb text, computed by server
+  speed_status: 'self_reported', visibility: 'private', synced_at: UTC_ISO
+}
+rs_get_ride_sync_status({p_operation: UUID}) -> same acknowledgement | null
+```
+
+Create uses expected revision 0 and returns revision 1. A later correction needs the exact current revision and a new persisted operation; original start UTC instant, schema identity and vehicle snapshot cannot change. Replaying the same operation/ride/revision/payload returns its original receipt and current row revision, without a new write or quota hit. Changed data under the same operation fails `RIDE_OPERATION_CONFLICT`. An old successful operation never rewrites a later row. JSON object-key order/numeric representation uses PostgreSQL JSONB semantic equality. The hash is an audit field; clients must preserve the immutable request rather than hash a differently formatted JSON string.
+
+Payload type lives in `ExpoRideSpeed/src/features/rides/syncTypes.ts` and the full [M2 contract](../docs/research/m2-ride-sync-contract-v5.md). Required fields: schema version 1; actual UTC start/end strings ending in `Z`; active/elapsed integer milliseconds; clock anomaly; nullable distance metres/max/average metres per second; reported provider; capture/accepted/rejected counts; geometry status; nullable immutable vehicle snapshot; `{encoding:'polyline5',fragments:[{segment_id,capture_id,part_index,polyline,point_count}]}`. All keys are explicit and unknown fields are rejected. No-fix measurements stay null; a confirmed stationary measurement can be 0. Average, when present, must equal distance/active seconds within 0.001 m/s. Without a clock anomaly, elapsed must match end minus start within 1 s and active cannot exceed elapsed by more than 1 s. With an anomaly, elapsed is null and actual observed UTC values remain intact.
+
+Limits: 128 fragments, 4,096 decoded coordinates, 64 KiB total encoded strings, 128 KiB JSONB text, active/elapsed durations up to 7 days, distance up to 10,000 km, speed up to 500/3.6 m/s, and integer counts up to 10 million. Storage bounds do not verify the ride. Polyline decoding validates E5 coordinate range, matching point counts, unique segment/part identity and capture association with bounded byte/varint work. Parts never connect across pause, lost fixes or crash. Client conversion simplifies each part independently and retains endpoints; it marks `simplified` and retains the local raw journal. More than 128 parts remain locally saved with a sync error until explicitly reconciled; they are never merged silently.
+
+Vehicle category `bigbike` maps to `motorcycle`; decimal cc remains intact, unknown fields remain null, and EVs use kW without invented cc. Class scheme 1 uses scooter ≤125 / >125–160 / >160; motorcycle ≤500 / >500–900 / >900; electric vehicles are separate and cars/unknown displacement stay unknown. These labels are display hints, not competitive eligibility.
+
+Owner history on another device:
+
+```ts
+rs_list_ride_summaries({p_limit:20, p_before_end:null|UTC_ISO, p_before_id:null|UUID})
+  -> {items:[{
+    ride_id, revision, payload, category, class_key, class_scheme_version:1,
+    metadata_authority:'self_reported', speed_status:'self_reported', visibility:'private',
+    created_at, updated_at
+  }], next_cursor:null|{ended_at,ride_id}}
+```
+
+Use both cursor fields returned by the server; limit is 1–50. Ordering is ended UTC instant descending, then ride UUID descending, including tied timestamps and anomalous device clocks. Only the active authenticated owner is read; no profile is required, and no evidence bytes or private operation IDs are returned. Reading this history does not recreate native proof or silently import it into another owner's local journal.
+
+The client entry points are `syncRideSummary(scope,session,draft)`, `getRideSyncStatus(scope,session,operationId)` and `listRideSummaries(scope,session,{limit,cursor})`. `toRideSummary(ride,platform)` runs once after finalization; persist its immutable payload with the operation/revision before scheduling network work. The initiating JWT is fixed for every request; UID/generation checks reject completion after sign-out or A→B→A. A response-loss status lookup is read-only and never changes the operation. Retry after token refresh uses a fresh same-owner request. Guest journals never sync automatically.
+
+New mutations have a 100-operation/day/owner limit using the existing UTC quota bucket; receipt replays/read history do not consume it. Stable server errors: `RIDE_SUMMARY_INVALID`, `RIDE_SUMMARY_TOO_LARGE`, `RIDE_OPERATION_CONFLICT`, `RIDE_REVISION_CONFLICT`, `RIDE_SNAPSHOT_CONFLICT`, `RIDE_UNAVAILABLE`, plus `ACCOUNT_DELETION_PENDING`. Client transport additionally maps failures to `RIDE_SYNC_UNAVAILABLE`, `RIDE_SYNC_AUTH_REQUIRED`, `RIDE_SYNC_RATE_LIMITED`, `RIDE_SYNC_INVALID_RESPONSE` and `ACCOUNT_CHANGED`; localize them instead of showing arbitrary backend text. A conflict retains the original local payload for deliberate reconciliation.
+
+RLS allows active owners SELECT only; direct INSERT/UPDATE/DELETE is denied. Only exact sync/status/history RPCs receive client EXECUTE. The new migration extends the token-fenced, binary-first deletion phase to purge summaries and private receipts before Auth removal, retaining established cross-owner challenge/evidence cleanup. Existing verifier grants and native evidence contracts remain unchanged.
 
 ## M1 onboarding, privacy and profile avatar
 

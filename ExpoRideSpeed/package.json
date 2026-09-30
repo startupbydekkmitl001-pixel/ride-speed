@@ -4,7 +4,9 @@
   "main": "index.ts",
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
+    "@maplibre/maplibre-react-native": "11.4.0",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@shopify/react-native-skia": "2.6.2",
     "@supabase/supabase-js": "^2.117.2",
     "decode-uri-component": "file:vendor/decode-uri-component",
     "expo": "~57.0.26",
@@ -24,18 +26,20 @@
     "expo-localization": "~57.0.2",
     "expo-location": "~57.0.20",
     "expo-router": "~57.0.24",
+    "expo-screen-orientation": "~57.0.2",
     "expo-secure-store": "~57.0.4",
     "expo-splash-screen": "~57.0.9",
+    "expo-sqlite": "~57.0.3",
     "expo-status-bar": "~57.0.1",
     "expo-video": "~57.0.5",
     "expo-web-browser": "~57.0.3",
     "i18next": "^26.4.2",
+    "maplibre-gl": "6.11.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-i18next": "^17.0.15",
     "react-native": "0.86.3",
     "react-native-gesture-handler": "~2.32.0",
-    "react-native-maps": "1.27.2",
     "react-native-reanimated": "4.5.1",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
@@ -49,6 +53,7 @@
     "eslint": "^9.0.0",
     "eslint-config-expo": "~57.0.2",
     "expo-dev-client": "~57.0.19",
+    "fake-indexeddb": "^6.2.5",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -60,7 +65,10 @@
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test tests/*.test.mjs modules/ride-location/tests/*.test.mjs",
     "start:dev": "node ../scripts/start-dev.cjs",
-    "check:build": "node ../scripts/check-build-config.cjs"
+    "check:build": "node ../scripts/check-build-config.cjs",
+    "copy:map-workers": "node scripts/copy-maplibre-workers.cjs",
+    "postinstall": "npm run copy:map-workers",
+    "export:web": "npm run copy:map-workers && expo export --platform web"
   },
   "private": true,
   "overrides": {

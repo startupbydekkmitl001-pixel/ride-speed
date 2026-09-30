@@ -54,3 +54,11 @@ Deployed canonical account function bundles generated with `node scripts/bundle-
 Allowed localhost and 127.0.0.1:8082 CORS preflights return 200 with the exact requesting allowed Origin. Real Google sign-in, profile read, ghost preference read and browser session reload pass against this schema. No actual owner deletion, private photo upload, synthetic users or rides occurred. Automated backend acceptance passes 45 tests. Native and disposable-account checks remain explicit gates.
 
 The owner saved GEOAPIFY_API_KEY in private function secrets; only its presence was inspected. Route-service deployment belongs to M4. The secret is never bundled into client/public source.
+
+## V5 M2 — 1 October 2026
+
+Applied `202610010004_private_ride_summaries.sql` once through the authenticated SQL editor; it returned **Success. No rows returned.** SHA-256: `51FFEA033F1E8A71AD52F7DD4448CE95ADC680E1D64F91971097BB902339181D`. Earlier migrations remain unchanged. Dashboard execution still requires explicit CLI-history reconciliation before any `db push`.
+
+This additive transaction provides owner-only, idempotent ride-summary sync, exact operation receipt lookup and bounded keyset history. Summaries remain private and self-reported; they cannot enter verified rankings. It extends the already fenced deletion function to remove these summaries and receipts before Auth removal. Deploying its definition did not delete any user data. No synthetic rides or GPS coordinates were uploaded during this check.
+
+The real signed-in browser opened ride history and retried its cloud read without an error; it correctly showed an empty account. Separate automated backend checks pass 55 cases, including owner isolation, direct mutation denial, payload bounds, operation/revision conflicts, clock anomalies and deletion dependencies. Browser screenshots are retained in ignored `build/review-v5/m2`.

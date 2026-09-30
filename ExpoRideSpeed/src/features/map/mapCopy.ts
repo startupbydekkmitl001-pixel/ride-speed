@@ -1,0 +1,4 @@
+export const mapCopy = {
+  th: { map: 'แผนที่ เลื่อนและซูมเพื่อดูเส้นทาง', attribution: 'ข้อมูลแผนที่และลิขสิทธิ์', gesture: 'แตะค้างบนแผนที่เพื่อเพิ่มจุด', draft: 'เส้นประแสดงลำดับจุดเท่านั้น ยังไม่ใช่เส้นทางตามถนน', loading: 'กำลังโหลดแผนที่…', nativeModule: 'ต้องติดตั้งแอปที่สร้างใหม่เพื่อเปิดแผนที่นี้', webgl: 'เบราว์เซอร์นี้ยังเปิดแผนที่ WebGL2 ไม่ได้ ลองเปิดการเร่งด้วยฮาร์ดแวร์หรือใช้แอปบนมือถือ' },
+  en: { map: 'Map. Pan and zoom to explore routes.', attribution: 'Map data and attribution', gesture: 'Long press the map to add a stop.', draft: 'Dashed lines show stop order. They are not a road route yet.', loading: 'Loading map…', nativeModule: 'Install a rebuilt app to enable this map.', webgl: 'This browser cannot render the WebGL2 map. Enable hardware acceleration or use the mobile app.' },
+} as const;

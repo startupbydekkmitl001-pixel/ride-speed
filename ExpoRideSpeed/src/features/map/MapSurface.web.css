@@ -1,0 +1,5 @@
+.ride-map-surface { overflow: hidden; touch-action: none; }
+.ride-map-surface .maplibregl-canvas { outline: none; }
+.ride-map-surface .maplibregl-ctrl-attrib { margin: 0; padding: 4px 8px; border-radius: var(--map-attribution-radius); font: 10px/1.5 sans-serif; background: var(--map-attribution-bg); color: var(--map-attribution-ink); }
+.ride-map-surface .maplibregl-ctrl-attrib a { color: inherit; }
+.ride-map-surface .maplibregl-ctrl-attrib-inner { white-space: normal; }

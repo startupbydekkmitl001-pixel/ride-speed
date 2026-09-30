@@ -1,4 +1,5 @@
-import { Stack } from "expo-router";
+import { Stack,router,usePathname } from "expo-router";
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
@@ -11,6 +12,7 @@ import { AppProvider, useApp } from "../state/AppState";
 import { AuthProvider } from "../state/AuthState";
 import { OnlineProvider } from "../state/OnlineState";
 import { RiderProfileProvider } from "../state/RiderProfile";
+import { RideProvider,useRide } from "../state/RideState";
 import { Button, T } from "../components/ui";
 import { errorKey, useI18n } from "../lib/i18n";
 
@@ -18,6 +20,7 @@ void SplashScreen.preventAutoHideAsync();
 function Navigation() {
   const { ready, dark, colors, motion, storageError, retryStorage } = useApp();
   const { t } = useI18n();
+  const ride=useRide(),pathname=usePathname();
   const [fonts, fontError] = useFonts({
     "Anuphan-400": require("../../assets/fonts/Anuphan-400.ttf"),
     "Anuphan-500": require("../../assets/fonts/Anuphan-500.ttf"),
@@ -54,6 +57,11 @@ function Navigation() {
           <Stack.Screen name="auth" options={{ presentation: "modal" }} />
           <Stack.Screen name="compose" options={{ presentation: "modal" }} />
         </Stack>
+        {ride.movingLocked&&pathname!=="/"&&<View style={{position:'absolute',top:0,bottom:0,left:0,right:0,backgroundColor:colors.bg,justifyContent:'center',padding:24,gap:20}} accessibilityViewIsModal>
+          <T size={24} weight="semibold">{t('m2.ride.movingLock')}</T>
+          <Button label={t('nav.map')} onPress={()=>router.replace('/')}/>
+          <Button secondary label={t('m2.ride.passengerOverride')} onPress={ride.setPassengerOverride}/>
+        </View>}
       </View>
     </View>
   );
@@ -66,7 +74,7 @@ export default function RootLayout() {
         <AppProvider>
           <OnlineProvider>
             <RiderProfileProvider>
-              <MotionProvider><Navigation /></MotionProvider>
+              <RideProvider><MotionProvider><Navigation /></MotionProvider></RideProvider>
             </RiderProfileProvider>
           </OnlineProvider>
         </AppProvider>

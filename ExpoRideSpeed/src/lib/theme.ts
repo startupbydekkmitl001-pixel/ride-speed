@@ -25,4 +25,8 @@ export const theme = {
   motion: { pressMs: 100, stateMs: 260, staggerMs: 40, spring: { damping: 20, stiffness: 220 } },
   material: { blur: 24, minTarget: 44, maxVideos: 2 },
   speedHeat: ['#35D6E8', '#B8ED55', '#FFB444', '#FF3B5C'],
+  map: {
+    dark: { background: '#000000', land: '#000000', water: '#000000', building: '#0A0A0A', road: '#333333', majorRoad: '#555555', roadCasing: '#111111', boundary: '#444444', label: '#D8D8D8', secondaryLabel: '#999999', halo: '#000000' },
+    light: { background: '#FAFAF8', land: '#F1F1EF', water: '#E4E4E2', building: '#DCDCD9', road: '#FFFFFF', majorRoad: '#FFFFFF', roadCasing: '#C9C9C5', boundary: '#B0B0AD', label: '#252525', secondaryLabel: '#666663', halo: '#FAFAF8' },
+  },
 } as const;

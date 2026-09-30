@@ -20,3 +20,12 @@
 - Supabase's existing foundation was deployed through the dashboard and has no CLI migration history (verified with a read-only query). Apply only the additive M1 migration. A future CLI push must reconcile that history first.
 - Apple sign-in remains a configured capability gate until its provider/App ID are tested. Google is available now; public email signup/reset delivery requires SMTP. These gates must be stated in the app, rather than showing buttons that promise unavailable login methods.
 - Native encrypted session storage already uses an atomic generation manifest and bounded chunks. The web review session uses sessionStorage. Native restart acceptance still requires a signed device build.
+
+## M2 — maps, journals and native validation
+
+- MapLibre native 11.4.0/web 6.11.2 share validated black/light bilingual styles. Same-origin web worker modules are copied from the exact locked package with their BSD notice. Visible OpenFreeMap/OpenMapTiles/OSM attribution remains with the map; expanded HUD hides the map as a whole.
+- Use native SQLite and web IndexedDB rather than SQLite WASM on web, avoiding cross-origin isolation headers that disrupt OAuth. Test actual SQL/IDB adapter behavior in addition to the global provider's captured-location ports. Failed writes remain queued and never let finalization overtake receipts.
+- Keep the proven SpeedEngine and use Reanimated SVG for the portable instrument; Skia is installed for later native shaders. Rolling digits/needle do not contribute evidence. There are no per-frame React state updates. Native frame rate remains a measured gate.
+- Cloud summaries are owner-only, self-reported and bounded. Oversized geometry stays saved locally with a sync message; do not merge gaps, silently clip an observed maximum or relabel it verified. A frozen operation survives response loss and disk retry.
+- Foreground interruption is explicit. Pause/GPS failure retain the last confirmed moving lock; only a fresh suitable stationary reading or passenger override releases it. Confirmed account deletion permanently closes that owner's local acquisition/write/proof boundary before cleanup finishes.
+- Run native compilation on public standard GitHub runners. The Android standalone preview uses Expo's public debug certificate, bundles its JS and is labeled unfit for store submission. iPhone artifacts remain unsigned. Compile/installation/performance are distinct results.

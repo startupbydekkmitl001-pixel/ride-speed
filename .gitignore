@@ -3,6 +3,7 @@ ExpoRideSpeed/node_modules/
 ExpoRideSpeed/.expo/
 ExpoRideSpeed/dist/
 /node_modules/
+/ExpoRideSpeed/public/maplibre/
 .DS_Store
 
 # Local build output and signing material

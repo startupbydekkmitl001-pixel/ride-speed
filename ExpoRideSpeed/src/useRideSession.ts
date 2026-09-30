@@ -21,7 +21,8 @@ const START_MESSAGE = 'เริ่ม GPS ไม่สำเร็จ ตรว
 const MAX_NATIVE_SPEED_ACCURACY_MPS = 1;
 
 // Shared across hook remounts: a pending old stop cannot overtake a new start.
-const capture = new ExclusiveLocationCapture();
+export const locationCapture = new ExclusiveLocationCapture();
+const capture = locationCapture;
 type CaptureHandle = { owner: symbol; removeListeners: () => void };
 
 function appIsBackground(): boolean { return AppState.currentState === 'background'; }
@@ -32,7 +33,12 @@ function permissionError(code: unknown): { state: PermissionState; message: stri
   return { state: 'error', message: START_MESSAGE };
 }
 
-export function useRideSession(): {
+export function useRideSession(observer?: {
+  onSample?: (sample: RideEvidenceSample, native: boolean) => void;
+  onStopped?: (message: string | null) => void;
+  onSnapshot?: (snapshot: SpeedSnapshot) => void;
+  onAcquired?: (native: boolean) => void;
+}): {
   active: boolean;
   snapshot: SpeedSnapshot;
   permissionState: PermissionState;
@@ -43,6 +49,7 @@ export function useRideSession(): {
   /** Only a successfully started new capture returns an ID. Failed starts return null. */
   start: () => Promise<string | null>;
   stop: () => void;
+  stopAsync: () => Promise<void>;
   resetMax: () => void;
 } {
   const [engine] = useState(() => new SpeedEngine());
@@ -54,6 +61,9 @@ export function useRideSession(): {
   const activeRef = useRef(false);
   const mountedRef = useRef(true);
   const sessionIdRef = useRef<string | null>(null);
+  const observerRef = useRef(observer);
+  useEffect(() => { observerRef.current = observer; }, [observer]);
+  const stoppingRef = useRef<Promise<void>>(Promise.resolve());
 
   const [active, setActive] = useState(false);
   const [snapshot, setSnapshot] = useState<SpeedSnapshot>(() => engine.snapshot);
@@ -68,7 +78,8 @@ export function useRideSession(): {
     if (!handle) return;
     handle.removeListeners();
     const stoppedGeneration = generationRef.current;
-    void capture.stop(handle.owner).catch(() => {
+    stoppingRef.current = capture.stop(handle.owner);
+    void stoppingRef.current.catch(() => {
       // Failed cleanup retains ownership, preventing another overlapping capture.
       if (mountedRef.current && generationRef.current === stoppedGeneration) {
         setPermissionState('error');
@@ -82,6 +93,7 @@ export function useRideSession(): {
     startingRef.current = false;
     activeRef.current = false;
     releaseProvider();
+    observerRef.current?.onStopped?.(nextMessage);
     if (timerRef.current !== null) {
       clearInterval(timerRef.current);
       timerRef.current = null;
@@ -158,19 +170,22 @@ export function useRideSession(): {
         if (!isCurrent() || !capture.owns(owner) || (!activeRef.current && !startingRef.current)) return;
         if (appIsBackground()) { stopWithMessage(BACKGROUND_MESSAGE); return; }
         evidence.append(sample);
+        observerRef.current?.onSample?.({ ...sample }, native !== null);
         const invalidNativeSpeed = native !== null
           && (sample.speedAccuracyMps === null || !Number.isFinite(sample.speedAccuracyMps)
             || sample.speedAccuracyMps < 0 || sample.speedAccuracyMps > MAX_NATIVE_SPEED_ACCURACY_MPS);
         const simulated = sample.isSimulatedBySoftware === true || sample.mocked === true;
         // Reject only the display input: retain raw evidence and break confirmation.
-        setSnapshot(engine.process({
+        const nextSnapshot=engine.process({
           speedMps: invalidNativeSpeed || simulated ? null : sample.speedMps,
           horizontalAccuracyM: sample.horizontalAccuracyM,
           timestampMs: sample.timestampMs,
-        }, Date.now()));
+        }, Date.now());
+        setSnapshot(nextSnapshot);observerRef.current?.onSnapshot?.(nextSnapshot);
         setMessage(null);
       };
       const beginEvidence = () => {
+        observerRef.current?.onAcquired?.(native !== null);
         sessionIdRef.current = null;
         setSessionId(null);
         evidence.reset(native !== null);
@@ -263,10 +278,11 @@ export function useRideSession(): {
   }, [engine, evidence, stopWithMessage]);
 
   const stop = useCallback(() => stopWithMessage(null), [stopWithMessage]);
+  const stopAsync = useCallback(async () => { stopWithMessage(null); await stoppingRef.current; }, [stopWithMessage]);
   const resetMax = useCallback(() => {
     if (mountedRef.current) setSnapshot(engine.resetMax());
   }, [engine]);
   const getEvidence = useCallback((): CapturedRideEvidence => ({ ...evidence.snapshot(), sessionId: sessionIdRef.current }), [evidence]);
 
-  return { active, snapshot, permissionState, message, nativeSource, sessionId, getEvidence, start, stop, resetMax };
+  return { active, snapshot, permissionState, message, nativeSource, sessionId, getEvidence, start, stop, stopAsync, resetMax };
 }

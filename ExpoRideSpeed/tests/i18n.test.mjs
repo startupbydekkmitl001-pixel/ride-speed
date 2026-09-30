@@ -106,3 +106,18 @@ test('account setup, photo retries, device storage and deletion failures have bi
     assert.ok(resources.messages.th[expected]);assert.ok(resources.messages.en[expected]);
   }
 });
+
+test('ride sync failures use bounded bilingual copy and never expose a raw transport response',()=>{
+  const key=callable(errors,'errorKey');
+  for(const [code,expected] of [
+    ['RIDE_SUMMARY_INVALID','m2.sync.invalid'],['RIDE_SUMMARY_TOO_LARGE','m2.sync.tooLarge'],
+    ['RIDE_OPERATION_CONFLICT','m2.sync.operationConflict'],['RIDE_REVISION_CONFLICT','m2.sync.revisionConflict'],
+    ['RIDE_SNAPSHOT_CONFLICT','m2.sync.snapshotConflict'],['RIDE_UNAVAILABLE','m2.sync.unavailable'],
+    ['RIDE_SYNC_UNAVAILABLE','m2.sync.unavailable'],['RIDE_SYNC_AUTH_REQUIRED','m2.sync.authRequired'],
+    ['RIDE_SYNC_RATE_LIMITED','m2.sync.rateLimited'],['RIDE_SYNC_INVALID_RESPONSE','m2.sync.invalidResponse'],
+  ]) {
+    assert.equal(key(new Error(code),'rideSync'),expected);
+    assert.ok(resources.messages.th[expected]);assert.ok(resources.messages.en[expected]);
+  }
+  assert.equal(key(new Error('private network body token=must-not-display'),'rideSync'),'m2.sync.unavailable');
+});
