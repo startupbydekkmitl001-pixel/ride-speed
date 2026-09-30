@@ -149,7 +149,11 @@ test('additive diesel extension preserves every other deployed M2 validator cons
 });
 test('catalog seed preserves exact official-source and unverified provenance without creating any user data',async()=>{
  const source=await readFile(new URL('../../ExpoRideSpeed/src/data/vehicleCatalog.json',import.meta.url),'utf8'),catalog=JSON.parse(source);
- const seed=await readFile(new URL('../seeds/vehicle_catalog_v5.sql',import.meta.url),'utf8');assert.equal(seed.includes(createHash('sha256').update(source).digest('hex')),true);
+ const seed=await readFile(new URL('../seeds/vehicle_catalog_v5.sql',import.meta.url),'utf8');
+ // Git checks out LF on Linux and CRLF on Windows. The deployed seed remains
+ // immutable; accept only those newline representations of the exact source.
+ const lf=source.replace(/\r\n/g,'\n'),representations=[lf,lf.replace(/\n/g,'\r\n')];
+ assert.equal(representations.some(bytes=>seed.includes(createHash('sha256').update(bytes).digest('hex'))),true);
  const before=(await admin('select (select count(*) from public.rs_garages)::int as garages,(select count(*) from auth.users)::int as users,(select count(*) from public.rs_verified_records)::int as ranked')).rows[0];
  await db.exec('reset role;set role service_role');try{await db.exec(seed);}finally{await db.exec('reset role');}
  const rows=(await as(A,'select metadata from public.rs_vehicle_catalog order by id')).rows.map(row=>row.metadata);assert.deepEqual(rows,catalog.entries.toSorted((a,b)=>a.id.localeCompare(b.id)));
