@@ -16,12 +16,14 @@ TEMPLATE_DEBUG_KEY_SHA256 = "221e0a3106aa4c3ccc154e0a418b55020b3f9ea6e84f92e8749
 
 def parse_badging(text, package, version, version_code):
     package_line = re.search(r"^package: name='([^']+)' versionCode='([0-9]+)' versionName='([^']+)'", text, re.M)
-    minimum = re.search(r"^sdkVersion:'([0-9]+)'$", text, re.M)
-    target = re.search(r"^targetSdkVersion:'([0-9]+)'$", text, re.M)
+    # Current AAPT2 prints minSdkVersion (AOSP d228691c8c4e); older AAPT used
+    # sdkVersion. Exactly one declaration is required, regardless of label.
+    minimum = re.findall(r"^(?:minSdkVersion|sdkVersion):'([0-9]+)'$", text, re.M)
+    target = re.findall(r"^targetSdkVersion:'([0-9]+)'$", text, re.M)
     native = re.search(r"^native-code:\s*(.*)$", text, re.M)
     if not package_line or package_line.groups() != (package, str(version_code), version):
         raise ValueError("APK package/version does not match the initiating CI build")
-    if not minimum or minimum[1] != "24" or not target or target[1] != "36" or "application-debuggable" in text:
+    if minimum != ["24"] or target != ["36"] or "application-debuggable" in text:
         raise ValueError("Expected non-debuggable SDK 57 preview: Android API 24 minimum, target 36")
     abis = sorted(re.findall(r"'([^']+)'", native[1])) if native else []
     if abis != ABIS:

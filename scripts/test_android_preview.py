@@ -26,6 +26,20 @@ SIGNATURE = f"Signer #1 certificate DN: CN=Android Debug\nSigner #1 certificate 
 
 
 class AndroidPreviewTests(unittest.TestCase):
+    def test_actual_build_tools_36_metadata_uses_min_sdk_version_label(self):
+        actual = (Path(__file__).parent / "fixtures/android-preview-badging-build-tools36.txt").read_text(encoding="utf-8")
+        value = preview.parse_badging(actual, "com.arnalxz.ridespeed", "0.1.0", 20100)
+        self.assertEqual(value["min_sdk"], 24)
+        self.assertEqual(value["target_sdk"], 36)
+        self.assertEqual(value["abis"], ["arm64-v8a", "x86_64"])
+        for changed in [actual.replace("minSdkVersion:'24'", "minSdkVersion:'26'"),
+                        actual.replace("targetSdkVersion:'36'", "targetSdkVersion:'35'"),
+                        actual.replace("minSdkVersion:'24'", ""),
+                        actual + "sdkVersion:'24'\n", actual + "targetSdkVersion:'36'\n",
+                        actual + "application-debuggable\n"]:
+            with self.subTest(changed=changed), self.assertRaises(ValueError):
+                preview.parse_badging(changed, "com.arnalxz.ridespeed", "0.1.0", 20100)
+
     def apk(self, omit=None, extra=None):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)

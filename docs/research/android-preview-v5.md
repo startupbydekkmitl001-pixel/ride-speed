@@ -3,6 +3,18 @@
 Reviewed 2026-10-01. Native compilation has **not** run on this Windows machine.
 The workflow is a validation gate, not evidence of a successful native build.
 
+CI [run 36784760006](https://github.com/startupbydekkmitl001-pixel/ride-speed/actions/runs/36784760006)
+at `c802c09bb25bdb7f201fa455099c83e5c6a96e02` compiled Release successfully in
+17m16s and verified its public debug signature, but failed artifact packaging.
+Its actual Build Tools 36.0.0 badging uses `minSdkVersion:'24'`, while the first
+validator expected the older `sdkVersion` label. The parser now handles the
+[official AAPT2 rename](https://android.googlesource.com/platform/frameworks/base/+/d228691c8c4e)
+and rejects duplicate SDK declarations, changed SDK values and debuggable APKs.
+The exact public `apk-badging.log` is the regression fixture in
+`scripts/fixtures/android-preview-badging-build-tools36.txt`. A successful rerun
+must still pass full APK content validation and publish the hash manifest;
+compilation and signature success alone do not prove that artifact acceptance.
+
 ## Reproducible public-runner build
 
 `.github/workflows/android-preview.yml` verifies ordinary pushes and pull requests.
