@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "generator": {
+    "framework": "Remotion",
+    "version": "4.0.531",
+    "entry": "motion/src/index.jsx",
+    "command": "cd motion && npm ci && npm run render"
+  },
+  "assets": {
+    "garage-scooter": {
+      "component": "AmbientLoop",
+      "composition": "GarageScooter",
+      "video": "garage-scooter.mp4",
+      "poster": "garage-scooter-poster.jpg",
+      "videoSha256": "77bf0b4e272ad3447a942b9ff4e7308234c31a063f37c727d8ad1882b830d4ac",
+      "posterSha256": "b8ecea63aff356e43048dc353646d57f876616432e2b9aeee41742d0be2fd735",
+      "videoBytes": 117180,
+      "posterBytes": 8455,
+      "width": 1280,
+      "height": 720,
+      "frames": 360,
+      "fps": 60,
+      "durationSeconds": 6,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#000000",
+      "provenance": {
+        "authorship": "Original procedural vector material created for Ride Speed",
+        "externalAssets": [],
+        "referenceUse": "Principles only: slow travelling edge light, depth from reflection, stable reading zone. No source media copied.",
+        "sourceSha256": {
+          "motion/src/GarageScooter.jsx": "4650bf84953d6907acdb910aa725c9620d56fa2a974e4262fdac2a6850849d70",
+          "motion/src/parameters.mjs": "9300db5a7e4e3b9bc4929840cafe63277a8e6ecfc89f2c066da3b559dd91d6e2",
+          "motion/src/index.jsx": "98b83dba9c0e076aa866e6f800d211418b0267e3f8ac700bef9471eee9b2f3ac",
+          "motion/scripts/render.mjs": "50ff881e577019b9e111532461cc776e6216617ffc4277490053b4c11fc34fc0",
+          "motion/scripts/verify.mjs": "759a2adcde0f0a7db25924b3f293419f6310bdade4acf54820925b06a0677155"
+        }
+      },
+      "seamVerification": {
+        "method": "Source frame 0 versus virtual endpoint; encoded last-to-first versus every ordinary frame step, downsampled to 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "encodedSeamMAE0To255": 0.08431712962962963,
+        "encodedOrdinaryMeanMAE0To255": 0.020765533116682156,
+        "encodedOrdinaryMaximumMAE0To255": 0.0733738425925926,
+        "acceptedMaximumMAE0To255": 0.21171730324074073,
+        "passed": true
+      }
+    }
+  }
+}

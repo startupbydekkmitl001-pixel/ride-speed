@@ -21,6 +21,7 @@ import { useApp } from "../../state/AppState";
 import { accountRpc, isAccountCurrent, useAuth } from "../../state/AuthState";
 import { useRiderProfile } from "../../state/RiderProfile";
 import { useOnline } from "../../state/OnlineState";
+import { errorKey, useI18n, type TranslationKey, type TranslationValues } from "../../lib/i18n";
 export default function ProfileScreen() {
   const { scope } = useAuth();
   // Reset only the profile form on account change; never remount navigation.
@@ -31,9 +32,10 @@ function AccountProfile() {
     { session, scope } = useAuth();
   const rider = useRiderProfile(),
     online = useOnline();
+  const { t } = useI18n();
   const [name, setName] = useState(rider.displayName),
     [handle, setHandle] = useState(""),
-    [message, setMessage] = useState(""),
+    [message, setMessage] = useState<{ key: TranslationKey; values?: TranslationValues } | null>(null),
     [busy, setBusy] = useState(false),
     [editing, setEditing] = useState(false);
   const [cardVisible, setCardVisible] = useState(true);
@@ -56,7 +58,7 @@ function AccountProfile() {
                 setHandle(profile.handle);
               } else setHandle("");
               setFormLoaded(true);
-              if (error) setMessage("ยังโหลดโปรไฟล์ออนไลน์ไม่ได้ ลองอีกครั้ง");
+              if (error) setMessage({ key: "errors.profileLoad" });
             }
           });
       return () => {
@@ -72,15 +74,15 @@ function AccountProfile() {
   async function saveProfile() {
     if (busy || !rider.ready || !isAccountCurrent(scope)) return;
     if (!name.trim() || name.trim().length > 40) {
-      setMessage("ชื่อแสดงผลต้องมี 1–40 ตัวอักษร");
+      setMessage({ key: "profile.nameValidation" });
       return;
     }
     if (session && !/^[a-z0-9_]{3,24}$/.test(handle.trim().toLowerCase())) {
-      setMessage("ชื่อผู้ใช้ใช้ a–z, 0–9 หรือ _ จำนวน 3–24 ตัว");
+      setMessage({ key: "profile.usernameValidation" });
       return;
     }
     setBusy(true);
-    setMessage("");
+    setMessage(null);
     try {
       if (session) {
         await accountRpc(scope, session, "rs_upsert_profile", {
@@ -93,10 +95,10 @@ function AccountProfile() {
       await rider.save({ displayName: name.trim() });
       if (!isAccountCurrent(scope)) return;
       setEditing(false);
-      setMessage("บันทึกโปรไฟล์แล้ว");
+      setMessage({ key: "profile.savedAs", values: { name: name.trim() } });
     } catch (e) {
       if (isAccountCurrent(scope))
-        setMessage(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ");
+        setMessage({ key: errorKey(e, "profile") });
     } finally {
       if (isAccountCurrent(scope)) setBusy(false);
     }
@@ -108,11 +110,11 @@ function AccountProfile() {
       if (selected && isAccountCurrent(scope)) {
         await rider.save({ photoUri: selected.uri });
         if (isAccountCurrent(scope))
-          setMessage("เปลี่ยนรูปบนบัตรแล้ว · รูปนี้เก็บในเครื่อง");
+          setMessage({ key: "profile.photoSaved" });
       }
     } catch (e) {
       if (isAccountCurrent(scope))
-        setMessage(e instanceof Error ? e.message : "เปิดรูปไม่สำเร็จ");
+        setMessage({ key: errorKey(e, "photo") });
     }
   }
   async function logout() {
@@ -120,10 +122,10 @@ function AccountProfile() {
     setBusy(true);
     try {
       const { error } = await supabase.auth.signOut();
-      if (error && isAccountCurrent(scope)) setMessage(error.message);
+      if (error && isAccountCurrent(scope)) setMessage({ key: errorKey(error, "logout") });
     } catch {
       if (isAccountCurrent(scope))
-        setMessage("ออกจากระบบไม่สำเร็จ กรุณาลองอีกครั้ง");
+        setMessage({ key: "errors.signOut" });
     } finally {
       if (isAccountCurrent(scope)) setBusy(false);
     }
@@ -131,12 +133,12 @@ function AccountProfile() {
   return (
     <Screen onScroll={(y) => setCardVisible(y < 400)}>
       <Heading
-        eyebrow="YOUR CORNER"
-        title="พื้นที่ของคุณ"
+        eyebrow={t("profile.eyebrow")}
+        title={t("profile.title")}
         right={
           <IconButton
             name="create-outline"
-            label="แก้ไขโปรไฟล์"
+            label={t("profile.edit")}
             onPress={toggleEdit}
           />
         }
@@ -149,7 +151,7 @@ function AccountProfile() {
           secondary
           small
           icon="image-outline"
-          label="เปลี่ยนรูป"
+          label={t("profile.changePhoto")}
           disabled={!rider.ready || busy}
           onPress={photo}
           style={{ flex: 1 }}
@@ -158,55 +160,55 @@ function AccountProfile() {
           secondary
           small
           icon="create-outline"
-          label="แก้ไขบัตร"
+          label={t("profile.editCard")}
           disabled={!rider.ready || !formLoaded || busy}
           onPress={toggleEdit}
           style={{ flex: 1 }}
         />
       </Row>
-      <Note>บัตรสมาชิกในแอป · ไม่ใช่ใบอนุญาตขับขี่</Note>
+      <Note>{t("profile.cardNote")}</Note>
       {editing && (
         <Panel>
           <Field
-            label="ชื่อบนบัตร"
+            label={t("profile.cardName")}
             value={name}
             onChangeText={setName}
             maxLength={40}
           />
           {session && (
             <Field
-              label="ชื่อผู้ใช้สำหรับเพิ่มเพื่อน"
+              label={t("profile.friendUsername")}
               value={handle}
               onChangeText={setHandle}
-              placeholder="rider_name"
+              placeholder={t("common.usernamePlaceholder")}
               autoCapitalize="none"
               autoCorrect={false}
               maxLength={24}
             />
           )}
           <Button
-            label="บันทึกโปรไฟล์"
+            label={t("profile.save")}
             disabled={!rider.ready}
             onPress={saveProfile}
             busy={busy}
           />
         </Panel>
       )}
-      {message ? <Note>{message}</Note> : null}
-      {!!rider.error && <Note error>{rider.error}</Note>}
-      {!!storageError && <Note error>{storageError}</Note>}
+      {message ? <Note>{t(message.key, message.values)}</Note> : null}
+      {!!rider.error && <Note error>{t(errorKey(rider.error, "profile"))}</Note>}
+      {!!storageError && <Note error>{t(errorKey(storageError, "storage"))}</Note>}
       <Row style={{ justifyContent: "space-between" }}>
         <View>
           <T size={22} weight="semibold">
-            โรงรถ
+            {t("nav.garage")}
           </T>
           <T size={12} muted>
-            {data.vehicles.length} คัน · เลือกคันที่ใช้วันนี้
+            {t("profile.garageCount", { count: data.vehicles.length })}
           </T>
         </View>
         <IconButton
           name="add"
-          label="เพิ่มรถ"
+          label={t("profile.addVehicle")}
           onPress={() => router.push("/garage")}
         />
       </Row>
@@ -215,18 +217,16 @@ function AccountProfile() {
           <Button
             key={v.id}
             secondary={vehicle?.id !== v.id}
-            label={`${v.brand} ${v.model}${v.engineCc !== null ? ` · ${v.engineCc} cc` : v.powertrain === "electric" ? " · EV" : ""}`}
+            label={`${v.brand} ${v.model}${v.engineCc !== null ? ` · ${v.engineCc} ${t("common.cc")}` : v.powertrain === "electric" ? ` · ${t("common.ev")}` : ""}`}
             icon={v.category === "car" ? "car-outline" : "bicycle-outline"}
             onPress={() => update({ selectedVehicleId: v.id })}
           />
         ))
       ) : (
         <Panel>
-          <T muted>
-            เริ่มด้วยรถคันแรก แล้วเลือกจากสกู๊ตเตอร์ บิ๊กไบค์ หรือรถยนต์
-          </T>
+          <T muted>{t("profile.firstVehicleBody")}</T>
           <Button
-            label="เพิ่มรถคันแรก"
+            label={t("profile.firstVehicle")}
             icon="add"
             onPress={() => router.push("/garage")}
           />
@@ -234,30 +234,58 @@ function AccountProfile() {
       )}
       <Panel>
         <T size={18} weight="semibold">
-          หน้าตาของแอป
+          {t("profile.language")}
         </T>
         <Segments
           items={[
-            { value: "light", label: "สว่าง" },
-            { value: "dark", label: "ดำ" },
-            { value: "system", label: "ตามเครื่อง" },
+            { value: "system", label: t("profile.system") },
+            { value: "th", label: t("profile.languageThai") },
+            { value: "en", label: t("profile.languageEnglish") },
+          ]}
+          value={data.language}
+          onChange={(language) => update({ language })}
+        />
+        <Note>{t("profile.languageHint")}</Note>
+      </Panel>
+      <Panel>
+        <T size={18} weight="semibold">
+          {t("profile.units")}
+        </T>
+        <Segments
+          items={[
+            { value: "kmh", label: t("common.kmh") },
+            { value: "mph", label: t("common.mph") },
+          ]}
+          value={data.unit}
+          onChange={(unit) => update({ unit })}
+        />
+      </Panel>
+      <Panel>
+        <T size={18} weight="semibold">
+          {t("profile.appearance")}
+        </T>
+        <Segments
+          items={[
+            { value: "light", label: t("profile.themeLight") },
+            { value: "dark", label: t("profile.themeDark") },
+            { value: "system", label: t("profile.system") },
           ]}
           value={data.theme}
           onChange={(theme) => update({ theme })}
         />
         <Row style={{ justifyContent: "space-between" }}>
-          <T>ลดการเคลื่อนไหว</T>
+          <T style={{ flexShrink: 1 }}>{t("profile.reduceMotion")}</T>
           <Switch
-            accessibilityLabel="ลดการเคลื่อนไหว"
+            accessibilityLabel={t("profile.reduceMotion")}
             value={data.reduceMotion}
             onValueChange={(reduceMotion) => update({ reduceMotion })}
             trackColor={{ true: colors.accent }}
           />
         </Row>
         <Row style={{ justifyContent: "space-between" }}>
-          <T>ลดความโปร่งใส</T>
+          <T style={{ flexShrink: 1 }}>{t("profile.reduceTransparency")}</T>
           <Switch
-            accessibilityLabel="ลดความโปร่งใส"
+            accessibilityLabel={t("profile.reduceTransparency")}
             value={data.reduceGlass}
             onValueChange={(reduceGlass) => update({ reduceGlass })}
             trackColor={{ true: colors.accent }}
@@ -269,17 +297,17 @@ function AccountProfile() {
           <Row>
             <Icon name="checkmark-circle-outline" color={colors.good} />
             <View style={{ flex: 1 }}>
-              <T weight="medium">เชื่อมต่อบัญชีแล้ว</T>
+              <T weight="medium">{t("profile.accountConnected")}</T>
               <T muted size={12}>
                 {session.user.email}
               </T>
             </View>
           </Row>
-          <Button secondary label="ออกจากระบบ" busy={busy} onPress={logout} />
+          <Button secondary label={t("profile.signOut")} busy={busy} onPress={logout} />
         </Panel>
       ) : (
         <Button
-          label="เข้าสู่ระบบ / สร้างบัญชี"
+          label={t("common.signInOrCreate")}
           icon="person-outline"
           onPress={() => router.push("/auth")}
         />

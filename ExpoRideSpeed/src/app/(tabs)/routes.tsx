@@ -1023,7 +1023,7 @@ function RoutesEditor() {
         <View
           style={{
             flex: 1,
-            backgroundColor: "#00000088",
+            backgroundColor: colors.glassScrim,
             justifyContent: "center",
             padding: 28,
           }}

@@ -6,11 +6,15 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { AccessibilityInfo, useColorScheme } from "react-native";
+import { AccessibilityInfo, Platform, useColorScheme } from "react-native";
 import type { GarageVehicle, SavedRoute } from "../lib/domain";
+import { theme, type ThemeColors } from "../lib/theme";
+import { parsePreferences, resolveDarkTheme } from "../lib/preferences";
+import { I18nProvider } from "../lib/i18n";
 
 type LocalData = {
   theme: "dark" | "light" | "system";
+  language: "system" | "th" | "en";
   reduceMotion: boolean;
   reduceGlass: boolean;
   welcomeDone: boolean;
@@ -22,7 +26,7 @@ type LocalData = {
   unit: "kmh" | "mph";
 };
 const initial: LocalData = {
-  theme: "dark",
+  ...parsePreferences(null),
   reduceMotion: false,
   reduceGlass: false,
   welcomeDone: false,
@@ -33,36 +37,12 @@ const initial: LocalData = {
   photoUri: null,
   unit: "kmh",
 };
-const day = {
-  bg: "#F4F5EF",
-  surface: "#FFFFFF",
-  raised: "#E9EDE5",
-  ink: "#182824",
-  muted: "#64706A",
-  line: "#DCE1D8",
-  accent: "#285FE7",
-  onAccent: "#FFFFFF",
-  good: "#397950",
-  danger: "#B23E37",
-};
-const night = {
-  bg: "#000000",
-  surface: "#111111",
-  raised: "#1D1D1D",
-  ink: "#F1F3EC",
-  muted: "#A3A8A0",
-  line: "#292B28",
-  accent: "#9BBAFF",
-  onAccent: "#101A31",
-  good: "#AFD1A2",
-  danger: "#FFADA7",
-};
 type State = {
   data: LocalData;
   update: (patch: Partial<LocalData>) => void;
   ready: boolean;
   dark: boolean;
-  colors: typeof day;
+  colors: ThemeColors;
   motion: boolean;
   glass: boolean;
   vehicle?: GarageVehicle;
@@ -75,7 +55,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [ready, setReady] = useState(false),
     [storageError, setStorageError] = useState<string | null>(null);
   const [systemReduce, setSystemReduce] = useState(true),
-    [systemGlass, setSystemGlass] = useState(false);
+    [systemGlass, setSystemGlass] = useState(Platform.OS !== "web");
   const systemTheme = useColorScheme();
   useEffect(() => {
     AsyncStorage.getItem(KEY)
@@ -87,13 +67,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             Array.isArray(value.vehicles) &&
             Array.isArray(value.routes)
           )
-            setData({ ...initial, ...value });
+            setData({ ...initial, ...value, ...parsePreferences(value) });
         }
       })
       .catch(() => setStorageError("อ่านข้อมูลในเครื่องไม่สำเร็จ"))
       .finally(() => setReady(true));
-    AccessibilityInfo.isReduceMotionEnabled().then(setSystemReduce);
-    AccessibilityInfo.isReduceTransparencyEnabled?.().then(setSystemGlass);
+    AccessibilityInfo.isReduceMotionEnabled().then(setSystemReduce).catch(() => {});
+    if (Platform.OS !== "web") AccessibilityInfo.isReduceTransparencyEnabled?.().then(setSystemGlass).catch(() => {});
+    const transparency = Platform.OS === "web" && typeof window !== "undefined"
+      ? window.matchMedia?.("(prefers-reduced-transparency: reduce)") : null;
+    const browserTransparencyChanged = () => setSystemGlass(transparency?.matches ?? false);
+    if (Platform.OS === "web") browserTransparencyChanged();
+    transparency?.addEventListener?.("change", browserTransparencyChanged);
     const a = AccessibilityInfo.addEventListener(
       "reduceMotionChanged",
       setSystemReduce,
@@ -105,6 +90,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return () => {
       a.remove();
       b.remove();
+      transparency?.removeEventListener?.("change", browserTransparencyChanged);
     };
   }, []);
   useEffect(() => {
@@ -113,9 +99,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setStorageError("บันทึกข้อมูลในเครื่องไม่สำเร็จ"),
       );
   }, [data, ready]);
-  const dark =
-    data.theme === "dark" ||
-    (data.theme === "system" && systemTheme === "dark");
+  const dark = resolveDarkTheme(data.theme, systemTheme);
   const update = useCallback(
     (patch: Partial<LocalData>) =>
       setData((current) => ({ ...current, ...patch })),
@@ -127,7 +111,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         data,
         ready,
         dark,
-        colors: dark ? night : day,
+        colors: dark ? theme.dark : theme.light,
         motion: !data.reduceMotion && !systemReduce,
         glass: !data.reduceGlass && !systemGlass,
         vehicle: data.vehicles.find((v) => v.id === data.selectedVehicleId),
@@ -135,7 +119,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         update,
       }}
     >
-      {children}
+      <I18nProvider preference={data.language}>{children}</I18nProvider>
     </Context.Provider>
   );
 }

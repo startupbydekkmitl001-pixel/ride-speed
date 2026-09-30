@@ -3,7 +3,9 @@ import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
-import { View } from "react-native";
+import { Platform, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { MotionProvider } from "../features/motion";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AppProvider, useApp } from "../state/AppState";
 import { AuthProvider } from "../state/AuthState";
@@ -12,7 +14,7 @@ import { RiderProfileProvider } from "../state/RiderProfile";
 
 void SplashScreen.preventAutoHideAsync();
 function Navigation() {
-  const { ready, dark, colors } = useApp();
+  const { ready, dark, colors, motion } = useApp();
   const [fonts, fontError] = useFonts({
     "Anuphan-400": require("../../assets/fonts/Anuphan-400.ttf"),
     "Anuphan-500": require("../../assets/fonts/Anuphan-500.ttf"),
@@ -28,18 +30,18 @@ function Navigation() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <View
-        style={{ flex: 1, width: "100%", maxWidth: 560, alignSelf: "center" }}
+        style={{ flex: 1, width: "100%", maxWidth: Platform.OS === "web" ? 560 : undefined, alignSelf: "center" }}
       >
         <StatusBar style={dark ? "light" : "dark"} />
         <Stack
           screenOptions={{
             headerShown: false,
             contentStyle: { backgroundColor: colors.bg },
-            animation: "slide_from_right",
+            animation: motion ? "slide_from_right" : "none",
           }}
         >
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="garage" options={{ presentation: "modal" }} />
+          <Stack.Screen name="vehicle-picker" options={{ presentation: "modal" }} />
           <Stack.Screen name="auth" options={{ presentation: "modal" }} />
           <Stack.Screen name="compose" options={{ presentation: "modal" }} />
         </Stack>
@@ -49,16 +51,18 @@ function Navigation() {
 }
 export default function RootLayout() {
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <SafeAreaProvider>
       <AppProvider>
         <AuthProvider>
           <OnlineProvider>
             <RiderProfileProvider>
-              <Navigation />
+              <MotionProvider><Navigation /></MotionProvider>
             </RiderProfileProvider>
           </OnlineProvider>
         </AuthProvider>
       </AppProvider>
     </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

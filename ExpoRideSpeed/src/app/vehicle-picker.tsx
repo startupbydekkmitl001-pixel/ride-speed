@@ -11,7 +11,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, Path } from "react-native-svg";
 import {
   Button,
-  Empty,
   Field,
   Glass,
   Icon,
@@ -34,6 +33,7 @@ import {
 } from "../data/vehicleCatalog";
 import { uid, type GarageVehicle } from "../lib/domain";
 import { useApp } from "../state/AppState";
+import { GarageWelcome } from "../features/garage/GarageWelcome";
 
 type Step = "garage" | "category" | "catalog" | "details" | "manual";
 type PowerChoice = VehiclePowertrain | "unknown";
@@ -104,7 +104,7 @@ function CategoryGlyph({
   );
 }
 
-export default function GarageScreen() {
+export default function GarageScreen({ embedded = false }: { embedded?: boolean } = {}) {
   const state = useApp(),
     { colors, data } = state,
     insets = useSafeAreaInsets();
@@ -124,6 +124,12 @@ export default function GarageScreen() {
   const saveLock = useRef(false);
 
   const dismiss = () => {
+    if (embedded) {
+      saveLock.current = false;
+      setSaving(false);
+      setStep("garage");
+      return;
+    }
     if (router.canGoBack()) router.back();
     else router.replace("/");
   };
@@ -254,11 +260,11 @@ export default function GarageScreen() {
             : "รายละเอียดรถ";
   const header = (
     <Row style={{ justifyContent: "space-between" }}>
-      <IconButton
+      {!(embedded && step === "garage") ? <IconButton
         name={step === "garage" ? "close-outline" : "arrow-back-outline"}
         label={step === "garage" ? "ปิดโรงรถ" : "ย้อนกลับ"}
         onPress={goBack}
-      />
+      /> : null}
       <T
         size={23}
         weight="semibold"
@@ -346,7 +352,7 @@ export default function GarageScreen() {
           style={{ flex: 1 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+          contentContainerStyle={{ paddingBottom: insets.bottom + (embedded ? 124 : 24) }}
           ListEmptyComponent={
             <Panel>
               <T weight="medium">ไม่พบรุ่นที่ค้นหา</T>
@@ -417,18 +423,12 @@ export default function GarageScreen() {
       {step === "garage" ? (
         <>
           {data.vehicles.length === 0 ? (
-            <Empty
-              icon="car-sport-outline"
+            <GarageWelcome
               title="เริ่มด้วยรถคันแรก"
               body="เลือกรถที่คุณใช้ เพื่อให้หน้าปัดเป็นของคุณ"
-            >
-              <Button
-                label="เพิ่มรถ"
-                icon="add-outline"
-                onPress={startAdd}
-                style={{ alignSelf: "stretch", marginTop: 6 }}
-              />
-            </Empty>
+              label="เพิ่มรถ"
+              onAdd={startAdd}
+            />
           ) : (
             <View style={{ gap: 12 }}>
               {data.vehicles.map((vehicle) => {

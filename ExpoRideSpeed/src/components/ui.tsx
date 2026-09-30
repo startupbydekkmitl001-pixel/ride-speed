@@ -1,9 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
-import React, { useState } from "react";
+import React from "react";
 import {
   ActivityIndicator,
-  Animated,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -19,7 +17,10 @@ import {
   type ColorValue,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Animated, { ReduceMotion, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
+import { theme } from "../lib/theme";
 import { useApp } from "../state/AppState";
+export { GlassSurface as Glass } from "./glass";
 
 export type IconName = React.ComponentProps<typeof Ionicons>["name"];
 export function Icon({
@@ -58,7 +59,7 @@ export function T({
           color: muted ? colors.muted : colors.ink,
           fontFamily: `${numeric ? "Manrope" : "Anuphan"}-${w}`,
           fontSize: size,
-          lineHeight: size * (numeric ? 1.2 : 1.55),
+          lineHeight: size * (numeric ? 1.2 : theme.typography.thaiLeading),
           fontVariant: numeric ? ["tabular-nums"] : undefined,
         },
         style,
@@ -166,47 +167,12 @@ export function Panel({
     <View
       style={[
         {
-          borderRadius: 26,
+          borderRadius: theme.radius.card,
           padding: 20,
           backgroundColor: colors.surface,
           borderColor: colors.line,
           borderWidth: 1,
           gap: 16,
-        },
-        style,
-      ]}
-    >
-      {children}
-    </View>
-  );
-}
-export function Glass({
-  children,
-  style,
-}: {
-  children?: React.ReactNode;
-  style?: StyleProp<ViewStyle>;
-}) {
-  const { colors, dark, glass } = useApp();
-  const available = Platform.OS === "ios" && glass && isLiquidGlassAvailable();
-  if (available)
-    return (
-      <GlassView
-        colorScheme={dark ? "dark" : "light"}
-        glassEffectStyle="regular"
-        style={[{ borderRadius: 28, overflow: "hidden" }, style]}
-      >
-        {children}
-      </GlassView>
-    );
-  return (
-    <View
-      style={[
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.line,
-          borderWidth: 1,
-          borderRadius: 28,
         },
         style,
       ]}
@@ -234,18 +200,15 @@ export function Button({
   small?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
-  const { colors, motion } = useApp(),
-    [scale] = useState(() => new Animated.Value(1));
-  const animate = (value: number) =>
-    Animated.timing(scale, {
-      toValue: value,
-      duration: motion ? 120 : 0,
-      useNativeDriver: true,
-    }).start();
+  const { colors, motion } = useApp();
+  const scale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.get() }] }));
+  const pressIn = () => scale.set(withTiming(0.97, { duration: motion ? theme.motion.pressMs : 0, reduceMotion: ReduceMotion.System }));
+  const pressOut = () => scale.set(motion ? withSpring(1, { ...theme.motion.spring, reduceMotion: ReduceMotion.System }) : 1);
   const foreground = secondary ? colors.ink : colors.onAccent;
   return (
     <Animated.View
-      style={[{ transform: [{ scale }], opacity: disabled ? 0.45 : 1 }, style]}
+      style={[animatedStyle, { opacity: disabled ? 0.45 : 1 }, style]}
     >
       <Pressable
         accessibilityRole="button"
@@ -253,8 +216,8 @@ export function Button({
         accessibilityState={{ disabled: disabled || busy, busy }}
         disabled={disabled || busy}
         onPress={onPress}
-        onPressIn={() => animate(0.975)}
-        onPressOut={() => animate(1)}
+        onPressIn={pressIn}
+        onPressOut={pressOut}
         style={{
           backgroundColor: secondary ? colors.raised : colors.accent,
           borderRadius: 20,
@@ -338,6 +301,7 @@ export function Field({ label, ...props }: TextInputProps & { label: string }) {
             minHeight: 52,
             fontFamily: "Anuphan-400",
             fontSize: 16,
+            lineHeight: 16 * theme.typography.thaiLeading,
           },
           props.style,
         ]}
@@ -373,7 +337,7 @@ export function Segments<T extends string>({
           onPress={() => onChange(item.value)}
           style={{
             flex: 1,
-            minHeight: 42,
+            minHeight: theme.material.minTarget,
             paddingHorizontal: 5,
             paddingVertical: 9,
             alignItems: "center",

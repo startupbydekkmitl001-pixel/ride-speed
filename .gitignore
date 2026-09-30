@@ -17,6 +17,8 @@ ExpoRideSpeed/dist/
 *.key
 **/__pycache__/
 .env*
+!.env.example
+!**/.env.example
 
 # Private test evidence belongs outside public source
 /private-data/

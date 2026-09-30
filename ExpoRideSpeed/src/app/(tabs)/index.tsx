@@ -18,12 +18,14 @@ import {
 import { useApp } from "../../state/AppState";
 import { useRideSession } from "../../useRideSession";
 import { RideControls } from "../../components/RideControls";
+import { errorKey, useI18n } from "../../lib/i18n";
 function Awake() {
   useKeepAwake();
   return null;
 }
 function Dial({ value }: { value: number | null }) {
   const { colors } = useApp();
+  const { t } = useI18n();
   const progress = Math.min(Math.max(value ?? 0, 0) / 240, 1);
   return (
     <View
@@ -72,7 +74,7 @@ function Dial({ value }: { value: number | null }) {
         {value === null ? "—" : Math.round(value)}
       </T>
       <T size={12} muted style={{ marginBottom: 27 }}>
-        ความเร็วปัจจุบัน
+        {t("speed.current")}
       </T>
     </View>
   );
@@ -80,6 +82,7 @@ function Dial({ value }: { value: number | null }) {
 export default function SpeedScreen() {
   const app = useApp(),
     { data, colors, update, vehicle } = app;
+  const { t } = useI18n();
   const ride = useRideSession();
   const params = useLocalSearchParams<{ challengeId?: string | string[] }>();
   const challengeId =
@@ -105,47 +108,46 @@ export default function SpeedScreen() {
         </Row>
         <View style={{ marginTop: 34 }}>
           <T size={42} weight="semibold">
-            ทุกเส้นทาง{"\n"}เริ่มจากคุณ
+            {t("onboarding.title")}
           </T>
           <T muted size={16} style={{ marginTop: 20 }}>
-            มาตรวัดที่อ่านง่าย{"\n"}โรงรถของคุณ เพื่อนของคุณ{"\n"}
-            และเรื่องราวระหว่างทาง
+            {t("onboarding.body")}
           </T>
         </View>
         <Panel style={{ marginTop: 24 }}>
           <Row>
             <Icon name="map-outline" color={colors.accent} />
             <View style={{ flex: 1 }}>
-              <T weight="semibold">วางเส้นทางในแอป</T>
+              <T weight="semibold">{t("onboarding.routeTitle")}</T>
               <T size={13} muted>
-                Apple Maps · iPhone
+                {t("onboarding.routeBody")}
               </T>
             </View>
           </Row>
           <Row>
             <Icon name="people-outline" color={colors.accent} />
             <View style={{ flex: 1 }}>
-              <T weight="semibold">ออกเดินทางด้วยกัน</T>
+              <T weight="semibold">{t("onboarding.friendTitle")}</T>
               <T size={13} muted>
-                เพิ่มเพื่อน แชร์ทริป และชาเลนจ์
+                {t("onboarding.friendBody")}
               </T>
             </View>
           </Row>
         </Panel>
         <Button
-          label="สร้างบัญชี / เข้าสู่ระบบ"
+          label={t("onboarding.signIn")}
           onPress={() => router.push("/auth")}
           icon="arrow-forward"
         />
         <Button
           secondary
-          label="ลองใช้ก่อน · เพิ่มรถคันแรก"
+          label={t("onboarding.tryFirst")}
           onPress={() => {
             update({ welcomeDone: true });
             router.push("/garage");
           }}
         />
-        <Note>ตำแหน่งของคุณเป็นส่วนตัว การเริ่มวัดจะขอสิทธิ์เมื่อคุณพร้อม</Note>
+        <Note>{t("onboarding.locationNote")}</Note>
       </Screen>
     );
   const multiplier = data.unit === "kmh" ? 3.6 : 2.236936;
@@ -156,24 +158,24 @@ export default function SpeedScreen() {
       ? "—"
       : Math.round(ride.snapshot.maxMps * multiplier).toString();
   const signal = !ride.active
-    ? "พร้อมเมื่อคุณพร้อม"
+    ? t("speed.ready")
     : ride.snapshot.quality === "good"
       ? value === null
-        ? "กำลังยืนยันสัญญาณ"
-        : "GPS พร้อม"
+        ? t("speed.confirming")
+        : t("speed.gpsReady")
       : ride.snapshot.quality === "weak"
-        ? "สัญญาณอ่อน"
-        : "กำลังหาสัญญาณ";
+        ? t("speed.weak")
+        : t("speed.searching");
   return (
     <Screen style={{ gap: 22 }}>
       {ride.active && <Awake />}
       <Heading
-        eyebrow="RIDE SPEED / LIVE"
-        title="ไปด้วยกัน"
+        eyebrow={t("speed.eyebrow")}
+        title={t("speed.title")}
         right={
           <IconButton
             name={app.dark ? "sunny-outline" : "moon-outline"}
-            label="เปลี่ยนธีม"
+            label={t("speed.changeTheme")}
             onPress={() => update({ theme: app.dark ? "light" : "dark" })}
           />
         }
@@ -196,7 +198,7 @@ export default function SpeedScreen() {
           </T>
         </Row>
         <T size={12} muted>
-          {vehicle ? `${vehicle.brand} ${vehicle.model}` : "ยังไม่ได้เลือกรถ"}
+          {vehicle ? `${vehicle.brand} ${vehicle.model}` : t("speed.noVehicle")}
         </T>
       </Row>
       <View>
@@ -206,13 +208,13 @@ export default function SpeedScreen() {
             <Button
               small
               secondary={data.unit !== "kmh"}
-              label="km/h"
+              label={t("common.kmh")}
               onPress={() => update({ unit: "kmh" })}
             />
             <Button
               small
               secondary={data.unit !== "mph"}
-              label="mph"
+              label={t("common.mph")}
               onPress={() => update({ unit: "mph" })}
             />
           </Glass>
@@ -232,7 +234,7 @@ export default function SpeedScreen() {
             {maximum}
           </T>
           <T muted size={12}>
-            สูงสุดที่กรองแล้ว
+            {t("speed.filteredMax")}
           </T>
         </View>
         <View style={{ width: 1, height: 42, backgroundColor: colors.line }} />
@@ -242,28 +244,28 @@ export default function SpeedScreen() {
             {String(seconds % 60).padStart(2, "0")}
           </T>
           <T muted size={12}>
-            เวลาในเซสชัน
+            {t("speed.sessionTime")}
           </T>
         </View>
       </Row>
       <Row style={{ justifyContent: "space-between" }}>
         <View style={{ flex: 1 }}>
           <T weight="medium">
-            {data.routes.at(-1)?.name || "เส้นทางต่อไปของคุณ"}
+            {data.routes.at(-1)?.name || t("speed.nextRoute")}
           </T>
           <T size={12} muted>
             {data.routes.length
-              ? "เส้นทางที่บันทึกล่าสุด"
-              : "ปักหมุดจุดเริ่มต้นและปลายทาง"}
+              ? t("speed.latestRoute")
+              : t("speed.pinRoute")}
           </T>
         </View>
         <IconButton
           name="arrow-forward"
-          label="เปิดแผนที่ในแอป"
+          label={t("speed.openMap")}
           onPress={() => router.push("/routes")}
         />
       </Row>
-      {!!ride.message && <Note>{ride.message}</Note>}
+      {!!ride.message && <Note>{t(errorKey(ride.message, "ride"))}</Note>}
       <RideControls
         ride={ride}
         challengeId={challengeId}
@@ -274,21 +276,18 @@ export default function SpeedScreen() {
         <Button
           secondary
           small
-          label="เปิดการตั้งค่าตำแหน่ง"
+          label={t("speed.locationSettings")}
           onPress={() => void Linking.openSettings()}
         />
       ) : ride.snapshot.maxMps !== null ? (
         <Button
           secondary
           small
-          label="รีเซ็ตความเร็วสูงสุด"
+          label={t("speed.resetMax")}
           onPress={ride.resetMax}
         />
       ) : null}
-      <Note>
-        วัดขณะเปิดแอป • หน้าจอจะเปิดค้างระหว่างวัด{"\n"}
-        ค่าสูงสุดนี้ยังไม่ใช่ผลที่ยืนยันสำหรับจัดอันดับ
-      </Note>
+      <Note>{t("speed.recordingNote")}</Note>
     </Screen>
   );
 }

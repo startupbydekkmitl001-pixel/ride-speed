@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Button, Field, Heading, Note, Screen } from "../../components/ui";
 import { supabase } from "../../lib/supabase";
 import { useApp } from "../../state/AppState";
+import { errorKey, useI18n, type TranslationKey } from "../../lib/i18n";
 import {
   changeAccountPassword,
   exchangeAuthCodeOnce,
@@ -43,10 +44,11 @@ function CallbackFlow({
 }) {
   const { update } = useApp(),
     { session, scope } = useAuth();
-  const [message, setMessage] = useState(
+  const { t } = useI18n();
+  const [message, setMessage] = useState<TranslationKey>(
     code && supabase
-      ? "กำลังยืนยันลิงก์…"
-      : error || "ลิงก์ไม่สมบูรณ์หรือหมดอายุ กรุณาขอลิงก์ใหม่",
+      ? "auth.verifying"
+      : errorKey(error, "callback"),
   );
   const [password, setPassword] = useState(""),
     [recoveryScope, setRecoveryScope] = useState<AuthScope | null>(null),
@@ -57,22 +59,22 @@ function CallbackFlow({
     void exchangeAuthCodeOnce(code, flowId).then((result) => {
       if (!alive) return;
       if (result.error) {
-        setMessage(result.error);
+        setMessage(errorKey(result.error, "callback"));
         return;
       }
       if (
         !isAccountCurrent(result.scope) ||
         result.userId !== result.scope.userId
       ) {
-        setMessage("บัญชีเปลี่ยนแล้ว กรุณากลับไปที่แอป");
+        setMessage("errors.accountChanged");
         return;
       }
       update({ welcomeDone: true });
       setRecoveryScope(result.recovery ? result.scope : null);
       setMessage(
         result.recovery
-          ? "ยืนยันลิงก์แล้ว ตั้งรหัสผ่านใหม่สำหรับบัญชีนี้"
-          : "ยืนยันบัญชีสำเร็จ",
+          ? "auth.recoveryVerified"
+          : "auth.accountVerified",
       );
     });
     return () => {
@@ -95,30 +97,30 @@ function CallbackFlow({
       if (!isAccountCurrent(scope)) return;
       setPassword("");
       setRecoveryScope(null);
-      setMessage("ตั้งรหัสผ่านใหม่แล้ว");
+      setMessage("auth.passwordSaved");
     } catch (e) {
       if (isAccountCurrent(scope))
-        setMessage(e instanceof Error ? e.message : "ตั้งรหัสผ่านไม่สำเร็จ");
+        setMessage(errorKey(e, "password"));
     } finally {
       if (isAccountCurrent(scope)) setBusy(false);
     }
   }
   return (
     <Screen>
-      <Heading eyebrow="RIDE SPEED ACCOUNT" title="บัญชีของคุณ" />
-      <Note>{message}</Note>
+      <Heading eyebrow={t("auth.eyebrow")} title={t("auth.account")} />
+      <Note>{t(message)}</Note>
       {recovery && (
         <>
           <Field
-            label="รหัสผ่านใหม่"
-            placeholder="อย่างน้อย 10 ตัวอักษร"
+            label={t("auth.newPassword")}
+            placeholder={t("auth.passwordMinimum")}
             secureTextEntry
             value={password}
             onChangeText={setPassword}
             autoComplete="new-password"
           />
           <Button
-            label="บันทึกรหัสผ่านใหม่"
+            label={t("auth.savePassword")}
             onPress={reset}
             disabled={password.length < 10}
             busy={busy}
@@ -127,7 +129,7 @@ function CallbackFlow({
       )}
       <Button
         secondary
-        label="กลับไปที่แอป"
+        label={t("auth.backToApp")}
         onPress={() => router.replace("/profile")}
       />
     </Screen>

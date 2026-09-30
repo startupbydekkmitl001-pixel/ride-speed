@@ -25,6 +25,7 @@ module.exports = ({ config }) => {
     plugins: [
       "expo-router",
       "expo-font",
+      "expo-localization",
       [
         "expo-splash-screen",
         {
@@ -74,6 +75,7 @@ module.exports = ({ config }) => {
         ...config.ios?.infoPlist,
         CFBundleDevelopmentRegion: "en",
         CFBundleLocalizations: ["en", "th"],
+        CADisableMinimumFrameDurationOnPhone: true,
         ...(development
           ? {
               NSLocalNetworkUsageDescription:

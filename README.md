@@ -1,5 +1,7 @@
 # Ride Speed
 
+**Map-first expansion in progress:** the owner selected MapLibre + OpenFreeMap with server-side Geoapify routing/search for iOS and Android. See [design brief](DESIGN_BRIEF.md), [milestone plan](PLAN.md), [decisions](DECISIONS.md) and [setup](docs/map-first-setup.md). Published build 9 below predates this expansion; milestone checks and release evidence are recorded separately.
+
 A Thai-first iPhone speed and ride recorder for a private group of friends. Target: iOS 17+, Windows development, free-Apple-ID Sideloadly installs, and free server tiers.
 
 **Current status — 1 October 2026:** native preview **0.1.0 (9.1.0)** includes the revised UI, foreground Core Location capture, embedded Apple Maps route editor, garage, animated rider card and online community. Google sign-in and cloud profile saving passed a real browser acceptance check. Release and development builds passed [run #9](https://github.com/startupbydekkmitl001-pixel/ride-speed/actions/runs/36750133009) at `df1e7db`; both unsigned IPAs are published and their downloaded hashes and packages verified. Installation, GPS and frame rate on the iPhone 14 Plus remain untested. The earlier run #2 IPAs contain the old prototype.

@@ -16,47 +16,26 @@ import {
 } from "../../components/ui";
 import { configured, supabase } from "../../lib/supabase";
 import { publicService } from "../../lib/publicService";
+import { errorKey, useI18n, type TranslationKey } from "../../lib/i18n";
 import { useApp } from "../../state/AppState";
 
 const publicRegistrationAvailable =
   publicService.publicEmailRegistration && publicService.publicEmailDelivery;
 
-function authError(
-  error: unknown,
-  mode: "google" | "login" | "signup" | "reset",
-) {
-  const code =
-    error && typeof error === "object" && "code" in error
-      ? String(error.code)
-      : "";
-  if (code === "invalid_credentials")
-    return "อีเมลหรือรหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง";
-  if (code === "email_not_confirmed")
-    return publicService.publicEmailDelivery
-      ? "ยืนยันอีเมลของบัญชีนี้ก่อนเข้าสู่ระบบ"
-      : "บัญชีนี้ยังไม่ได้ยืนยันอีเมล ขณะนี้อีเมลยืนยันส่งได้เฉพาะทีมพัฒนา";
-  if (code.includes("rate_limit"))
-    return "ส่งคำขอบ่อยเกินไป กรุณาลองใหม่ภายหลัง";
-  if (mode === "reset" && !publicService.publicEmailDelivery)
-    return "ส่งลิงก์ไม่สำเร็จ ขณะนี้ส่งอีเมลได้เฉพาะทีมพัฒนา หากใช้บัญชี Google ให้เข้าสู่ระบบด้วย Google";
-  return mode === "google"
-    ? "เข้าสู่ระบบด้วย Google ไม่สำเร็จ กรุณาลองอีกครั้ง"
-    : "เชื่อมต่อไม่สำเร็จ กรุณาลองอีกครั้ง";
-}
-
 export default function AuthScreen() {
   const { data, update } = useApp();
+  const { t } = useI18n();
   const [mode, setMode] = useState<"login" | "signup" | "reset">("login");
   const [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
     [pending, setPending] = useState<"google" | "email" | null>(null),
-    [message, setMessage] = useState(""),
+    [message, setMessage] = useState<TranslationKey | null>(null),
     [failed, setFailed] = useState(false);
   const busy = pending !== null;
   async function google() {
     if (!supabase || busy) return;
     setPending("google");
-    setMessage("");
+    setMessage(null);
     setFailed(false);
     try {
       const redirectTo = Linking.createURL("auth/callback");
@@ -89,7 +68,7 @@ export default function AuthScreen() {
       }
     } catch (e) {
       setFailed(true);
-      setMessage(authError(e, "google"));
+      setMessage(errorKey(e, "google", publicService));
     } finally {
       setPending(null);
     }
@@ -98,16 +77,16 @@ export default function AuthScreen() {
     if (!supabase || busy) return;
     if (mode === "signup" && !publicRegistrationAvailable) {
       setFailed(true);
-      setMessage("การสมัครด้วยอีเมลยังไม่เปิดให้บริการ กรุณาสมัครด้วย Google");
+      setMessage("auth.registrationUnavailable");
       return;
     }
     if (mode === "signup" && password.length < 10) {
       setFailed(true);
-      setMessage("ใช้รหัสผ่านอย่างน้อย 10 ตัวอักษร");
+      setMessage("auth.passwordTooShort");
       return;
     }
     setPending("email");
-    setMessage("");
+    setMessage(null);
     setFailed(false);
     try {
       const redirectTo = Linking.createURL("auth/callback");
@@ -119,8 +98,8 @@ export default function AuthScreen() {
         if (error) throw error;
         setMessage(
           publicService.publicEmailDelivery
-            ? "รับคำขอแล้ว หากอีเมลนี้มีบัญชี ให้ตรวจสอบกล่องจดหมายและสแปม"
-            : "รับคำขอแล้ว ลิงก์จะส่งได้เฉพาะบัญชีอีเมลของทีมพัฒนาเท่านั้น",
+            ? "auth.resetRequested"
+            : "auth.resetRequestedTeam",
         );
       } else if (mode === "signup") {
         const { data: result, error } = await supabase.auth.signUp({
@@ -131,7 +110,7 @@ export default function AuthScreen() {
         if (error) throw error;
         setPassword("");
         if (result.session) finish();
-        else setMessage("ตรวจสอบอีเมลเพื่อยืนยันบัญชี แล้วกลับมาเข้าสู่ระบบ");
+        else setMessage("auth.verifyEmail");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
@@ -143,7 +122,7 @@ export default function AuthScreen() {
       }
     } catch (e) {
       setFailed(true);
-      setMessage(authError(e, mode));
+      setMessage(errorKey(e, mode, publicService));
     } finally {
       setPending(null);
     }
@@ -158,75 +137,69 @@ export default function AuthScreen() {
         eyebrow=""
         title={
           mode === "signup"
-            ? "สมัครด้วยอีเมล"
+            ? t("auth.signUpEmail")
             : mode === "reset"
-              ? "ตั้งรหัสผ่านใหม่"
-              : "บัญชีของคุณ"
+              ? t("auth.resetPassword")
+              : t("auth.account")
         }
         right={
           <IconButton
             name="close"
-            label="ปิด"
+            label={t("common.close")}
             onPress={() =>
               router.canGoBack() ? router.back() : router.replace("/")
             }
           />
         }
       />
-      <T muted>สมัครหรือเข้าสู่ระบบด้วย Google เพื่อเพิ่มเพื่อนและแชร์ทริป</T>
+      <T muted>{t("auth.googleIntro")}</T>
       <Button
-        label="ดำเนินการด้วย Google"
+        label={t("auth.googleContinue")}
         icon="logo-google"
         onPress={google}
         busy={pending === "google"}
         disabled={!configured || pending === "email"}
       />
       {!publicRegistrationAvailable && (
-        <Note>
-          ผู้ใช้ใหม่สมัครด้วย Google ได้เลย การสมัครด้วยอีเมลยังไม่เปิดให้บริการ
-        </Note>
+        <Note>{t("auth.googleRegistration")}</Note>
       )}
       {publicRegistrationAvailable ? (
         <Segments
           items={[
-            { value: "login", label: "เข้าสู่ระบบ" },
-            { value: "signup", label: "สร้างบัญชี" },
+            { value: "login", label: t("auth.login") },
+            { value: "signup", label: t("auth.createAccount") },
           ]}
           value={mode === "reset" ? "login" : mode}
           onChange={(v) => {
             if (busy) return;
             setMode(v);
-            setMessage("");
+            setMessage(null);
             setFailed(false);
           }}
         />
       ) : (
         <T size={20} weight="semibold">
-          {mode === "reset" ? "กู้รหัสผ่านบัญชีอีเมล" : "มีบัญชีอีเมลอยู่แล้ว"}
+          {t(mode === "reset" ? "auth.recoverEmail" : "auth.existingEmail")}
         </T>
       )}
       {mode === "reset" && !publicService.publicEmailDelivery && (
-        <Note>
-          ขณะนี้ส่งลิงก์ได้เฉพาะอีเมลของทีมพัฒนา
-          อีเมลทั่วไปยังใช้การกู้รหัสผ่านทางอีเมลไม่ได้ บัญชี Google
-          ใช้ปุ่มด้านบนได้เลย
-        </Note>
+        <Note>{t("auth.resetTeamNotice")}</Note>
       )}
       <View style={{ gap: 18 }}>
         <Field
-          label="อีเมล"
+          label={t("auth.email")}
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
           autoCorrect={false}
           keyboardType="email-address"
           autoComplete="email"
-          placeholder="you@example.com"
+          placeholder={t("common.emailPlaceholder")}
           editable={!busy}
         />
         {mode !== "reset" && (
           <Field
-            label="รหัสผ่าน"
+            label={t("auth.password")}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -236,29 +209,26 @@ export default function AuthScreen() {
               mode === "signup" ? "new-password" : "current-password"
             }
             placeholder={
-              mode === "signup" ? "อย่างน้อย 10 ตัวอักษร" : "รหัสผ่านของคุณ"
+              t(mode === "signup" ? "auth.passwordMinimum" : "auth.passwordPlaceholder")
             }
           />
         )}
       </View>
-      {message ? <Note error={failed}>{message}</Note> : null}
+      {message ? <Note error={failed}>{t(message)}</Note> : null}
       {!configured && (
         <Panel>
-          <T weight="semibold">กำลังเชื่อมต่อระบบออนไลน์</T>
-          <Note>
-            คุณยังใช้มาตรวัดและจัดโรงรถในเครื่องได้
-            บัญชีจะเปิดให้ใช้งานเมื่อเซิร์ฟเวอร์พร้อม
-          </Note>
+          <T weight="semibold">{t("auth.connecting")}</T>
+          <Note>{t("auth.localAvailable")}</Note>
         </Panel>
       )}
       <Button
         secondary
         label={
           mode === "signup"
-            ? "สร้างบัญชี"
+            ? t("auth.createAccount")
             : mode === "reset"
-              ? "ขอลิงก์ตั้งรหัสผ่าน"
-              : "เข้าสู่ระบบด้วยอีเมล"
+              ? t("auth.requestReset")
+              : t("auth.loginEmail")
         }
         onPress={submit}
         busy={pending === "email"}
@@ -275,11 +245,11 @@ export default function AuthScreen() {
         <Button
           secondary
           small
-          label="ลืมรหัสผ่าน"
+          label={t("auth.forgotPassword")}
           disabled={busy}
           onPress={() => {
             setMode("reset");
-            setMessage("");
+            setMessage(null);
             setFailed(false);
           }}
         />
@@ -288,19 +258,16 @@ export default function AuthScreen() {
         <Button
           secondary
           small
-          label="กลับไปเข้าสู่ระบบด้วยอีเมล"
+          label={t("auth.backToEmail")}
           disabled={busy}
           onPress={() => {
             setMode("login");
-            setMessage("");
+            setMessage(null);
             setFailed(false);
           }}
         />
       )}
-      <Note>
-        เราไม่เก็บรหัสผ่านไว้ในแอป
-        การแชร์เส้นทางและรูปภาพจะเกิดขึ้นเมื่อคุณตรวจสอบและยืนยันการแชร์
-      </Note>
+      <Note>{t("auth.privacy")}</Note>
     </Screen>
   );
 }

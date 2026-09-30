@@ -2,26 +2,28 @@ import { router } from "expo-router";
 import { Button, Empty } from "./ui";
 import { useAuth } from "../state/AuthState";
 import { useOnline } from "../state/OnlineState";
+import { errorKey, useI18n } from "../lib/i18n";
 export function AccountGate({ children }: { children: React.ReactNode }) {
   const { session, ready } = useAuth(),
     { profileReady, error, refresh } = useOnline();
+  const { t } = useI18n();
   if (!ready)
     return (
       <Empty
         icon="person-circle-outline"
-        title="กำลังเปิดบัญชี"
-        body="รอสักครู่"
+        title={t("account.loading")}
+        body={t("common.wait")}
       />
     );
   if (!session)
     return (
       <Empty
         icon="people-outline"
-        title="เส้นทางดี ๆ มีไว้แบ่งปัน"
-        body="เข้าสู่ระบบเพื่อเพิ่มเพื่อน แชร์ทริป และร่วมชาเลนจ์"
+        title={t("account.shareTitle")}
+        body={t("account.shareBody")}
       >
         <Button
-          label="เข้าสู่ระบบ / สร้างบัญชี"
+          label={t("common.signInOrCreate")}
           onPress={() => router.push("/auth")}
         />
       </Empty>
@@ -30,21 +32,21 @@ export function AccountGate({ children }: { children: React.ReactNode }) {
     return (
       <Empty
         icon="cloud-offline-outline"
-        title="ยังเชื่อมต่อไม่ได้"
-        body={error}
+        title={t("account.offlineTitle")}
+        body={t(errorKey(error, "online"))}
       >
-        <Button label="ลองอีกครั้ง" onPress={() => void refresh()} />
+        <Button label={t("common.retry")} onPress={() => void refresh()} />
       </Empty>
     );
   if (!profileReady)
     return (
       <Empty
         icon="person-circle-outline"
-        title="ตั้งชื่อให้เพื่อนหาคุณเจอ"
-        body="ไปที่แก้ไขบัตร แล้วบันทึกชื่อผู้ใช้ก่อนเริ่มใช้งานชุมชน"
+        title={t("account.profileTitle")}
+        body={t("account.profileBody")}
       >
         <Button
-          label="ตั้งค่าโปรไฟล์"
+          label={t("account.setupProfile")}
           onPress={() => router.push("/profile")}
         />
       </Empty>

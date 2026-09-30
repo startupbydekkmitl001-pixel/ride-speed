@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "video": "build/garage-scooter.mp4",
+  "width": 1280,
+  "height": 720,
+  "fps": 60,
+  "frames": 360,
+  "durationSeconds": 6,
+  "bytes": 117180,
+  "audioTracks": 0,
+  "seam": {
+    "method": "Source frame 0 versus virtual endpoint; encoded last-to-first versus every ordinary frame step, downsampled to 320x180 RGB",
+    "sourceEndpointMAE0To255": 0,
+    "encodedSeamMAE0To255": 0.08431712962962963,
+    "encodedOrdinaryMeanMAE0To255": 0.020765533116682156,
+    "encodedOrdinaryMaximumMAE0To255": 0.0733738425925926,
+    "acceptedMaximumMAE0To255": 0.21171730324074073,
+    "passed": true
+  }
+}

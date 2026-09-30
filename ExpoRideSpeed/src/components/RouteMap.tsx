@@ -178,7 +178,7 @@ export default function RouteMap({
           {stops.length > 1 && (
             <Polyline
               coordinates={stops}
-              strokeColor={dark ? "#99B9FF" : "#285FE7"}
+              strokeColor={colors.accent}
               strokeWidth={3}
               lineDashPattern={[7, 7]}
               geodesic
@@ -199,8 +199,8 @@ export default function RouteMap({
                   styles.marker,
                   {
                     backgroundColor:
-                      selectedId === stop.id ? colors.ink : "#285FE7",
-                    borderColor: "#FFFFFF",
+                      selectedId === stop.id ? colors.ink : colors.accent,
+                    borderColor: colors.ink,
                   },
                 ]}
               >
@@ -209,7 +209,7 @@ export default function RouteMap({
                   size={15}
                   weight="semibold"
                   style={{
-                    color: selectedId === stop.id ? colors.bg : "#FFFFFF",
+                    color: selectedId === stop.id ? colors.bg : colors.onAccent,
                   }}
                 >
                   {index + 1}
@@ -222,7 +222,7 @@ export default function RouteMap({
               coordinate={location}
               title="ตำแหน่งที่ค้นหาล่าสุด"
               description="แตะค้างบริเวณนี้เพื่อเพิ่มเป็นจุดในเส้นทาง"
-              pinColor="#508FE9"
+              pinColor={colors.accent}
             />
           )}
         </MapView>

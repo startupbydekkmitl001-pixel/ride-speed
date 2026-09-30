@@ -3,9 +3,11 @@ import { StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Glass, Icon, type IconName } from "../../components/ui";
 import { useApp } from "../../state/AppState";
+import { useI18n } from "../../lib/i18n";
 export default function TabLayout() {
   const { colors, data } = useApp(),
     inset = useSafeAreaInsets();
+  const { t } = useI18n();
   const tabs: {
     name: string;
     title: string;
@@ -14,26 +16,26 @@ export default function TabLayout() {
   }[] = [
     {
       name: "index",
-      title: "ความเร็ว",
-      icon: "speedometer-outline",
-      active: "speedometer",
+      title: t("nav.map"),
+      icon: "map-outline",
+      active: "map",
     },
-    { name: "routes", title: "เส้นทาง", icon: "map-outline", active: "map" },
+    { name: "garage", title: t("nav.garage"), icon: "car-sport-outline", active: "car-sport" },
     {
       name: "community",
-      title: "ชุมชน",
+      title: t("nav.community"),
       icon: "people-outline",
       active: "people",
     },
     {
       name: "rankings",
-      title: "อันดับ",
+      title: t("nav.ranked"),
       icon: "podium-outline",
       active: "podium",
     },
     {
       name: "profile",
-      title: "โปรไฟล์",
+      title: t("nav.me"),
       icon: "person-circle-outline",
       active: "person-circle",
     },
@@ -42,10 +44,10 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.accent,
+        tabBarActiveTintColor: colors.accentText,
         tabBarInactiveTintColor: colors.muted,
         tabBarHideOnKeyboard: true,
-        tabBarLabelStyle: { fontFamily: "Anuphan-500", fontSize: 10 },
+        tabBarLabelStyle: { fontFamily: "Anuphan-500", fontSize: 11, lineHeight: 17 },
         tabBarStyle: {
           display: data.welcomeDone ? "flex" : "none",
           position: "absolute",
@@ -80,6 +82,7 @@ export default function TabLayout() {
           }}
         />
       ))}
+      <Tabs.Screen name="routes" options={{ href: null }} />
     </Tabs>
   );
 }

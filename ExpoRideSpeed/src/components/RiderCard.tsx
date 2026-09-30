@@ -1,16 +1,18 @@
-import { useIsFocused } from "expo-router";
 import { useVideoPlayer, VideoView } from "expo-video";
-import { useEffect, useState } from "react";
-import { AppState, Image, StyleSheet, View } from "react-native";
+import { useEffect, useLayoutEffect, useState } from "react";
+import { Image, StyleSheet, View } from "react-native";
+import { useMotionPlaybackLease } from "../features/motion";
+import { useI18n } from "../lib/i18n";
 import { useApp } from "../state/AppState";
 import { useRiderProfile } from "../state/RiderProfile";
 import { Icon, Row, T } from "./ui";
 
-function Material({ dark, play }: { dark: boolean; play: boolean }) {
+function PlayingMaterial({ dark, registerStop, playIfAllowed }: {
+  dark: boolean;
+  registerStop: (stop: () => void) => () => void;
+  playIfAllowed: (play: () => void) => void;
+}) {
   const [rendered, setRendered] = useState(false);
-  const poster = dark
-    ? require("../../assets/motion/card-loop-dark-poster.png")
-    : require("../../assets/motion/card-loop-poster.png");
   const player = useVideoPlayer(
     dark
       ? require("../../assets/motion/card-loop-dark.mp4")
@@ -21,29 +23,37 @@ function Material({ dark, play }: { dark: boolean; play: boolean }) {
       p.audioMixingMode = "mixWithOthers";
     },
   );
+  useLayoutEffect(() => {
+    const unregister = registerStop(() => player.pause());
+    return () => { player.pause(); unregister(); };
+  }, [player, registerStop]);
   useEffect(() => {
-    if (play) player.play();
-    else player.pause();
-  }, [play, player]);
+    // Expo's web VideoView registers the video element in its passive effect.
+    playIfAllowed(() => player.play());
+  }, [player, playIfAllowed]);
   return (
-    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-      <Image
-        source={poster}
-        style={[StyleSheet.absoluteFill, { width: "100%", height: "100%" }]}
-      />
       <VideoView
         player={player}
         nativeControls={false}
         contentFit="cover"
+        playsInline
         onFirstFrameRender={() => setRendered(true)}
         style={[
           StyleSheet.absoluteFill,
-          { width: "100%", height: "100%", opacity: rendered && play ? 1 : 0 },
+          { width: "100%", height: "100%", opacity: rendered ? 1 : 0 },
         ]}
         accessible={false}
       />
-    </View>
   );
+}
+
+function Material({ dark, visible }: { dark: boolean; visible: boolean }) {
+  const { canPlay, registerStop, playIfAllowed } = useMotionPlaybackLease(visible);
+  const poster = dark ? require("../../assets/motion/card-loop-dark-poster.png") : require("../../assets/motion/card-loop-poster.png");
+  return <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+    <Image source={poster} style={[StyleSheet.absoluteFill, { width: "100%", height: "100%" }]} />
+    {canPlay ? <PlayingMaterial dark={dark} registerStop={registerStop} playIfAllowed={playIfAllowed} /> : null}
+  </View>;
 }
 export function RiderCard({
   handle,
@@ -52,16 +62,9 @@ export function RiderCard({
   handle?: string;
   visible?: boolean;
 }) {
-  const { dark, colors, motion, vehicle } = useApp();
+  const { dark, colors, vehicle } = useApp();
+  const { t } = useI18n();
   const data = useRiderProfile();
-  const focused = useIsFocused(),
-    [foreground, setForeground] = useState(AppState.currentState === "active");
-  useEffect(() => {
-    const s = AppState.addEventListener("change", (state) =>
-      setForeground(state === "active"),
-    );
-    return () => s.remove();
-  }, []);
   return (
     <View
       style={{
@@ -84,7 +87,7 @@ export function RiderCard({
         <Material
           key={dark ? "dark" : "light"}
           dark={dark}
-          play={motion && focused && foreground && visible}
+          visible={visible}
         />
         <Row style={{ justifyContent: "space-between" }}>
           <Row style={{ gap: 7 }}>
@@ -94,7 +97,7 @@ export function RiderCard({
             </T>
           </Row>
           <T size={10} muted>
-            RIDER CARD
+            {t("card.label")}
           </T>
         </Row>
         <Row style={{ gap: 16 }}>
@@ -127,19 +130,19 @@ export function RiderCard({
               {data.displayName}
             </T>
             <T numberOfLines={1} muted size={12}>
-              {handle ? `@${handle}` : "ออกแบบเส้นทางในแบบคุณ"}
+              {handle ? `@${handle}` : t("card.tagline")}
             </T>
           </View>
         </Row>
         <Row style={{ justifyContent: "space-between" }}>
           <View style={{ flex: 1 }}>
             <T size={9} muted>
-              YOUR RIDE
+              {t("card.vehicle")}
             </T>
             <T size={12} weight="medium" numberOfLines={1}>
               {vehicle
                 ? `${vehicle.brand} ${vehicle.model}`
-                : "เพิ่มรถคันแรกของคุณ"}
+                : t("card.addVehicle")}
             </T>
           </View>
           <Icon name="finger-print-outline" color={colors.muted} size={30} />
