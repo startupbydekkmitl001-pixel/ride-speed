@@ -33,13 +33,13 @@
 
 **Interface:** Workflow dispatch produces both an unsigned Release IPA and a development IPA. Version tags produce a GitHub Release with downloadable Release IPA, checksum, short Thai changelog and an explicit signing-required label.
 
-- [ ] Fetch matching versioned Expo configuration/build/dev-client docs and confirm installed packages.
-- [ ] Add SDK-compatible development client and build configuration using expo install.
-- [ ] Set fixed app identifiers, deployment target and version/build-number rules in config.
-- [ ] Implement clean prebuild, unsigned device xcodebuild, app validation and Payload packaging.
-- [ ] Keep ordinary workflow jobs read-only; grant release-write permission only to the publishing job.
-- [ ] Run existing tests, lint, typecheck, Expo config resolution and appropriate workflow/script checks.
-- [ ] Document exact Windows cloud-build/install/Metro steps and distinguish existing foreground prototype from future native recorder.
+- [x] Fetch matching versioned Expo configuration/build/dev-client docs and confirm installed packages.
+- [x] Add SDK-compatible development client and build configuration using expo install.
+- [x] Set fixed app identifiers, deployment target and version/build-number rules in config.
+- [x] Implement clean prebuild, unsigned device xcodebuild, app validation and Payload packaging.
+- [x] Keep ordinary workflow jobs read-only; grant release-write permission only to the publishing job.
+- [x] Run existing tests, lint, typecheck, Expo config resolution and appropriate workflow/script checks.
+- [x] Document exact Windows cloud-build/install/Metro steps and distinguish existing foreground prototype from future native recorder.
 
 ## Task 2: Screen design for approval
 
@@ -47,20 +47,20 @@
 
 **Interface:** A preview shows Thai dark/light riding screens, quality failures and permission states using the proposed research tokens. It contains fictional sample data explicitly labeled as a mockup outside the app frame.
 
-- [ ] Define hierarchy, typography, colors, touch targets and state behavior in the design document.
-- [ ] Generate dark/light speedometer screenshots with a huge speed value, quality label, vehicle profile, sustained maximum/reset and session action.
-- [ ] Generate no-fix/weak-fix/permission and large-text previews for review.
-- [ ] Inspect images, flag Thai wording for native-speaker review and preserve the generation prompts.
+- [x] Define hierarchy, typography, colors, touch targets and state behavior in the design document.
+- [x] Generate dark/light speedometer screenshots with a huge speed value, quality label, vehicle profile, sustained maximum/reset and session action.
+- [x] Generate no-fix/weak-fix/permission and large-text previews for review.
+- [x] Inspect images, flag Thai wording for native-speaker review and preserve the generation prompts.
 - [ ] Present the previews and request design approval as the final step before implementing screens.
 
 ## Task 3: GitHub connection and build verification
 
 **Own files:** Git remote configuration; README/status and results log.
 
-- [ ] Identify available GitHub account/repository access without exposing credentials.
-- [ ] Inspect the exact files intended for public publication and ignore local output/private evidence.
-- [ ] Publish to the selected public repository when account access permits, then run the workflow.
-- [ ] Inspect real build logs and resulting IPA contents; fix build failures before claiming success.
+- [x] Identify available GitHub account/repository access without exposing credentials.
+- [x] Inspect the exact files intended for public publication and ignore local output/private evidence.
+- [x] Publish to the selected public repository when account access permits, then run the workflow.
+- [x] Inspect real build logs and resulting IPA contents; fix build failures before claiming success.
 - [ ] If authentication or repository access is unavailable, leave the complete local workflow and give the precise remaining user action.
 - [ ] Update the feature checklist with prepared, built and device-tested states separately.
 
@@ -74,3 +74,4 @@
 - Draft 1 previews generated and saved; user requested a revision. Design direction is pending and no screen implementation began.
 - Public repository created at https://github.com/startupbydekkmitl001-pixel/ride-speed; local origin configured. Cloud compilation and device installation remain unverified.
 - First cloud proof: commit 48ce49a, run 36725855154, Release and development 0.1.0 (2.1.0) built successfully. Both artifacts downloaded under ignored build/downloads and SHA-256 verified. Native app screens and on-device behavior remain unverified.
+- Versioned publication: tag v0.1.0 at d398835 triggered run 36726999685. Its Mac job was queued at the last check; publication must be verified separately from run #2's successful artifacts.

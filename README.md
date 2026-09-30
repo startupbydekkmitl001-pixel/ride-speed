@@ -8,6 +8,8 @@ A Thai-first iPhone speed and ride recorder for a private group of friends. Targ
 
 **Public repository:** [startupbydekkmitl001-pixel/ride-speed](https://github.com/startupbydekkmitl001-pixel/ride-speed). The [screen review](docs/design/phase2-speedometer-v1.md) records the proposed design and requested revisions.
 
+**First installation test:** Release and development IPA artifacts are available in [run #2](https://github.com/startupbydekkmitl001-pixel/ride-speed/actions/runs/36725855154). Tag v0.1.0 has triggered the separate [public-release workflow](https://github.com/startupbydekkmitl001-pixel/ride-speed/actions/runs/36726999685); its status is visible there. Follow the [Thai install guide](docs/INSTALL_TH.md) and start with foreground operation.
+
 ## Start here
 
 | Document | Contents |
