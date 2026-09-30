@@ -1,0 +1,73 @@
+{
+  "periodFrames": 360,
+  "endpointExactlyEqual": true,
+  "worstVelocityError": 0,
+  "steps": [
+    {
+      "key": "blueX",
+      "boundary": 0.7330010703659582,
+      "adjacent": 0.7330010703659582,
+      "largestOrdinaryStep": 0.7330010703659582
+    },
+    {
+      "key": "blueY",
+      "boundary": 0.0047214501518624274,
+      "adjacent": 0.0047214501518624274,
+      "largestOrdinaryStep": 0.541024599555783
+    },
+    {
+      "key": "sageX",
+      "boundary": 0.00533066952630179,
+      "adjacent": 0.00533066952630179,
+      "largestOrdinaryStep": 0.6108342253048704
+    },
+    {
+      "key": "sageY",
+      "boundary": 0.4886673802439532,
+      "adjacent": 0.4886673802439532,
+      "largestOrdinaryStep": 0.4886673802439532
+    },
+    {
+      "key": "lightX",
+      "boundary": 0.23031068014040557,
+      "adjacent": 0.22345188722897547,
+      "largestOrdinaryStep": 0.45376256736938103
+    },
+    {
+      "key": "lightY",
+      "boundary": 0.30076149820109066,
+      "adjacent": 0.30380759507325905,
+      "largestOrdinaryStep": 0.3490481287456717
+    },
+    {
+      "key": "lensBend",
+      "boundary": 0.5933818188676411,
+      "adjacent": 0.5933818188676394,
+      "largestOrdinaryStep": 0.5933818188676394
+    },
+    {
+      "key": "lensTilt",
+      "boundary": 0.003503011403001466,
+      "adjacent": 0.003503011403001466,
+      "largestOrdinaryStep": 0.40140534805752137
+    },
+    {
+      "key": "blueOpacity",
+      "boundary": 0.0008587925826442078,
+      "adjacent": 0.0008434966296310131,
+      "largestOrdinaryStep": 0.0012216938843389036
+    },
+    {
+      "key": "sageOpacity",
+      "boundary": 0.000009138290616439448,
+      "adjacent": 0.000009138290616439448,
+      "largestOrdinaryStep": 0.0010471443862369867
+    },
+    {
+      "key": "highlightOpacity",
+      "boundary": 0.0007519037455027133,
+      "adjacent": 0.0007595189876831165,
+      "largestOrdinaryStep": 0.0008726203218641926
+    }
+  ]
+}

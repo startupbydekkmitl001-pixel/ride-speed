@@ -1,0 +1,36 @@
+[
+  {
+    "file": "card-loop.mp4",
+    "bytes": 351510,
+    "width": 720,
+    "height": 450,
+    "durationSeconds": 12,
+    "fps": 30,
+    "frames": 360,
+    "audioStreams": 0,
+    "virtualEndpointPixelsIdentical": true,
+    "rawBoundaryRms": 0.38882539164152485,
+    "rawFirstAdjacentRms": 0.34362207683331814,
+    "encodedBoundaryRms": 0.5915305877247531,
+    "encodedAdjacentRmsMedian": 0.4379009039110225,
+    "encodedAdjacentRmsMax": 0.5062815300347436,
+    "blackReadingZoneMaxRgb": null
+  },
+  {
+    "file": "card-loop-dark.mp4",
+    "bytes": 310857,
+    "width": 720,
+    "height": 450,
+    "durationSeconds": 12,
+    "fps": 30,
+    "frames": 360,
+    "audioStreams": 0,
+    "virtualEndpointPixelsIdentical": true,
+    "rawBoundaryRms": 0.3102799744608735,
+    "rawFirstAdjacentRms": 0.26740638144873463,
+    "encodedBoundaryRms": 0.5698774324939035,
+    "encodedAdjacentRmsMedian": 0.3852635247971116,
+    "encodedAdjacentRmsMax": 0.5190833563737115,
+    "blackReadingZoneMaxRgb": 0
+  }
+]

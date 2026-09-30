@@ -1,0 +1,8 @@
+{
+  "name": "ride-location",
+  "version": "1.0.0",
+  "description": "Foreground Core Location samples for RideSpeed",
+  "private": true,
+  "main": "index.ts",
+  "types": "index.ts"
+}

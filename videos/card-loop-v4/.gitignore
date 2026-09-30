@@ -1,0 +1,6 @@
+node_modules/
+build/
+renders/
+proofs/
+studio.log
+studio.err.log

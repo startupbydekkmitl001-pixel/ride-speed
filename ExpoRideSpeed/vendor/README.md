@@ -1,0 +1,7 @@
+# Dependency review — 30 September 2026
+
+The query-string decoder is adapted from the fixed upstream source in `decode-uri-component/`; the adjacent provenance and license document the only code change. npm installs it from tracked source through an override scoped to query-string 7.1.3. No files in node_modules are patched manually.
+
+After this change, `npm audit` reports 11 moderate transitive entries, all propagated from the uuid advisory through xcode and Expo build/config tooling. The installed path is `xcode@3.0.1 → uuid@7.0.3`. Inspection of `xcode/lib/pbxProject.js` shows its only UUID API call is `uuid.v4()` without an output buffer, for build-project identifiers. The [maintainer advisory](https://github.com/uuidjs/uuid/security/advisories/GHSA-w5hq-g745-h8pq) concerns the `v3`, `v5` and `v6` API methods with caller-provided buffers; those names are methods, not package versions. This specific inspected xcode call does not use an affected method. The old package remains flagged; this is a reachability assessment, not a claim that the package has been patched.
+
+Do not run the audit's proposed forced Expo downgrade. Track an upstream xcode/Expo dependency update, and repeat this review when their versions or call sites change. Runtime decoder regressions are covered in `tests/urlDecoder.test.mjs`; the build-tool finding is documented rather than suppressed from audit output.

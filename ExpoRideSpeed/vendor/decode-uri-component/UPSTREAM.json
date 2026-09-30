@@ -1,0 +1,10 @@
+{
+  "name": "decode-uri-component",
+  "version": "0.5.0",
+  "commit": "a12fabaa28303cc8b5b07e93d128f4fc09fc31e5",
+  "sourceUrl": "https://raw.githubusercontent.com/SamVerschueren/decode-uri-component/a12fabaa28303cc8b5b07e93d128f4fc09fc31e5/index.js",
+  "sourceSha256": "9401353df38f8010ad7035fe8d666bce6a4902bc1cff809afc4ab23fa2e0bdaa",
+  "npmTarball": "https://registry.npmjs.org/decode-uri-component/-/decode-uri-component-0.5.0.tgz",
+  "npmIntegrity": "sha512-1BiQVoK8C9gUbQU6NzAtO/tkz2qOFpEObMWpcFvhx4fYnj4Oc5yzaJN/LD36ihkVUdXyh5ZekzX+yM+ty/SrPg==",
+  "adaptation": "Replace export default function decodeUriComponent with module.exports = function decodeUriComponent; no algorithm changes."
+}

@@ -8,6 +8,7 @@ on:
   pull_request:
     paths:
       - 'ExpoRideSpeed/**'
+      - 'backend/**'
       - 'scripts/**'
       - '.github/workflows/ios-unsigned.yml'
 
@@ -40,6 +41,8 @@ jobs:
         working-directory: ExpoRideSpeed
       - run: npm test && npm run typecheck && npm run lint
         working-directory: ExpoRideSpeed
+      - run: npm ci && npm test
+        working-directory: backend
       - run: node scripts/check-build-config.cjs
       - run: python3 -m unittest discover -s scripts -p 'test_*.py'
       - run: bash -n scripts/build-ios-unsigned.sh

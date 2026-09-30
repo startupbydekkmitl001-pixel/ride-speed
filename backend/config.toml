@@ -1,0 +1,11 @@
+# Used after staging this directory as a Supabase project (see README).
+project_id = "ride-speed"
+
+[functions.media-url]
+verify_jwt = false
+
+[functions.verify-submission]
+verify_jwt = false
+
+# Each handler explicitly validates the Bearer token through Supabase Auth getUser.
+# The gateway's legacy JWT check is disabled to support current publishable keys.
