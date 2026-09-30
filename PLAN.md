@@ -39,15 +39,15 @@ The user has authorized native implementation and chosen MapLibre/OpenFreeMap + 
 - [x] Start/pause/resume/stop/save, keep awake, offline outbox and idempotent cloud ride summary sync; foreground interruption policy visible. Glance lock >10 km/h with passenger override.
 - [x] Meaningful unit/adapter tests, browser map/HUD/history interactions, lint/typecheck and all-platform export. See `docs/design/m2-acceptance-v5.md` for exact evidence.
 - [ ] Fresh iOS/Android native CI compilation and physical GPS/50-marker/2 s map/FPS/battery acceptance. Source implementation is complete; these results must be measured separately.
-- [ ] Commit M2; report five lines.
+- [x] Commit M2; report five lines.
 
 ## M3 — garage/catalog
 
-- [ ] Garage tab and first-run animated plus; category→brand/model/variant/year flow, powertrain cc/kW, photo/color/nickname, many vehicles and active snapshot.
-- [ ] Expand editable verified Thailand catalog to about 20–30 models per category from official manufacturer pages, provenance/year; uncertain specs explicitly flagged and excluded from autoverified classification. Custom fallback.
-- [ ] Cloud vehicle owner/RLS sync with revisions; active vehicle immutable snapshot attaches to rides/posts/competition classes.
-- [ ] Verify type is independent of cc, EV uses kW, 4-tap fast path, duplicate/manual handling and owner isolation; browser flow and catalog provenance checks.
-- [ ] Commit M3; report five lines.
+- [x] Garage tab and first-run animated plus; category→brand/model/variant/year flow, powertrain cc/kW, photo/color/nickname, many vehicles and active snapshot.
+- [x] Expand editable verified Thailand catalog to about 20–30 models per category from official manufacturer pages, provenance/year; uncertain specs explicitly flagged and excluded from autoverified classification. Custom fallback.
+- [x] Cloud vehicle owner/RLS sync with revisions; active vehicle immutable snapshot attaches to rides/posts/competition classes.
+- [x] Verify type is independent of cc, EV uses kW, 4-tap fast path, duplicate/manual handling and owner isolation; browser flow and catalog provenance checks. See M3 acceptance for device/photo gates.
+- [x] Commit M3; report five lines.
 
 ## M4 — routes/search/road geometry
 

@@ -23,6 +23,13 @@ const ride = () => ({
 const draft = () => ({ operationId: uuid(5), rideId: uuid(1), expectedRevision: 0, payload: toRideSummary(ride(), 'android') });
 const ack = (value = draft()) => ({ operation_id: value.operationId, ride_id: value.rideId, applied_revision: value.expectedRevision + 1, current_revision: value.expectedRevision + 1, payload_sha256: 'a'.repeat(64), speed_status: 'self_reported', visibility: 'private', synced_at: '2026-10-01T01:02:00.123456+00:00' });
 
+test('new garage EV kW and diesel snapshots persist without rebuilding earlier summaries',()=>{
+ const electric=ride();electric.vehicle={...electric.vehicle,category:'car',powertrain:'electric',engineCc:null,motorPowerKw:150,nickname:'Private name',photoPath:'private'};
+ const captured=toRideSummary(electric,'android');assert.equal(captured.vehicle.motor_kw,150);assert.equal(captured.vehicle.engine_cc,null);assert.equal(Object.hasOwn(captured.vehicle,'photoPath'),false);assert.equal(Object.hasOwn(captured.vehicle,'nickname'),false);
+ electric.vehicle.motorPowerKw=230;assert.equal(captured.vehicle.motor_kw,150);
+ const diesel=ride();diesel.vehicle.powertrain='diesel';assert.equal(toRideSummary(diesel,'ios').vehicle.powertrain,'diesel');
+});
+
 function decode(polyline) {
   let cursor = 0, lat = 0, lon = 0;
   const result = [], integer = () => {

@@ -1,5 +1,5 @@
 // Dashboard editor bundles. Canonical multi-file sources stay in backend/functions.
-// This narrowly supports the two reviewed M1 handlers; it does not read credentials.
+// This supports the reviewed account and garage handlers; it does not read credentials.
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
@@ -8,7 +8,7 @@ const functionsRoot = path.join(root, 'backend', 'functions');
 const output = path.join(root, 'build', 'deploy-m1');
 const names = process.argv.slice(2);
 if (!names.length) names.push('profile-avatar-url', 'delete-account');
-if (names.some(name => !['profile-avatar-url', 'delete-account'].includes(name))) throw new Error('Unsupported dashboard handler');
+if (names.some(name => !['profile-avatar-url', 'delete-account', 'vehicle-photo-url'].includes(name))) throw new Error('Unsupported dashboard handler');
 fs.mkdirSync(output, { recursive: true });
 const manifest = {};
 for (const name of names) {

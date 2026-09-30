@@ -56,3 +56,20 @@ For verification, use a controlled approved course/session and actual CoreLocati
 The verifier recomputes the highest conservative three-second **minimum speed** from consecutive valid observations. It checks real sample times, gaps ≤1.5s, horizontal accuracy ≤15m, speed accuracy ≤1m/s, speed/acceleration/coordinate consistency, approved course boundary and session. It requires at least four observations and rejects missing native fields. Explicit simulated/mock flags anywhere in the stream reject the entire submission, while absent/null flags remain unknown. A real accessory source is allowed and must pass every other check. It measures sustained speed, not a completed lap or route time. Server processing of a client-supplied sample stream is not sensor attestation or a full anti-cheat system.
 
 An atomic two-minute, token-fenced lease prevents parallel/stale workers from committing. Three attempts are allowed; transient failures requeue, invalid evidence rejects, and exhausted jobs need operator inspection. Operator-only moderation and record-revocation RPCs exist; a moderation queue/retention job and GNSS attestation are future operational work, not implemented services.
+
+## M3 Garage upgrade
+
+Apply only reviewed `202610010005_garage_catalog.sql` after already deployed 001–004; do not replay any prior source. The additive transaction adds owner-only entire Garage snapshots, exact operation receipts/CAS conflicts, a service-managed catalog, private `vehicle-photos` reservation/upload authorization, and binary-first account-deletion coverage. It extends diesel in the M2 summary validator without changing the deployed004 file, existing snapshots, classification or proof rules. No new account, paid service or credential is needed.
+
+The fifth maintained Edge Function, `vehicle-photo-url`, must be staged/deployed with its config entry; gateway checking remains disabled because its handler explicitly validates Auth `getUser`. Check canonical sources before deployment:
+
+```powershell
+npx --yes deno check --node-modules-dir=auto functions/media-url/index.ts functions/verify-submission/index.ts functions/profile-avatar-url/index.ts functions/delete-account/index.ts functions/vehicle-photo-url/index.ts
+node backend/scripts/garage-catalog-seed.mjs
+```
+
+Run Deno from `backend/` and the catalog generator from the repository root. The generator reads the one editable JSON catalog and writes `backend/seeds/vehicle_catalog_v5.sql` with its source SHA-256. Review official source/provenance flags, then apply that separate catalog-only seed after005. It is not an owner-data migration. New catalog editions do not rewrite saved vehicles; older source editions and explicitly unverified outputs remain labeled in their metadata.
+
+Garage mutations cap at 100/day/owner and documents at 200 entries/512 KiB JSONB. Photo reservations cap at 20/day/owner, each 1 MiB JPEG/PNG/WebP. Replays retain immutable UUID/revision/document and make no new mutation. Monitor database receipt growth, define a promised receipt retry/retention window and operate abandoned/obsolete photo cleanup before broad release; do not prune an active pending request. Private URLs last at most 60 seconds. No upload proves a catalog spec, vehicle class or ride speed.
+
+Acceptance: a genuine empty owner adds a vehicle, restarts offline and retains it; response-loss retry produces one revision; another installation adopts the real garage; two-device edits show an explicit conflict. Confirm edits during upload/ACK persistence preserve current metadata. Check photo compression/EXIF removal, exact MIME/size, reservation expiry, immutable upload response-loss recovery, current owner-only signing and cleanup. Anonymous/unrelated accounts must fail. Confirm pending deletion blocks upload/sync/signing; successful Storage→DB→Auth deletion requires an explicitly authorized disposable account, never the real owner during routine QA. Local PostgreSQL/SDK/handler tests verify boundaries and ordering, not managed service/hardware performance.

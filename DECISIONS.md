@@ -29,3 +29,11 @@
 - Cloud summaries are owner-only, self-reported and bounded. Oversized geometry stays saved locally with a sync message; do not merge gaps, silently clip an observed maximum or relabel it verified. A frozen operation survives response loss and disk retry.
 - Foreground interruption is explicit. Pause/GPS failure retain the last confirmed moving lock; only a fresh suitable stationary reading or passenger override releases it. Confirmed account deletion permanently closes that owner's local acquisition/write/proof boundary before cleanup finishes.
 - Run native compilation on public standard GitHub runners. The Android standalone preview uses Expo's public debug certificate, bundles its JS and is labeled unfit for store submission. iPhone artifacts remain unsigned. Compile/installation/performance are distinct results.
+
+## M3 — garage ownership and catalog
+
+- Keep 90 editable configurations across 72 verified model families (21 scooter, 25 motorcycle, 26 car). Three preserved legacy EV suggestions have unverified power output; nullable values and manual entry remain valid. A Civic RS badge does not determine its engine, generation or hybrid status.
+- Classify scooters by body/type rather than cc. Pure EVs use traction-motor kW, diesel is represented explicitly, and previously captured ride vehicle snapshots remain immutable.
+- Persist the complete owner garage with compare-and-swap revisions and immutable operation receipts. Never automatically overwrite a conflicting cloud garage or silently import guest data into a real account. Local-only QA vehicles are explicitly labelled and isolated on a separate browser origin.
+- Private photo reservations retain exact bounded bytes and owner/vehicle/upload IDs across interruption. Unknown response outcomes preserve the operation; only a definite expired reservation can be retired and rotated. Delete a retained local photo draft only after the current garage acknowledgement proves its attachment. Signed photo reads authorize the current owner vehicle rather than an arbitrary caller-supplied Storage path.
+- The shortest catalog path is plus → category → model → save. Brand filters, trim selection and optional photo/nickname/color share the picker rather than adding mandatory screens. Native photo acquisition and two-device conflicts still require installed-device acceptance.

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url), ts = require('typescript');
-const imports = { './preferences': await import('../src/lib/preferences.ts') };
+const imports = { './preferences': await import('../src/lib/preferences.ts'), '../features/garage/localModel': await import('../src/features/garage/localModel.ts') };
 const module = { exports: {} };
 try {
   const source = readFileSync(new URL('../src/lib/accountLocalStore.ts', import.meta.url), 'utf8');
@@ -24,6 +24,29 @@ const fixture = () => {
 };
 const vehicle = id => ({ id, catalogId: null, category: 'scooter', brand: 'Honda', model: 'PCX160', engineCc: 156.93, year: '' });
 const flush = () => new Promise(r => setImmediate(r));
+test('hydration preserves full server-valid Unicode nickname and year',async()=>{
+ const h=fixture();await h.store.hydrate(h.scope);const v={...vehicle('unicode'),nickname:'😀'.repeat(80),year:'😀'.repeat(30)};
+ h.store.update(h.scope,{vehicles:[v]});await h.store.flush();await h.store.hydrate(h.switch('A'));
+ assert.equal(h.store.getSnapshot().owned.vehicles[0].nickname,v.nickname);assert.equal(h.store.getSnapshot().owned.vehicles[0].year,v.year);
+});
+
+test('garage power/photo/edit fields and pending immutable sync survive a restart', async()=>{
+ const h=fixture();await h.store.hydrate(h.scope);
+ const v={...vehicle('v'),powertrain:null,motorPowerKw:null,nickname:'My scooter',color:'#FF5A1F',photoPath:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.jpg'};
+ const model=imports['../features/garage/localModel'];const document=model.garageDocument([v],'v');
+ const garageSync={revision:0,cleanFingerprint:null,pending:{operationId:'cccccccc-cccc-4ccc-8ccc-cccccccccccc',expectedRevision:0,document}};
+ h.store.update(h.scope,{vehicles:[v],selectedVehicleId:'v',garageSync});await h.store.flush();await h.store.hydrate(h.switch('A'));
+ assert.deepEqual(h.store.getSnapshot().owned.vehicles[0],v);assert.deepEqual(h.store.getSnapshot().owned.garageSync,garageSync);assert.equal(h.store.isOwnedDurable(h.scope),true);
+});
+test('guest import strips private photo and sync binding while keeping plain vehicle details',async()=>{
+ const h=fixture();await h.store.hydrate(h.switch(null));h.store.update(h.scope,{vehicles:[{...vehicle('g'),nickname:'Scooter',photoPath:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.jpg'}]});await h.store.flush();
+ await h.store.hydrate(h.switch('A'));await h.store.importGuest(h.scope);const value=h.store.getSnapshot().owned;
+ assert.equal(value.vehicles[0].photoPath,undefined);assert.equal(value.vehicles[0].nickname,'Scooter');assert.deepEqual(value.garageSync,imports['../features/garage/localModel'].blankGarageSync());
+});
+test('failed or waiting garage disk writes are never advertised durable',async()=>{
+ const h=fixture();await h.store.hydrate(h.scope);const hold=h.hold();h.store.update(h.scope,{vehicles:[vehicle('v')]});assert.equal(h.store.isOwnedDurable(h.scope),false);hold.resolve();await h.store.flush();assert.equal(h.store.isOwnedDurable(h.scope),true);
+ h.fail(true);h.store.update(h.scope,{vehicles:[vehicle('x')]});await h.store.flush();assert.equal(h.store.isOwnedDurable(h.scope),false);h.fail(false);await h.store.retry(h.scope);assert.equal(h.store.isOwnedDurable(h.scope),true);
+});
 
 test('legacy garage/routes migrate only to guest, preserve preferences and never inherit cloud bindings', async () => {
   const h = fixture();

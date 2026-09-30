@@ -1,11 +1,13 @@
 import type { GarageVehicle, SavedRoute, Stop } from './domain';
 import { parsePreferences, type Preferences } from './preferences';
+import { blankGarageSync, parseGarageSync, type GarageLocalSync } from '../features/garage/localModel';
 
 export type LocalScope = Readonly<{ userId: string | null; generation: number }>;
 export type DevicePreferences = Omit<Preferences, 'welcomeDone'>;
 export type OwnedLocalData = {
   vehicles: GarageVehicle[]; selectedVehicleId: string | null; routes: SavedRoute[];
   welcomeDone: boolean; importedGuest: boolean;
+  garageSync: GarageLocalSync;
 };
 export type LocalPatch = Partial<DevicePreferences & OwnedLocalData>;
 type Storage = { getItem: (key: string) => Promise<string | null>; setItem: (key: string, value: string) => Promise<unknown>; removeItem?: (key: string) => Promise<unknown> };
@@ -15,10 +17,10 @@ export type LocalSnapshot = Readonly<{
 }>;
 const LEGACY = 'ridespeed.local.v4', PREFS = 'ride.preferences.v5', MIGRATED = 'ride.local.migration.v5';
 const ownerKey = (scope: LocalScope) => `ride.local.v5.${scope.userId ?? 'guest'}`;
-const text = (v: unknown, max: number): v is string => typeof v === 'string' && v.length > 0 && v.length <= max;
+const text = (v: unknown, max: number): v is string => typeof v === 'string' && [...v].length > 0 && [...v].length <= max && !/[\u0000-\u001f\u007f]/.test(v);
 const object = (v: unknown): Record<string, unknown> => v && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : {};
 const coordinate = (v: unknown, max: number): v is number => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= max;
-export const emptyOwned = (): OwnedLocalData => ({ vehicles: [], selectedVehicleId: null, routes: [], welcomeDone: false, importedGuest: false });
+export const emptyOwned = (): OwnedLocalData => ({ vehicles: [], selectedVehicleId: null, routes: [], welcomeDone: false, importedGuest: false, garageSync: blankGarageSync() });
 const preferences = (value: unknown): DevicePreferences => {
   const { welcomeDone: _welcome, ...device } = parsePreferences(value); return device;
 };
@@ -34,9 +36,13 @@ function parseOwned(value: unknown, stripCloud = false): OwnedLocalData {
     if (v.engineCc !== null && !(typeof v.engineCc === 'number' && Number.isFinite(v.engineCc) && v.engineCc > 0 && v.engineCc <= 10000)) continue;
     vehicleIds.add(v.id);
     vehicles.push({ id: v.id, catalogId: text(v.catalogId, 100) ? v.catalogId : null, category: v.category as GarageVehicle['category'], brand: v.brand, model: v.model,
-      engineCc: v.engineCc as number | null, year: typeof v.year === 'string' ? v.year.slice(0, 30) : '',
+      engineCc: v.engineCc as number | null, year: typeof v.year === 'string' && [...v.year].length<=30 && !/[\u0000-\u001f\u007f]/.test(v.year) ? v.year : '',
       ...(text(v.variant, 100) ? { variant: v.variant } : {}),
-      powertrain: ['petrol', 'hybrid', 'electric'].includes(String(v.powertrain)) ? v.powertrain as GarageVehicle['powertrain'] : null });
+      powertrain: ['petrol', 'diesel', 'hybrid', 'electric'].includes(String(v.powertrain)) ? v.powertrain as GarageVehicle['powertrain'] : null,
+      ...(v.motorPowerKw === null || typeof v.motorPowerKw === 'number' && Number.isFinite(v.motorPowerKw) && v.motorPowerKw > 0 && v.motorPowerKw <= 2000 ? { motorPowerKw: v.motorPowerKw as number|null } : {}),
+      ...(text(v.nickname,80) ? { nickname:v.nickname } : {}),
+      ...(typeof v.color === 'string' && /^#[a-f\d]{6}$/i.test(v.color) ? { color:v.color.toUpperCase() } : {}),
+      ...(!stripCloud && typeof v.photoPath === 'string' && /^[a-f\d-]{36}\/[a-f\d-]{36}\.(jpg|png|webp)$/i.test(v.photoPath) ? { photoPath:v.photoPath } : {}) });
   }
   const routes: SavedRoute[] = [], routeIds = new Set<string>();
   for (const candidate of Array.isArray(stored.routes) ? stored.routes.slice(0, 500) : []) {
@@ -56,7 +62,7 @@ function parseOwned(value: unknown, stripCloud = false): OwnedLocalData {
       ...(['scooter', 'motorcycle', 'car', 'bicycle'].includes(String(r.category)) ? { category: r.category as SavedRoute['category'] } : {}) });
   }
   return { ...blank, vehicles, routes, selectedVehicleId: typeof stored.selectedVehicleId === 'string' && vehicleIds.has(stored.selectedVehicleId) ? stored.selectedVehicleId : null,
-    welcomeDone: stored.welcomeDone === true, importedGuest: stored.importedGuest === true };
+    welcomeDone: stored.welcomeDone === true, importedGuest: stored.importedGuest === true, garageSync: parseGarageSync(stored.garageSync,stripCloud) };
 }
 
 /** Pins every local write to its initiating owner and rejects stale scope generations. */
@@ -126,6 +132,7 @@ export class AccountLocalStore {
     });
   }
   flush() { return this.writes; }
+  isOwnedDurable(scope: LocalScope) { return this.current(scope) && this.value.ready && !this.closedOwners.has(ownerKey(scope)) && !this.dirty.has(ownerKey(scope)) && this.value.error !== 'LOCAL_READ_FAILED'; }
   async retry(scope: LocalScope) {
     if (!this.current(scope) || !this.value.ready || this.closedOwners.has(ownerKey(scope))) return;
     if (this.value.error === 'LOCAL_READ_FAILED') { await this.hydrate(scope); return; }

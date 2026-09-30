@@ -31,6 +31,8 @@ type State = {
   importGuest: () => Promise<void>;
   retryStorage: () => Promise<void>;
   forgetLocalAccount: () => Promise<void>;
+  getOwned: () => OwnedLocalData | null;
+  flushStorage: () => Promise<void>;
 };
 const Context = createContext<State | null>(null);
 export function AppProvider({ children }: { children: React.ReactNode }) {
@@ -88,6 +90,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         importGuest: () => store.importGuest(scope),
         retryStorage: () => store.retry(scope),
         forgetLocalAccount: () => store.forgetAccount(scope),
+        getOwned: () => { const value=store.getSnapshot();return isAccountCurrent(scope)&&value.scope===scope&&value.ready?value.owned:null; },
+        flushStorage: async () => { await store.flush();if(!isAccountCurrent(scope))throw Error('ACCOUNT_CHANGED');if(!store.isOwnedDurable(scope))throw Error(store.getSnapshot().error??'LOCAL_WRITE_FAILED'); },
         update,
       }}
     >

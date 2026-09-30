@@ -3,7 +3,7 @@ export type StartVehicleSnapshot = Readonly<{
   local_id: string | null; catalog_id: string | null;
   category: 'scooter' | 'motorcycle' | 'car'; brand: string; model: string;
   variant: string | null; year: string | null;
-  powertrain: 'petrol' | 'hybrid' | 'electric' | 'unknown';
+  powertrain: 'petrol' | 'diesel' | 'hybrid' | 'electric' | 'unknown';
   engine_cc: number | null; motor_kw: number | null;
 }>;
 export type SummaryFragment = Readonly<{

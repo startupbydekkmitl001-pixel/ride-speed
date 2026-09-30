@@ -13,6 +13,7 @@ import { AuthProvider } from "../state/AuthState";
 import { OnlineProvider } from "../state/OnlineState";
 import { RiderProfileProvider } from "../state/RiderProfile";
 import { RideProvider,useRide } from "../state/RideState";
+import { GarageProvider } from "../state/GarageState";
 import { Button, T } from "../components/ui";
 import { errorKey, useI18n } from "../lib/i18n";
 
@@ -74,7 +75,7 @@ export default function RootLayout() {
         <AppProvider>
           <OnlineProvider>
             <RiderProfileProvider>
-              <RideProvider><MotionProvider><Navigation /></MotionProvider></RideProvider>
+              <GarageProvider><RideProvider><MotionProvider><Navigation /></MotionProvider></RideProvider></GarageProvider>
             </RiderProfileProvider>
           </OnlineProvider>
         </AppProvider>

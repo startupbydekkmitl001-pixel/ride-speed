@@ -51,14 +51,15 @@ function snapshot(ride: JournalRide): StartVehicleSnapshot | null {
   const v = ride.vehicle;
   if (!v) return null;
   if (!text(v.brand, 80) || !text(v.model, 100) || !['scooter', 'bigbike', 'car'].includes(v.category)
-    || (v.powertrain != null && !['petrol', 'hybrid', 'electric'].includes(v.powertrain))
+    || (v.powertrain != null && !['petrol', 'diesel', 'hybrid', 'electric'].includes(v.powertrain))
     || (v.engineCc !== null && (!number(v.engineCc, 10000) || v.engineCc < 0.01))
-    || (v.powertrain === 'electric' && v.engineCc !== null)) throw invalid();
+    || (v.powertrain === 'electric' && v.engineCc !== null)
+    || (v.motorPowerKw != null && (!number(v.motorPowerKw,2000) || v.motorPowerKw < 0.01))) throw invalid();
   const optional = [[v.id, 100], [v.catalogId, 100], [v.variant, 100], [v.year, 30]] as const;
   for (const [value, max] of optional) if (value != null && typeof value !== 'string' || typeof value === 'string' && value.trim().length > max) throw invalid();
   return Object.freeze({ local_id: optionalText(v.id), catalog_id: optionalText(v.catalogId), category: v.category === 'bigbike' ? 'motorcycle' : v.category,
     brand: v.brand.trim(), model: v.model.trim(), variant: optionalText(v.variant), year: optionalText(v.year),
-    powertrain: v.powertrain ?? 'unknown', engine_cc: v.engineCc, motor_kw: null });
+    powertrain: v.powertrain ?? 'unknown', engine_cc: v.engineCc, motor_kw: v.motorPowerKw ?? null });
 }
 
 /** Assign a bounded point budget proportionally, retaining both endpoints of each part. */

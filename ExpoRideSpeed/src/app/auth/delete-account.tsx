@@ -11,6 +11,7 @@ import { useApp } from "../../state/AppState";
 import { accountClient, isAccountCurrent, useAuth } from "../../state/AuthState";
 import { useRiderProfile } from "../../state/RiderProfile";
 import { clearRideAccount,useRide } from "../../state/RideState";
+import { clearGarageAccount } from "../../state/GarageState";
 
 export default function DeleteAccountScreen() {
   const { scope } = useAuth();
@@ -56,6 +57,7 @@ function AccountDeletion() {
           await rider.clearAccount(); ensure();
           await clearOnboardingAccount(scope); ensure();
           await clearRideAccount(scope); ensure();
+          await clearGarageAccount(scope); ensure();
           await forgetLocalAccount(); ensure();
         });
       await AsyncStorage.removeItem(key);

@@ -46,3 +46,29 @@ export async function pickPicture(square = false) {
 export function pictureBytes(base64: string) {
   return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0)).buffer;
 }
+
+/** Garage-only budget. Existing profile/community picker sizing remains unchanged. */
+export async function pickGaragePhoto() {
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ["images"], allowsEditing: false, quality: 1, exif: false,
+  });
+  if (result.canceled) return null;
+  const asset = result.assets[0];
+  if (!asset || (asset.fileSize ?? 0) > 20 * 1024 * 1024 || !Number.isFinite(asset.width) || !Number.isFinite(asset.height)
+    || asset.width <= 0 || asset.height <= 0 || asset.width * asset.height > 40_000_000) throw new Error("GARAGE_PHOTO_INVALID");
+  for (const [dimension, compress] of [[720, 0.75], [512, 0.68], [384, 0.58]] as const) {
+    const context = ImageManipulator.manipulate(asset.uri);
+    let image: Awaited<ReturnType<typeof context.renderAsync>> | null = null;
+    try {
+      context.resize(asset.width >= asset.height
+        ? { width: Math.min(asset.width, dimension) }
+        : { height: Math.min(asset.height, dimension) });
+      image = await context.renderAsync();
+      // Re-encode pixels as JPEG rather than uploading the picked file/metadata.
+      const output = await image.saveAsync({ format: SaveFormat.JPEG, compress, base64: true });
+      if (!output.base64) throw new Error("GARAGE_PHOTO_INVALID");
+      if (pictureBytes(output.base64).byteLength <= 1_048_576) return { uri: `data:image/jpeg;base64,${output.base64}`, base64: output.base64 };
+    } finally { image?.release(); context.release(); }
+  }
+  throw new Error("GARAGE_PHOTO_INVALID");
+}

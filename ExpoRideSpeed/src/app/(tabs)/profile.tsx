@@ -21,6 +21,7 @@ import { supabase } from "../../lib/supabase";
 import { useApp } from "../../state/AppState";
 import { accountRpc, isAccountCurrent, useAuth } from "../../state/AuthState";
 import { useRiderProfile } from "../../state/RiderProfile";
+import { useGarage } from "../../state/GarageState";
 import { useOnline } from "../../state/OnlineState";
 import { errorKey, useI18n, type TranslationKey, type TranslationValues } from "../../lib/i18n";
 export default function ProfileScreen() {
@@ -29,6 +30,7 @@ export default function ProfileScreen() {
   return <AccountProfile key={scope.generation} />;
 }
 function AccountProfile() {
+  const garage=useGarage();
   const { data, update, colors, vehicle, storageError, guestAvailable, importGuest } = useApp(),
     { session, scope } = useAuth();
   const rider = useRiderProfile(),
@@ -239,7 +241,7 @@ function AccountProfile() {
             secondary={vehicle?.id !== v.id}
             label={`${v.brand} ${v.model}${v.engineCc !== null ? ` · ${v.engineCc} ${t("common.cc")}` : v.powertrain === "electric" ? ` · ${t("common.ev")}` : ""}`}
             icon={v.category === "car" ? "car-outline" : "bicycle-outline"}
-            onPress={() => update({ selectedVehicleId: v.id })}
+            onPress={() => { void garage.select(v.id); }}
           />
         ))
       ) : (

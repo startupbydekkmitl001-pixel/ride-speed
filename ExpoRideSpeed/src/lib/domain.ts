@@ -6,9 +6,15 @@ export type GarageVehicle = {
   brand: string;
   model: string;
   variant?: string;
-  powertrain?: "petrol" | "hybrid" | "electric" | null;
+  powertrain?: "petrol" | "diesel" | "hybrid" | "electric" | null;
   engineCc: number | null;
   year: string;
+  motorPowerKw?: number | null;
+  nickname?: string;
+  /** User-selected paint colour, normalized #RRGGBB. */
+  color?: string;
+  /** Private owner path; never a public or expiring signed URL. */
+  photoPath?: string;
 };
 export type Stop = {
   id: string;

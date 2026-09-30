@@ -62,3 +62,23 @@ Applied `202610010004_private_ride_summaries.sql` once through the authenticated
 This additive transaction provides owner-only, idempotent ride-summary sync, exact operation receipt lookup and bounded keyset history. Summaries remain private and self-reported; they cannot enter verified rankings. It extends the already fenced deletion function to remove these summaries and receipts before Auth removal. Deploying its definition did not delete any user data. No synthetic rides or GPS coordinates were uploaded during this check.
 
 The real signed-in browser opened ride history and retried its cloud read without an error; it correctly showed an empty account. Separate automated backend checks pass 55 cases, including owner isolation, direct mutation denial, payload bounds, operation/revision conflicts, clock anomalies and deletion dependencies. Browser screenshots are retained in ignored `build/review-v5/m2`.
+
+## V5 M3 — 1 October 2026
+
+Applied `202610010005_garage_catalog.sql` and the separate catalog-only seed once through the authenticated SQL editor, each returning **Success. No rows returned.** Deployed `vehicle-photo-url` from the reviewed canonical bundle. Earlier deployed migrations remain immutable; future changes require additive migrations.
+
+The new owner garage/photo contract preserves the existing deletion Edge entrypoint: SQL object enumeration includes `vehicle-photos`, and SQL purge refuses remaining binaries before deleting owner garages, receipts/reservations and Auth. The catalog seed contains no user garage, profile, ride or ranked fixtures. Deployed004 is unchanged;005 adds diesel metadata compatibility through an otherwise identical validator replacement. No account deletion is authorized as routine deployment QA.
+
+Deployed SQL/seed and reviewed canonical source hashes:
+
+| Source | SHA-256 |
+| --- | --- |
+| 202610010005_garage_catalog.sql | `296DD4767D1E19FBCF870247005BD3D7D3C92F2B2F6D5148BC9F6FD1732A5B08` |
+| seeds/vehicle_catalog_v5.sql | `90BB19326F6DB7152527CBF7763E4A815E01876C653A08DCA4D82720619A699B` |
+| functions/vehicle-photo-url/index.ts (canonical entry, not bundle) | `4E15249B6B5FBC3D59A52D6E9DF3BD57E16C74A478D15D8A4BF9BC9CD5462B7C` |
+| functions/_shared/garage-requests.ts | `FE52F6158013CC5F9296D5791DB64A2D5AB091DFCE514C0F1D6F2ECEA25A5C73` |
+| Expo catalog source vehicleCatalog.json | `CDBDD4A204F3EFD627DE57E8CF9AB4823ADD2C1438756928C655A5F08AFD1085` |
+
+The deployed function bundle SHA-256 is `9246D0BA56F1C2D9AAD67AC08B309EDE24253F05155F010845A7B5E09E2AD7D3`. Its saved editor source matches the reviewed bundle after CRLF normalization; the listed hash describes the local reviewed bytes. Deno validation passed. Reloaded settings showed the legacy-secret gateway off; project Auth validation remains in the handler. A live POST without a token returned 401 AUTH_REQUIRED.
+
+Final local acceptance: all 71 backend and 258 app tests, app typecheck/lint and all-platform export pass. Cases cover exact response-loss receipts, owner/path authorization, photo expiry/committed retries, immutable pending documents, crash-safe acknowledgement and deletion dependencies. The real owner loaded an empty synced garage. A separate localhost guest retained explicitly labelled local-only EV edits after reload; no fake owner garage was uploaded. Two real installed devices, private photo upload and periodic orphan cleanup remain operational acceptance gates; no account was deleted during verification.
