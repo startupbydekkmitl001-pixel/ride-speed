@@ -1,0 +1,28 @@
+# Expo development output
+ExpoRideSpeed/node_modules/
+ExpoRideSpeed/.expo/
+ExpoRideSpeed/dist/
+.DS_Store
+
+# Local build output and signing material
+/build/
+*.ipa
+*.xcarchive/
+*.dSYM/
+*.p12
+*.p8
+*.mobileprovision
+*.cer
+*.pem
+*.key
+**/__pycache__/
+.env*
+
+# Private test evidence belongs outside public source
+/private-data/
+/diagnostics/
+/rides/
+
+# Local assistant state
+.superpowers/
+**/.claude/

@@ -1,0 +1,6 @@
+{
+  "ios": {
+    "NSLocationWhenInUseUsageDescription": "Ride Speed uses your precise location to measure speed while a session is open.",
+    "NSLocalNetworkUsageDescription": "Ride Speed Dev connects to the development server on your Windows PC for live updates while you develop the app."
+  }
+}

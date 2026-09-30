@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="RideSpeed" xmlns="http://www.topografix.com/GPX/1/1">
+  <wpt lat="13.756300" lon="100.501800"><name>Start</name></wpt>
+  <wpt lat="13.756300" lon="100.501800"/>
+  <wpt lat="13.756300" lon="100.501850"/>
+  <wpt lat="13.756300" lon="100.501930"/>
+  <wpt lat="13.756300" lon="100.502050"/>
+  <wpt lat="13.756300" lon="100.502200"/>
+  <wpt lat="13.756300" lon="100.502380"/>
+  <wpt lat="13.756300" lon="100.502590"/>
+  <wpt lat="13.756300" lon="100.502820"/>
+  <wpt lat="13.756300" lon="100.503050"><name>Peak</name></wpt>
+  <wpt lat="13.756300" lon="100.503270"/>
+  <wpt lat="13.756300" lon="100.503440"/>
+  <wpt lat="13.756300" lon="100.503560"/>
+  <wpt lat="13.756300" lon="100.503640"/>
+  <wpt lat="13.756300" lon="100.503680"/>
+  <wpt lat="13.756300" lon="100.503680"><name>Stop</name></wpt>
+</gpx>

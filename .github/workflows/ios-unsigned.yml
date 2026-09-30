@@ -1,0 +1,131 @@
+name: Unsigned iPhone IPA
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+    branches: [main, 'codex/**']
+  pull_request:
+    paths:
+      - 'ExpoRideSpeed/**'
+      - 'scripts/**'
+      - '.github/workflows/ios-unsigned.yml'
+
+permissions:
+  contents: read
+
+# Preserve completed artifacts, and avoid competing installs/builds for the same ref.
+concurrency:
+  group: ios-unsigned-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+      build_number: ${{ steps.metadata.outputs.build_number }}
+      variants: ${{ steps.metadata.outputs.variants }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '22.23.2'
+          cache: npm
+          cache-dependency-path: ExpoRideSpeed/package-lock.json
+      - run: npm ci
+        working-directory: ExpoRideSpeed
+      - run: npm test && npm run typecheck && npm run lint
+        working-directory: ExpoRideSpeed
+      - run: node scripts/check-build-config.cjs
+      - run: python3 -m unittest discover -s scripts -p 'test_*.py'
+      - run: bash -n scripts/build-ios-unsigned.sh
+      - name: Validate version and assign build identity
+        id: metadata
+        run: node scripts/ci-metadata.cjs
+      - name: Require Thai release notes for tags
+        if: github.ref_type == 'tag'
+        run: node scripts/release-notes.cjs /tmp/release-notes.md
+
+  build:
+    if: github.event_name == 'workflow_dispatch' || github.ref_type == 'tag'
+    needs: verify
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: ${{ fromJSON(needs.verify.outputs.variants) }}
+    runs-on: macos-26
+    timeout-minutes: 90
+    env:
+      APP_VARIANT: ${{ matrix.variant }}
+      IOS_BUILD_NUMBER: ${{ needs.verify.outputs.build_number }}
+      DEVELOPER_DIR: /Applications/Xcode_26.4.1.app/Contents/Developer
+      CI: '1'
+      EXPO_NO_TELEMETRY: '1'
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '22.23.2'
+          cache: npm
+          cache-dependency-path: ExpoRideSpeed/package-lock.json
+      - name: Check pinned Xcode is installed
+        run: |
+          test -d "$DEVELOPER_DIR"
+          xcodebuild -version
+          xcodebuild -version | grep -q '^Xcode 26.4.1$'
+      - name: Generate, build and validate unsigned iPhone app
+        run: bash scripts/build-ios-unsigned.sh
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ios-${{ matrix.variant }}-${{ needs.verify.outputs.version }}-${{ needs.verify.outputs.build_number }}
+          path: build/${{ matrix.variant }}/artifacts/*
+          if-no-files-found: error
+          retention-days: 7
+      - name: Save build diagnostics and matching symbols
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: diagnostics-${{ matrix.variant }}-${{ needs.verify.outputs.build_number }}
+          path: |
+            build/${{ matrix.variant }}/*.log
+            build/${{ matrix.variant }}/workspace.json
+            build/${{ matrix.variant }}/dSYMs.zip
+          if-no-files-found: warn
+          retention-days: 3
+
+  publish:
+    if: github.ref_type == 'tag'
+    needs: [verify, build]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: ios-release-${{ needs.verify.outputs.version }}-${{ needs.verify.outputs.build_number }}
+          path: release-assets
+      - name: Prepare Thai notes and installation instructions
+        run: |
+          node scripts/release-notes.cjs release-notes.md
+          cp docs/INSTALL_TH.md release-assets/INSTALL_TH.md
+      - name: Publish immutable unsigned release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          # No --clobber: rerunning a published tag cannot silently replace a friend's IPA.
+          gh release create "$RELEASE_TAG" release-assets/* \
+            --verify-tag --prerelease \
+            --title "Ride Speed $RELEASE_TAG — unsigned, signing required" \
+            --notes-file release-notes.md
