@@ -2,7 +2,7 @@
 
 Deployment sources for Supabase Auth, PostgreSQL/RLS, private Storage, server Broadcast presence and two Edge Functions. [API.md](API.md) is the native contract. No credentials or artificial course approvals are seeded.
 
-Local verification: `npm ci` then `npm test` in this directory. Fourteen tests execute the migration and real PostgreSQL grants/RLS in PGlite, plus evidence recomputation. Auth, Storage and Realtime service schemas are stubs; these tests do **not** prove a hosted Supabase integration. Edge TypeScript checks pass with `npx --yes deno check --node-modules-dir=auto functions/media-url/index.ts functions/verify-submission/index.ts`.
+Local verification: Node 24, `npm ci` then `npm test` in this directory. Eighteen tests execute the migration and real PostgreSQL grants/RLS in PGlite, evidence recomputation and the Edge handler's terminal rejection path. Auth, Storage and Realtime boundaries are stubs; these tests do **not** prove a hosted Supabase integration. Edge TypeScript checks pass with `npx --yes deno check --node-modules-dir=auto functions/media-url/index.ts functions/verify-submission/index.ts`.
 
 ## Deploy to the already-created project
 
@@ -36,6 +36,6 @@ Use separate, consented test accounts. Confirm registration/recovery delivery an
 
 For verification, use a controlled approved course/session and actual CoreLocation samples. Upload UTF-8 evidence, queue it, invoke `verify-submission`, and confirm the derived result only enters the chosen audience and correct Bangkok date/category. Missing speed accuracy, a three-sample maximum, malformed evidence and public-road rides must not create ranks. No synthetic fixture is valid production evidence.
 
-The verifier recomputes the highest conservative three-second **minimum speed** from consecutive valid observations. It checks real sample times, gaps ≤1.5s, horizontal accuracy ≤15m, speed accuracy ≤1m/s, speed/acceleration/coordinate consistency, approved course boundary and session. It requires at least four observations and rejects missing native fields. It measures sustained speed, not a completed lap or route time. Server processing of a client-supplied sample stream is not sensor attestation or a full anti-cheat system.
+The verifier recomputes the highest conservative three-second **minimum speed** from consecutive valid observations. It checks real sample times, gaps ≤1.5s, horizontal accuracy ≤15m, speed accuracy ≤1m/s, speed/acceleration/coordinate consistency, approved course boundary and session. It requires at least four observations and rejects missing native fields. Explicit simulated/mock flags anywhere in the stream reject the entire submission, while absent/null flags remain unknown. A real accessory source is allowed and must pass every other check. It measures sustained speed, not a completed lap or route time. Server processing of a client-supplied sample stream is not sensor attestation or a full anti-cheat system.
 
 An atomic two-minute, token-fenced lease prevents parallel/stale workers from committing. Three attempts are allowed; transient failures requeue, invalid evidence rejects, and exhausted jobs need operator inspection. Operator-only moderation and record-revocation RPCs exist; a moderation queue/retention job and GNSS attestation are future operational work, not implemented services.

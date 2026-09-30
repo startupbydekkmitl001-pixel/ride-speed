@@ -31,6 +31,14 @@ export function verifyEvidence(evidence, context) {
   const segments=[]; let segment=[]; let previous=null; let timestamp=-Infinity;
   for (const s of samples) {
     if (!s || !Number.isSafeInteger(s.timestampMs) || !finite(s.latitude) || !finite(s.longitude) || Math.abs(s.latitude)>90 || Math.abs(s.longitude)>180) fail('SAMPLE_MALFORMED');
+    // Missing source information is unknown, never manufactured as false.
+    // An accessory may be a real external GNSS source; it is not simulation.
+    for (const key of ['isSimulatedBySoftware','mocked','isProducedByAccessory']) {
+      if (s[key] !== undefined && s[key] !== null && typeof s[key] !== 'boolean') fail('SAMPLE_MALFORMED');
+    }
+    // Reject the whole submitted stream before quality/window filtering so a
+    // caller cannot hide known simulated samples outside a selected window.
+    if (s.isSimulatedBySoftware === true || s.mocked === true) fail('SIMULATED_LOCATION');
     if (s.timestampMs<=timestamp) fail('TIMESTAMP_ORDER');
     timestamp=s.timestampMs;
     const valid=finite(s.speedMps)&&s.speedMps>=0&&s.speedMps<=500/3.6

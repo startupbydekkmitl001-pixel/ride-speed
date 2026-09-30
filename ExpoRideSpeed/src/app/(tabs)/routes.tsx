@@ -573,7 +573,7 @@ function RoutesEditor() {
         onChange={setTab}
       />
       {message && <Note error={message.error}>{message.text}</Note>}
-      {storageError && <Note error>{storageError}</Note>}
+      {!!storageError && <Note error>{storageError}</Note>}
 
       {tab === "build" ? (
         <>
@@ -949,7 +949,7 @@ function RoutesEditor() {
                     disabled={busy}
                   />
                 )}
-                {route.cloudId && session && (
+                {!!route.cloudId && session && (
                   <Button
                     label="โหลดใหม่"
                     small
@@ -972,13 +972,13 @@ function RoutesEditor() {
                   removeLocal(route),
                 )}
               </Row>
-              {route.cloudId && (
+              {!!route.cloudId && (
                 <T size={11} muted>
                   มีสำเนาบนคลาวด์ · เวอร์ชันที่ซิงก์ล่าสุด{" "}
                   {route.cloudRevision ?? "—"}
                 </T>
               )}
-              {route.cloudId && session && (
+              {!!route.cloudId && session && (
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`ลบ ${route.name} จากเครื่องและคลาวด์`}

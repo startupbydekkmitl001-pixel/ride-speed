@@ -1,7 +1,7 @@
 import { authenticate, failure, HttpError, preflight, readId, response } from '../_shared/http.ts';
 import { verifyEvidence } from '../_shared/verify-evidence.mjs';
 
-const invalidEvidence = new Set(['SCHEMA_UNSUPPORTED','CHALLENGE_MISMATCH','SESSION_INVALID','SAMPLE_COUNT','SAMPLE_MALFORMED','TIMESTAMP_ORDER','NO_ELIGIBLE_WINDOW','EVIDENCE_TOO_LARGE','EVIDENCE_INVALID_JSON','CHALLENGE_INELIGIBLE']);
+const invalidEvidence = new Set(['SCHEMA_UNSUPPORTED','CHALLENGE_MISMATCH','SESSION_INVALID','SAMPLE_COUNT','SAMPLE_MALFORMED','SIMULATED_LOCATION','TIMESTAMP_ORDER','NO_ELIGIBLE_WINDOW','EVIDENCE_TOO_LARGE','EVIDENCE_INVALID_JSON','CHALLENGE_INELIGIBLE']);
 
 Deno.serve(async req => {
   let job: { admin: Awaited<ReturnType<typeof authenticate>>['admin']; id: string; token: string } | null = null;

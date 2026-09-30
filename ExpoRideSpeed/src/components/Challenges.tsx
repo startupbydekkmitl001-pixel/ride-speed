@@ -610,7 +610,7 @@ function AccountChallenges({ userId }: { userId: string }) {
           onPress={() => void load()}
         />
       </Row>
-      {loadError && <Note error>{loadError}</Note>}
+      {!!loadError && <Note error>{loadError}</Note>}
       {review ? (
         <View style={{ gap: 18 }}>
           <Row>
@@ -657,7 +657,7 @@ function AccountChallenges({ userId }: { userId: string }) {
             เพื่อนที่ได้รับคำชวนจะเห็นพิกัดทุกจุดด้านบน
             โปรดตรวจสอบจุดใกล้บ้านก่อนส่ง
           </Note>
-          {message && <Note error={messageError}>{message}</Note>}
+          {!!message && <Note error={messageError}>{message}</Note>}
           {Date.parse(review.startsAt) <= now && (
             <Note error>เลยเวลาเริ่มแล้ว กลับไปเลือกเวลาใหม่</Note>
           )}
@@ -836,7 +836,7 @@ function AccountChallenges({ userId }: { userId: string }) {
               ที่มีความแม่นยำเพียงพอ
             </Note>
           )}
-          {message && <Note error={messageError}>{message}</Note>}
+          {!!message && <Note error={messageError}>{message}</Note>}
           <Button
             label="ตรวจสอบเส้นทางและคำชวน"
             icon="arrow-forward"

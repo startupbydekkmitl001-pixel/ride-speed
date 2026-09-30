@@ -345,7 +345,7 @@ function AccountComposer({ userId }: { userId: string }) {
               disabled={busy}
             />
           ) : null}
-          {picture && !preview && (
+          {!!picture && !preview && (
             <Button
               small
               secondary
@@ -467,7 +467,7 @@ function AccountComposer({ userId }: { userId: string }) {
               โพสต์นี้จะแชร์พิกัดทุกจุดที่แสดง ตรวจสอบจุดใกล้บ้านก่อนโพสต์
             </Note>
           )}
-          {error && <Note error>{error}</Note>}
+          {!!error && <Note error>{error}</Note>}
           {preview ? (
             <>
               <Button

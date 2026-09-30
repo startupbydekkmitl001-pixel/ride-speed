@@ -18,22 +18,19 @@ const scopedClients = new WeakMap<
 export function accountClient(scope: AuthScope, session: Session | null) {
   if (!session || session.user.id !== scope.userId || !isAccountCurrent(scope))
     throw accountChanged();
+  const token = session.access_token;
   const cached = scopedClients.get(scope);
-  if (cached?.token === session.access_token) return cached.client;
+  if (cached?.token === token) return cached.client;
   const client = createClient(
     process.env.EXPO_PUBLIC_SUPABASE_URL ?? publicService.url,
     process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
       publicService.publishableKey,
     {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-        detectSessionInUrl: false,
-      },
-      global: { headers: { Authorization: `Bearer ${session.access_token}` } },
+      // An explicit token provider avoids creating another GoTrue auth session.
+      accessToken: async () => token,
     },
   );
-  scopedClients.set(scope, { token: session.access_token, client });
+  scopedClients.set(scope, { token, client });
   return client;
 }
 

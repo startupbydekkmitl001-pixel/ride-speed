@@ -193,8 +193,8 @@ function AccountProfile() {
         </Panel>
       )}
       {message ? <Note>{message}</Note> : null}
-      {rider.error && <Note error>{rider.error}</Note>}
-      {storageError && <Note error>{storageError}</Note>}
+      {!!rider.error && <Note error>{rider.error}</Note>}
+      {!!storageError && <Note error>{storageError}</Note>}
       <Row style={{ justifyContent: "space-between" }}>
         <View>
           <T size={22} weight="semibold">

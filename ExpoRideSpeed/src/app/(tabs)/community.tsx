@@ -195,7 +195,7 @@ function Feed() {
           onPress={() => void fetchFeed()}
         />
       </Row>
-      {error && <Note>{error}</Note>}
+      {!!error && <Note>{error}</Note>}
       {!posts.length && (
         <Empty
           icon="images-outline"
@@ -236,7 +236,7 @@ function Feed() {
               color={colors.muted}
             />
           </Row>
-          {post.media_path && (
+          {!!post.media_path && (
             <PostPhoto key={`${post.id}-${revision}`} postId={post.id} />
           )}
           <T size={20} weight="semibold">
@@ -399,8 +399,8 @@ function Friends() {
           })
         }
       />
-      {message && <Note>{message}</Note>}
-      {online.error && <Note error>{online.error}</Note>}
+      {!!message && <Note>{message}</Note>}
+      {!!online.error && <Note error>{online.error}</Note>}
       <Row style={{ justifyContent: "space-between" }}>
         <T size={21} weight="semibold">
           เพื่อนร่วมทาง

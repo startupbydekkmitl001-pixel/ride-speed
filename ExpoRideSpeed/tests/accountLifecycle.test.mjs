@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { Buffer } from 'node:buffer';
 import { createRequire } from 'node:module';
 import vm from 'node:vm';
 const require = createRequire(import.meta.url);
@@ -8,7 +9,7 @@ const ts = require('typescript');
 const deferred = () => { let resolve; const promise = new Promise(r => { resolve = r; }); return { promise, resolve }; };
 const session = id => ({ user: { id }, access_token: `token-${id}`, refresh_token: `refresh-${id}` });
 
-function loadAuth() {
+function loadAuth(createScopedClient) {
   let authListener, effect; const states = []; let stateIndex = 0;
   const initial = deferred(), exchange = deferred(); let exchanges = 0;
   const query = deferred(); let header, calls = 0;
@@ -23,7 +24,7 @@ function loadAuth() {
     useEffect(fn) { effect=fn; }, useRef:v=>({current:v}), createElement:(type,props,...children)=>({type,props,children}),
   };
   const imports = { react: React, 'react-native':{AppState:{currentState:'active',addEventListener:()=>({remove(){}})}},
-    '../lib/supabase':{supabase:client}, '@supabase/supabase-js':{createClient:()=>client}, '../lib/publicService':{publicService:{url:'https://test.invalid',publishableKey:'test'}} };
+    '../lib/supabase':{supabase:client}, '@supabase/supabase-js':{createClient:createScopedClient??(()=>client)}, '../lib/publicService':{publicService:{url:'https://test.invalid',publishableKey:'test'}} };
   const source=readFileSync(new URL('../src/state/AuthState.tsx',import.meta.url),'utf8');
   const js=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React,esModuleInterop:true,target:ts.ScriptTarget.ES2022}}).outputText;
   const module={exports:{}};
@@ -56,6 +57,85 @@ test('account RPC pins the original JWT and rejects results after A→B→A swit
   await assert.rejects(pending,/account|บัญชี/i);
   await assert.rejects(h.exports.accountRpc(scope,session('A'),'rs_upsert_profile',{}),/account|บัญชี/i);
   assert.equal(h.calls,1);
+});
+
+function loadSdkAuth() {
+  const { createClient } = require('@supabase/supabase-js');
+  const requests = [], clients = [];
+  const h = loadAuth((url, key, options) => {
+    const client = createClient(url, key, { ...options, global: { ...options.global, fetch: async (input, init) => {
+      const path = new URL(typeof input === 'string' ? input : input.url).pathname;
+      requests.push({ path, authorization: new Headers(init?.headers).get('Authorization') });
+      assert.ok(!path.startsWith('/auth/'), 'scoped data clients must not initialize or refresh an Auth session');
+      return new Response(JSON.stringify(path.startsWith('/functions/') ? { ok: true } : []), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    } } });
+    clients.push(client);
+    return client;
+  });
+  return { ...h, requests, clients };
+}
+const sdkSession = (id, revision) => ({ ...session(id), access_token: [
+  Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url'),
+  Buffer.from(JSON.stringify({ sub: id, exp: Math.floor(Date.now()/1000)+3600, revision })).toString('base64url'),
+  'test-signature-not-a-real-credential',
+].join('.') });
+async function requestSdkServices(client) {
+  const responses = await Promise.all([
+    client.storage.from('ride-evidence').list('owned'),
+    client.functions.invoke('verify-submission', { body: { submissionId: 'test-only' } }),
+    client.rpc('rs_my_friends'),
+  ]);
+  for (const result of responses) assert.equal(result.error, null);
+}
+
+test('real SDK Storage, Edge and database requests retain their account token through refresh and A→B→A',async()=>{
+  const h = loadSdkAuth(), initial = sdkSession('A', 1);
+  h.emit('SIGNED_IN', initial);
+  const scope = h.states[0].scope;
+  const first = h.exports.accountClient(scope, initial);
+  assert.equal(h.exports.accountClient(scope, { ...initial }), first);
+  // This is the SDK's public behavior when custom accessToken replaces GoTrue.
+  assert.throws(() => first.auth.getSession(), /accessToken option/);
+  await requestSdkServices(first);
+  const refreshed = sdkSession('A', 2);
+  h.emit('TOKEN_REFRESHED', refreshed);
+  assert.equal(h.states[0].scope, scope);
+  const second = h.exports.accountClient(scope, refreshed);
+  assert.notEqual(second, first);
+  assert.equal(h.exports.accountClient(scope, { ...refreshed }), second);
+  await requestSdkServices(first);
+  await requestSdkServices(second);
+  h.emit('SIGNED_OUT', null);
+  h.emit('SIGNED_IN', sdkSession('B', 1));
+  h.emit('SIGNED_IN', sdkSession('A', 3));
+  const newScope = h.states[0].scope;
+  assert.notEqual(newScope, scope);
+  const createdBeforeStaleCall = h.clients.length;
+  assert.throws(() => h.exports.accountClient(scope, initial), /บัญชี/);
+  assert.throws(() => h.exports.accountClient(newScope, sdkSession('B', 1)), /บัญชี/);
+  assert.throws(() => h.exports.accountClient(newScope, null), /บัญชี/);
+  assert.equal(h.clients.length, createdBeforeStaleCall);
+  // A request already holding an old client cannot turn into a B/new-A write.
+  await requestSdkServices(first);
+  const third = h.exports.accountClient(newScope, h.states[0].session);
+  assert.notEqual(third, first);
+  assert.throws(() => third.auth.getSession(), /accessToken option/);
+  await requestSdkServices(third);
+  assert.deepEqual(h.requests.map(r=>r.authorization), [initial, initial, refreshed, initial, h.states[0].session].flatMap(s=>Array(3).fill(`Bearer ${s.access_token}`)));
+  assert.deepEqual(new Set(h.requests.map(r=>r.path)), new Set(['/storage/v1/object/list/ride-evidence', '/functions/v1/verify-submission', '/rest/v1/rpc/rs_my_friends']));
+});
+
+test('a retained SDK client snapshots its token even when a caller reuses and mutates a session object',async()=>{
+  const h = loadSdkAuth(), current = sdkSession('A', 1), originalToken = current.access_token;
+  h.emit('SIGNED_IN', current);
+  const scope = h.states[0].scope, first = h.exports.accountClient(scope, current);
+  current.access_token = sdkSession('A', 2).access_token;
+  h.emit('TOKEN_REFRESHED', current);
+  const refreshed = h.exports.accountClient(scope, current);
+  assert.notEqual(refreshed, first);
+  await requestSdkServices(first);
+  await requestSdkServices(refreshed);
+  assert.deepEqual(h.requests.map(r=>r.authorization), [...Array(3).fill(`Bearer ${originalToken}`), ...Array(3).fill(`Bearer ${current.access_token}`)]);
 });
 
 function loadRider() {

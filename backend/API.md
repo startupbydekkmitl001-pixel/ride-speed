@@ -53,12 +53,15 @@ Envelope schema (timestamps are epoch milliseconds, units explicitly SI):
   "source": "corelocation",
   "samples": [
     {"timestampMs": 1790000000000, "latitude": 13.7, "longitude": 100.5,
-     "speedMps": 10.0, "horizontalAccuracyM": 4.0, "speedAccuracyMps": 0.4}
+     "speedMps": 10.0, "horizontalAccuracyM": 4.0, "speedAccuracyMps": 0.4,
+     "isSimulatedBySoftware": false, "isProducedByAccessory": false, "mocked": null}
   ]
 }
 ```
 
 Capture actual delivered timestamps and native accuracy fields. Never fill missing accuracy, duplicate timestamps, densify samples or send an existing “3-sample max” as a 3-second measurement. At least four valid ordered observations supporting a complete three-second window are required. The verifier rejects missing accuracy, gaps and malformed evidence. Existing foreground Expo samples without native speed accuracy do **not** become ranked automatically.
+
+Source flags are optional boolean-or-null fields; preserve actual values. Omission/null means unknown, and false is only a reported flag, not sensor attestation. Any sample with `isSimulatedBySoftware:true` or `mocked:true` rejects the **whole submission** as `SIMULATED_LOCATION`, including samples outside the selected speed window. Other flag types reject as `SAMPLE_MALFORMED`. `isProducedByAccessory:true` is allowed because a real GPS accessory or CarPlay can supply location; all accuracy/course/time checks still apply. The Edge worker records these as terminal rejections using its current lease. [Apple source information](https://developer.apple.com/documentation/corelocation/cllocationsourceinformation), [external accessory flag](https://developer.apple.com/documentation/corelocation/cllocationsourceinformation/isproducedbyaccessory).
 
 `rs_leaderboard({p_period:'today'|'week'|'month',p_category,p_scope:'community'|'friends',p_course:null|<course UUID>})` returns `rank,user_id,display_name,sustained_kmh,recorded_at,method`; one best record per rider. Period boundaries use **Asia/Bangkok**: midnight each day, Monday midnight each week, first-day midnight each month. Database timestamps remain UTC instants. Only server-derived eligible records appear. Pending/rejected/self-reported data never appear. Ties share rank.
 

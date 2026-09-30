@@ -31,3 +31,33 @@ test('unapproved/missing geometry and wrong route challenge identity reject',()=
  assert.throws(()=>verifyEvidence(envelope([0,1,2,3].map(i=>sample(i))),{...context,polygon:null}),/COURSE_BOUNDARY_REQUIRED/);
  assert.throws(()=>verifyEvidence(envelope([0,1,2,3].map(i=>sample(i))),{...context,challengeId:'other'}),/CHALLENGE_MISMATCH/);
 });
+
+test('known simulation rejects the entire submission, even outside the winning window',()=>{
+ for (const flag of ['isSimulatedBySoftware','mocked']) {
+  const allSimulated=[0,1,2,3].map(i=>({...sample(i),[flag]:true}));
+  assert.throws(()=>verifyEvidence(envelope(allSimulated),context),/SIMULATED_LOCATION/);
+  // Four honest-looking samples must not hide an explicitly simulated tail,
+  // even when that tail would be discarded by the accuracy filter.
+  const mixed=[0,1,2,3].map(i=>sample(i));
+  mixed.push({...sample(4),[flag]:true,speedAccuracyMps:-1});
+  assert.throws(()=>verifyEvidence(envelope(mixed),context),/SIMULATED_LOCATION/);
+ }
+});
+
+test('unknown or false flags preserve quality rules; accessories are not simulations',()=>{
+ for (const flags of [{},{isSimulatedBySoftware:null,mocked:null,isProducedByAccessory:null},{isSimulatedBySoftware:false,mocked:false,isProducedByAccessory:false},{isSimulatedBySoftware:false,isProducedByAccessory:true}]) {
+  const samples=[0,1,2,3].map(i=>({...sample(i),...flags}));
+  assert.equal(verifyEvidence(envelope(samples),context).sustainedKmh,36);
+  assert.throws(()=>verifyEvidence(envelope(samples.map(s=>({...s,speedAccuracyMps:null}))),context),/NO_ELIGIBLE_WINDOW/);
+ }
+ assert.throws(()=>verifyEvidence({...envelope([0,1,2,3].map(i=>sample(i))),source:'expo'},context),/SCHEMA_UNSUPPORTED/);
+});
+
+test('source flags accept only booleans, null or omission without coercion',()=>{
+ for (const flag of ['isSimulatedBySoftware','mocked','isProducedByAccessory']) {
+  for (const value of ['true','false',1,0,{},[]]) {
+   const samples=[0,1,2,3].map(i=>({...sample(i),[flag]:value}));
+   assert.throws(()=>verifyEvidence(envelope(samples),context),/SAMPLE_MALFORMED/);
+  }
+ }
+});

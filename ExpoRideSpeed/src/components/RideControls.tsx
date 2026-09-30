@@ -456,7 +456,7 @@ export function RideControls({ ride, challengeId, onSessionStart }: Props) {
             {date(currentChallenge.starts_at)} –{" "}
             {date(currentChallenge.ends_at)}
           </T>
-          {!boundHere && unavailable && <Note>{unavailable}</Note>}
+          {!boundHere && !!unavailable && <Note>{unavailable}</Note>}
         </Panel>
       )}
       {signedOutChallenge && (
@@ -469,7 +469,7 @@ export function RideControls({ ride, challengeId, onSessionStart }: Props) {
           />
         </Panel>
       )}
-      {!!challengeId && !boundHere && currentLoaded?.error && (
+      {!!challengeId && !boundHere && !!currentLoaded?.error && (
         <Note error>{currentLoaded.error}</Note>
       )}
       {challengeLoading && !boundHere && <Note>กำลังเปิดรายการ…</Note>}
@@ -710,7 +710,7 @@ export function RideControls({ ride, challengeId, onSessionStart }: Props) {
           )}
         </Panel>
       )}
-      {error && <Note error>{error}</Note>}
+      {!!error && <Note error>{error}</Note>}
     </View>
   );
 }

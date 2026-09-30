@@ -274,7 +274,7 @@ export default function RouteMap({
       <T size={12} muted>
         เส้นประแสดงลำดับจุดเท่านั้น ไม่ใช่เส้นทางขับขี่
       </T>
-      {message && <Note error>{message}</Note>}
+      {!!message && <Note error>{message}</Note>}
     </View>
   );
 }

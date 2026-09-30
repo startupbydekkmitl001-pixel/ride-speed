@@ -25,7 +25,7 @@ else
 fi
 # Do not set NODE_ENV=production for Debug; dependencies differ via npm omit only.
 CI=1 npx --no-install expo prebuild --platform ios --clean --no-install
-pod install --project-directory=ios | tee "$OUT/pods.log"
+python3 "$ROOT/scripts/install-pods.py" --project-directory ios --log-directory "$OUT"
 WORKSPACE="$(find "$APP/ios" -maxdepth 1 -name '*.xcworkspace' -print)"
 [[ -n "$WORKSPACE" && "$(printf '%s\n' "$WORKSPACE" | wc -l | tr -d ' ')" == 1 ]] || { echo 'Expected one generated workspace' >&2; exit 1; }
 xcodebuild -list -json -workspace "$WORKSPACE" > "$OUT/workspace.json"

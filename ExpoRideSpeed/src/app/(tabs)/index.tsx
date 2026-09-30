@@ -263,7 +263,7 @@ export default function SpeedScreen() {
           onPress={() => router.push("/routes")}
         />
       </Row>
-      {ride.message && <Note>{ride.message}</Note>}
+      {!!ride.message && <Note>{ride.message}</Note>}
       <RideControls
         ride={ride}
         challengeId={challengeId}

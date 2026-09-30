@@ -17,6 +17,8 @@ export type PermissionState = 'ready' | 'requesting' | 'denied' | 'preciseRequir
 const BACKGROUND_MESSAGE = 'หยุดการวัดแล้วเมื่อแอปอยู่เบื้องหลังหรือหน้าจอล็อก เปิดแอปแล้วเริ่มใหม่ได้';
 const SIGNAL_MESSAGE = 'ยังรับสัญญาณ GPS ไม่ได้ ลองไปยังจุดที่เปิดโล่ง';
 const START_MESSAGE = 'เริ่ม GPS ไม่สำเร็จ ตรวจสอบบริการหาตำแหน่งแล้วลองใหม่';
+// Match the evidence verifier's native speed uncertainty ceiling (metres/second).
+const MAX_NATIVE_SPEED_ACCURACY_MPS = 1;
 
 // Shared across hook remounts: a pending old stop cannot overtake a new start.
 const capture = new ExclusiveLocationCapture();
@@ -157,9 +159,12 @@ export function useRideSession(): {
         if (appIsBackground()) { stopWithMessage(BACKGROUND_MESSAGE); return; }
         evidence.append(sample);
         const invalidNativeSpeed = native !== null
-          && (sample.speedAccuracyMps === null || !Number.isFinite(sample.speedAccuracyMps) || sample.speedAccuracyMps < 0);
+          && (sample.speedAccuracyMps === null || !Number.isFinite(sample.speedAccuracyMps)
+            || sample.speedAccuracyMps < 0 || sample.speedAccuracyMps > MAX_NATIVE_SPEED_ACCURACY_MPS);
+        const simulated = sample.isSimulatedBySoftware === true || sample.mocked === true;
+        // Reject only the display input: retain raw evidence and break confirmation.
         setSnapshot(engine.process({
-          speedMps: invalidNativeSpeed ? null : sample.speedMps,
+          speedMps: invalidNativeSpeed || simulated ? null : sample.speedMps,
           horizontalAccuracyM: sample.horizontalAccuracyM,
           timestampMs: sample.timestampMs,
         }, Date.now()));

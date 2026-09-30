@@ -116,7 +116,7 @@ function Rankings() {
           onPress={() => void refresh()}
         />
       </Row>
-      {error && <Note error>{error}</Note>}
+      {!!error && <Note error>{error}</Note>}
       {ranks[0] && (
         <Panel style={{ paddingVertical: 28 }}>
           <Row style={{ justifyContent: "space-between" }}>
