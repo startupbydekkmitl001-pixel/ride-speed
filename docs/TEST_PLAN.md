@@ -1,6 +1,6 @@
 # Field tests and performance evidence
 
-Phase 1, 30 September 2026. **No new IPA has been built or installed, and no device/battery/accuracy measurements have been made in this phase.** The existing Expo Go prototype is not evidence that native recording works while locked.
+**Historical Phase 1 baseline — 30 September 2026:** no new IPA had been built or installed, and no device/battery/accuracy measurements had been made in that phase. The Expo Go prototype was not evidence that native recording works while locked. For the published native build and remaining device checks, see [Current native pilot](#current-native-pilot-1-october-2026) and the results log below.
 
 ## Measurement rules
 
@@ -91,12 +91,23 @@ Submit real, replayed, truncated, duplicated, reordered, forged, oversized and c
 
 Check global/country/friends filters, separate vehicle and receiver classes, UTC weekly/monthly boundaries, course versions, rollout policy, and uncertainty ties. Check that hidden start/end points cannot be recovered from public polylines, event markers, chart endpoints, download URLs or metadata. Test quota rejection while recording continues locally; no automatic paid-plan upgrade.
 
+## Current native pilot: 1 October 2026
+
+The owner authorized native implementation. This pilot uses foreground-only Core Location capture, Apple Maps pin editing and Google/Supabase accounts. Original locked-screen recording, durable SQLite journals/export/replay, English settings, driving navigation, later sensor tools and worldwide/country rankings remain roadmap work. The broader phase exit criteria above are not all met.
+
+Build **0.1.0 (9.1.0)** is from `df1e7db` in [run #9](https://github.com/startupbydekkmitl001-pixel/ride-speed/actions/runs/36750133009). Verification, Release and development jobs passed. Both unsigned IPAs and their metadata/checksum files are published in the [native preview release](https://github.com/startupbydekkmitl001-pixel/ride-speed/releases/tag/preview-0.1.0-build9). Both downloaded archives and IPAs passed SHA-256, structure and exact version/build/source checks. The Release IPA contains its JavaScript bundle, both card videos and bundled fonts. This establishes packaging, not installation or device performance.
+
+Browser acceptance completed: real Google consent/callback; cloud profile save and reload; private account gates opening; friend controls and approved-course empty state; live empty rankings; two synthetic local route stops saved/reordered and retained after reload. The synthetic route is explicitly labelled a test and was not synced or published. Rider-card looping pauses for reduced motion and navigation. Preview checks do not verify native FPS, Apple Maps gestures or GPS.
+
+Next device sequence: sign the release IPA; open without Metro; sign in with the same Google account; add a vehicle; test Apple Maps pins; change rider-card picture; toggle Reduce Motion; then test foreground location start/stop, denied/approximate permission and background stop while stationary. Two consenting accounts are needed to finish real friend acceptance, media visibility and private presence checks. Do not seed fake ranked records to make an empty screen appear populated.
+
 ## Results log
 
 | Phase | Date/build/device | Software checks | Device accuracy | Battery | Rendering | Decision |
 |---|---|---|---|---|---|---|
 | 1 | 2026-09-30 / documentation / no device | Source/consistency review; existing prototype 12/12 tests, typecheck and lint pass; Node module-type warning; no product changes | Not measured | Not measured | Not measured | Review research before Phase 2 |
 | 2 build preparation | 2026-09-30 / 0.1.0 / Windows checks | 12/12 prototype tests; 6/6 IPA fixture tests; lint/typecheck/configuration, Bash/YAML/Python checks pass; production install excludes dev client; independent review corrected deployment-target validation | Not measured | Not measured | Not measured | Cloud compile and Sideloadly test pending; screen draft needs revision |
-| 2 first cloud build | 2026-09-30 / 0.1.0 (2.1.0) / Xcode 26.4.1 / [run #2](https://github.com/startupbydekkmitl001-pixel/ride-speed/actions/runs/36725855154) | Linux verification and both Mac jobs passed; device arm64/iOS 17 packaging verified; downloaded Release and development SHA-256 matched metadata | Not measured | Not measured | Not measured | Ready for Sideloadly installation; no claim of background capture; design revision pending |
+| 2 first cloud build | 2026-09-30 / 0.1.0 (2.1.0) / Xcode 26.4.1 / [run #2](https://github.com/startupbydekkmitl001-pixel/ride-speed/actions/runs/36725855154) | Linux verification and both Mac jobs passed; device arm64/iOS 17 packaging verified; downloaded Release and development SHA-256 matched metadata | Not measured | Not measured | Not measured | Historical prototype; superseded by native preview; installation untested |
+| Native/online revision | 2026-10-01 / 0.1.0 (9.1.0) / `df1e7db` / Windows browser + [run #9](https://github.com/startupbydekkmitl001-pixel/ride-speed/actions/runs/36750133009) | 58 app, 18 backend, 12 build-script tests; typecheck/lint/config pass; live Google/profile and Edge denial/CORS checks pass. Release/development compilation and both downloaded IPA checks pass | Not measured | Not measured | Browser layout/loop controls checked; native not measured | Both unsigned IPAs published; device installation and two-account acceptance pending |
 
 Each later phase adds actual figures and attaches exported logs. “Not measured” is a valid result; invented values are not.
