@@ -15,7 +15,7 @@ The app currently asks for foreground location only. Thai and English system per
 
 ## Run the cloud build
 
-1. Push this repository to the chosen **public** GitHub repository. Enable Actions if GitHub asks.
+1. Open the public [Ride Speed repository](https://github.com/startupbydekkmitl001-pixel/ride-speed), which already contains this workflow. For later changes, push reviewed commits before building.
 2. Open **Actions → Unsigned iPhone IPA → Run workflow**, choose the intended branch and run it. This produces both variants. Pull requests run the JavaScript/configuration/package-fixture checks only; they do not build or publish IPAs.
 3. The Linux job runs tests, lint, typecheck, resolved Expo configuration checks and IPA layout fixture tests. Mac jobs use the standard `macos-26` runner, Node `22.23.2`, and **Xcode 26.4.1**. No larger/paid runner is selected. If GitHub removes that Xcode version, the job fails clearly; recheck the inventory before deliberately updating it.
 4. Each Mac job installs locked dependencies. Release uses `npm ci --omit=dev`, and refuses to continue if the dev-client, launcher or menu is installed or linked. Development uses the full lockfile. Expo generates `ios/` with clean prebuild; CocoaPods installs native dependencies; `xcodebuild archive` targets `generic/platform=iOS` with signing disabled.
@@ -83,4 +83,4 @@ Compare the hashes; the example build number will differ from the actual run. Gi
 - [GitHub macOS 26 ARM64 software inventory](https://github.com/actions/runner-images/blob/main/images/macos/macos-26-arm64-Readme.md), [Actions billing for public standard runners](https://docs.github.com/en/billing/concepts/product-billing/github-actions).
 - [Apple build-number format](https://developer.apple.com/documentation/bundleresources/information-property-list/cfbundleversion), [phase-one build and signing research](research/build-and-sideloading.md).
 
-This guide describes the checked-in implementation. Successful native compilation, unsigned artifact production, Sideloadly installation and device behavior must be established by their actual runs; Windows checks alone cannot establish those results.
+Both native variants compiled and produced validated unsigned IPAs in [run #2](https://github.com/startupbydekkmitl001-pixel/ride-speed/actions/runs/36725855154), from commit 48ce49a, version 0.1.0, build 2.1.0. Downloaded IPA hashes matched their metadata. Sideloadly installation, offline device launch, Metro connection, refresh and data preservation remain real-device checks.

@@ -8,7 +8,7 @@ The product is an iOS 17+ private riding instrument for 1–10 friends, operated
 
 Plan separate saved vehicle profiles for PCX160 and S1000RR within the motorcycle class, and Civic RS within the car class. Store calibration against the actual phone/mount/vehicle combination; do not infer acceleration limits, braking thresholds or record authenticity from a model name. Model years and modifications are unspecified. The [test matrix](TEST_PLAN.md#confirmed-device-and-vehicles) covers baseline recording, cabin effects, motorcycle lean and vibration constraints.
 
-The selected delivery route is public source hosting with standard GitHub-hosted macOS runners. The public repository has been created and the workflow is being prepared. Keep private ride evidence out of source and public build artifacts.
+The selected delivery route is public source hosting with standard GitHub-hosted macOS runners. The public repository and workflow are set up; Release and development unsigned device builds passed in workflow run #2. Sideloadly installation remains untested. Keep private ride evidence out of source and public build artifacts.
 
 | Approach | Strength | Cost or constraint | Decision |
 |---|---|---|---|

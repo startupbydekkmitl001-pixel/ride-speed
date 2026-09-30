@@ -73,3 +73,4 @@
 - Review correction: inspect resolved application build settings instead of every project/dependency deployment-target declaration.
 - Draft 1 previews generated and saved; user requested a revision. Design direction is pending and no screen implementation began.
 - Public repository created at https://github.com/startupbydekkmitl001-pixel/ride-speed; local origin configured. Cloud compilation and device installation remain unverified.
+- First cloud proof: commit 48ce49a, run 36725855154, Release and development 0.1.0 (2.1.0) built successfully. Both artifacts downloaded under ignored build/downloads and SHA-256 verified. Native app screens and on-device behavior remain unverified.

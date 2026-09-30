@@ -2,7 +2,7 @@
 
 A Thai-first iPhone speed and ride recorder for a private group of friends. Target: iOS 17+, Windows development, free-Apple-ID Sideloadly installs, and free server tiers.
 
-**Current status: Phase 2 build preparation is in progress.** The first install test uses the earlier foreground-only Expo Go prototype. Native recording is not implemented yet. The first screen proposal needs revision before UI implementation.
+**Current status: Phase 2 build pipeline verified in the cloud; iPhone installation remains untested.** Release and development unsigned IPAs were produced successfully in [build run #2](https://github.com/startupbydekkmitl001-pixel/ride-speed/actions/runs/36725855154). They contain the earlier foreground-only prototype. Native recording is not implemented yet, and the first screen proposal needs revision before UI implementation.
 
 **Confirmed test setup:** iPhone 14 Plus running iOS 26; Honda PCX160 and BMW S1000RR motorcycle profiles; Honda Civic RS car profile. The user selected public source hosting and standard GitHub-hosted macOS runners. See the [device and vehicle test matrix](docs/TEST_PLAN.md#confirmed-device-and-vehicles).
 
@@ -37,7 +37,7 @@ Sources and caveats are in the documents above. Nothing here depends on buying a
 
 ## Free-tier operating policy
 
-The user selected public source hosting: use standard public GitHub-hosted macOS runners for the Phase 2 build experiment. The public repository has been created; the first build remains to be verified. Keep short-lived CI artifacts, stable Release files, no Apple credentials in CI and no private ride data in public files. The [build report](docs/research/build-and-sideloading.md) records the dated limits and alternatives.
+The user selected public source hosting and standard GitHub-hosted macOS runners; the first Release and development builds passed. Keep short-lived CI artifacts, stable Release files, no Apple credentials in CI and no private ride data in public files. The [build report](docs/research/build-and-sideloading.md) records the dated limits and alternatives.
 
 Keep recording functional offline. Upload only bounded qualifying evidence and refuse excess submissions when backend limits are near. Supabase email sending, inactivity pauses, storage, egress and function ceilings are explicit design constraints; Firebase's required paid billing plan for this verification/storage architecture rules it out under the current constraints. The [backend report](docs/research/backend-and-routing.md) contains the detailed quota table and budget calculation.
 
@@ -46,7 +46,7 @@ Keep recording functional offline. Upload only bounded qualifying evidence and r
 | Phase | Deliverables | State |
 |---|---|---|
 | 1 | Sourced research, accuracy/capability tables, architecture, Thai install draft, test plans | Research delivered; device results unmeasured |
-| 2a | Unsigned Release/dev IPA workflows, stable bundle ID, GitHub Release/changelog, update smoke test | Build preparation in progress; device installation untested |
+| 2a | Unsigned Release/dev IPA workflows, stable bundle ID, GitHub Release/changelog, update smoke test | Both cloud builds passed; first prerelease being prepared; installation/update untested |
 | 2b | Approved screenshots, Thai/English, vehicle picker, light/dark speed/max/quality, native locked recording, raw logs/export/replay, Jest | First design needs revision; old foreground prototype only |
 | 3 | Speed-colored map, ride stats/elevation, linked charts, history, GPX, backup/restore | Not implemented |
 | 4 | Acceleration/braking tests, brake events, calibrated G/G-G, laps and comparisons | Not implemented |

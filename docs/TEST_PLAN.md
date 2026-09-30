@@ -97,5 +97,6 @@ Check global/country/friends filters, separate vehicle and receiver classes, UTC
 |---|---|---|---|---|---|---|
 | 1 | 2026-09-30 / documentation / no device | Source/consistency review; existing prototype 12/12 tests, typecheck and lint pass; Node module-type warning; no product changes | Not measured | Not measured | Not measured | Review research before Phase 2 |
 | 2 build preparation | 2026-09-30 / 0.1.0 / Windows checks | 12/12 prototype tests; 6/6 IPA fixture tests; lint/typecheck/configuration, Bash/YAML/Python checks pass; production install excludes dev client; independent review corrected deployment-target validation | Not measured | Not measured | Not measured | Cloud compile and Sideloadly test pending; screen draft needs revision |
+| 2 first cloud build | 2026-09-30 / 0.1.0 (2.1.0) / Xcode 26.4.1 / [run #2](https://github.com/startupbydekkmitl001-pixel/ride-speed/actions/runs/36725855154) | Linux verification and both Mac jobs passed; device arm64/iOS 17 packaging verified; downloaded Release and development SHA-256 matched metadata | Not measured | Not measured | Not measured | Ready for Sideloadly installation; no claim of background capture; design revision pending |
 
 Each later phase adds actual figures and attaches exported logs. “Not measured” is a valid result; invented values are not.
