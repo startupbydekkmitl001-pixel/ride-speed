@@ -125,7 +125,9 @@ function AccountProfile() {
     if (busy || !session || !account.ready || !isAccountCurrent(scope)) return;
     setBusy(true); setMessage(null);
     try {
-      await account.setPreferences({ ghost_mode: ghost, route_audience: audience });
+      if (ghost !== account.value.preferences.ghost_mode) await online.setPresence(!ghost);
+      if (!isAccountCurrent(scope)) return;
+      await account.setPreferences({ route_audience: audience });
       if (!isAccountCurrent(scope)) return;
       await online.refresh();
       if (isAccountCurrent(scope)) setMessage({ key: "profile.privacySaved" });

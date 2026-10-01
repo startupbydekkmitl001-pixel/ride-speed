@@ -10,6 +10,7 @@ function compile(path, dependencies={}) {
  new Function('require','module','exports',js)(name=>{if(name in dependencies)return dependencies[name];throw Error(name);},out,out.exports);return out.exports;
 }
 const routeSync=compile('../src/features/routes/syncModel.ts');
+imports['../features/social/model']=compile('../src/features/social/model.ts',{'../routes/syncModel':routeSync});
 imports['../features/routes/localModel']=compile('../src/features/routes/localModel.ts',{'./syncModel':routeSync});
 imports['../features/routes/persistenceModel']=await import('../src/features/routes/persistenceModel.ts');
 const module = { exports: {} };
@@ -32,6 +33,30 @@ const fixture = () => {
 };
 const vehicle = id => ({ id, catalogId: null, category: 'scooter', brand: 'Honda', model: 'PCX160', engineCc: 156.93, year: '' });
 const flush = () => new Promise(r => setImmediate(r));
+const socialOperation = (handle='rider_one') => ({operationId:'dddddddd-dddd-4ddd-8ddd-dddddddddddd',request:{schema_version:1,action:'request_friend',handle},queuedAt:'2026-10-01T00:00:00.000Z',lastError:null});
+
+test('social outbox survives owner restart while stale A callbacks cannot write into a later A generation',async()=>{
+ const h=fixture();await h.store.hydrate(h.scope);const old=h.scope,op=socialOperation();
+ assert.equal(h.store.update(old,{socialOperations:[op]}),true);await h.store.flush();
+ await h.store.hydrate(h.switch('B'));assert.deepEqual(h.store.getSnapshot().owned.socialOperations,[]);
+ await h.store.hydrate(h.switch('A'));assert.deepEqual(h.store.getSnapshot().owned.socialOperations,[op]);
+ assert.equal(h.store.update(old,{socialOperations:[]}),false);assert.deepEqual(h.store.getSnapshot().owned.socialOperations,[op]);
+});
+
+test('malformed social operation fails hydration without erasing unrelated owner vehicles or recovery bytes',async()=>{
+ const h=fixture();await h.store.hydrate(h.scope);h.store.update(h.scope,{vehicles:[vehicle('retained')]});await h.store.flush();
+ const raw=JSON.parse(h.values.get('ride.local.v5.A'));raw.socialOperations=[{...socialOperation(),request:{schema_version:1,action:'set_presence',enabled:true}}];
+ const bytes=JSON.stringify(raw);h.values.set('ride.local.v5.A',bytes);await h.store.hydrate(h.switch('A'));
+ assert.equal(h.store.getSnapshot().error,'LOCAL_READ_FAILED');assert.equal(h.store.update(h.scope,{vehicles:[]}),false);
+ await h.store.flush();assert.equal(h.values.get('ride.local.v5.A'),bytes);
+});
+
+test('guest import never grants social requests or presence consent to the signed-in owner',async()=>{
+ const h=fixture();await h.store.hydrate(h.switch(null));h.store.update(h.scope,{vehicles:[vehicle('guest')]});await h.store.flush();
+ const guest=JSON.parse(h.values.get('ride.local.v5.guest'));guest.socialOperations=[socialOperation()];h.values.set('ride.local.v5.guest',JSON.stringify(guest));
+ await h.store.hydrate(h.switch('A'));await h.store.importGuest(h.scope);
+ assert.equal(h.store.getSnapshot().owned.vehicles.length,1);assert.deepEqual(h.store.getSnapshot().owned.socialOperations,[]);
+});
 test('hydration preserves full server-valid Unicode nickname and year',async()=>{
  const h=fixture();await h.store.hydrate(h.scope);const v={...vehicle('unicode'),nickname:'😀'.repeat(80),year:'😀'.repeat(30)};
  h.store.update(h.scope,{vehicles:[v]});await h.store.flush();await h.store.hydrate(h.switch('A'));

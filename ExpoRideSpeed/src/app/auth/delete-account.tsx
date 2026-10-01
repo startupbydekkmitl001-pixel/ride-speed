@@ -13,6 +13,7 @@ import { useRiderProfile } from "../../state/RiderProfile";
 import { clearRideAccount,useRide } from "../../state/RideState";
 import { clearGarageAccount } from "../../state/GarageState";
 import { clearRouteAccount } from "../../state/RouteState";
+import { clearSocialAccount } from "../../state/SocialState";
 
 export default function DeleteAccountScreen() {
   const { scope } = useAuth();
@@ -54,6 +55,7 @@ function AccountDeletion() {
           await AsyncStorage.setItem(key, JSON.stringify(value));
           ensure(); requested = value; setReceipt(value);
         }, async () => {
+          clearSocialAccount(scope); ensure();
           await ride.stopAsync(); ensure();
           await rider.clearAccount(); ensure();
           await clearOnboardingAccount(scope); ensure();

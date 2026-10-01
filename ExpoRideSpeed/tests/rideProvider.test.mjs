@@ -18,7 +18,9 @@ vm.runInNewContext(ts.transpileModule(syncSource, { compilerOptions: { module: t
   require: name => { if (name === './journalModel') return journalModel; throw Error(name); }, module: syncModule, exports: syncModule.exports, Date,
 });
 const errorModule = { exports: {} };
-vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../src/lib/i18n/errors.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, { module: errorModule, exports: errorModule.exports });
+const socialErrors = { exports: {} };
+vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../src/lib/i18n/m5a.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, { module:socialErrors, exports:socialErrors.exports });
+vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../src/lib/i18n/errors.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, { module: errorModule, exports: errorModule.exports, require:name=>{if(name==='./m5a')return socialErrors.exports;throw Error(name);} });
 
 /** Executes the real provider and journal model. Only React, platform capture and disk are ports. */
 function harness({ stored = [], scopeId = 'A', signedIn = false } = {}) {

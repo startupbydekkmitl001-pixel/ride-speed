@@ -2,7 +2,9 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
+import { createLegacyInternalAs } from './legacy-internal.mjs';
 let db;
+const legacyInternalAs=createLegacyInternalAs(()=>db);
 const A='00000000-0000-4000-8000-000000000041',B='00000000-0000-4000-8000-000000000042',C='00000000-0000-4000-8000-000000000043';
 const id=n=>`40000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const value=r=>r.rows[0].value;
@@ -52,13 +54,13 @@ test('compatibility post/challenge snapshots bind only trimmed independent parts
  // Existing profile-dependent social APIs stay intact; private route saves do not need a profile.
  await as(B,"select public.rs_upsert_profile('route_friend','Friend')");
  await as(B,'select public.rs_create_post($1)',[id(24)]);await as(B,"select public.rs_publish_post($1,'Test only','',null,$2,1,'community',null)",[id(24),id(23)]);
- await as(B,"select public.rs_create_challenge($1,$2,1,'group_ride',null,now()+interval '1 hour',now()+interval '2 hours')",[id(25),id(23)]);
+ await legacyInternalAs(B,"select public.rs_create_challenge($1,$2,1,'group_ride',null,now()+interval '1 hour',now()+interval '2 hours')",[id(25),id(23)]);
  for(const table of ['public.rs_posts','public.rs_challenges']){const snapshot=(await admin(`select route_snapshot from ${table} where id=$1`,[table.endsWith('posts')?id(24):id(25)])).rows[0].route_snapshot;assert.equal(snapshot.revision,1);assert.equal(snapshot.segments.length,2);assert.equal('stops' in snapshot,false);assert.equal('routeToken' in snapshot,false);assert.equal(JSON.stringify(snapshot).includes('home-secret'),false);}
 });
 test('friend and targeted-share projections revoke on block and do not restore stale generation',async()=>{
- await as(B,"select public.rs_upsert_profile('route_friend','Friend')");await as(C,"select public.rs_upsert_profile('route_peer','Peer')");await as(B,"select public.rs_request_friend('route_peer')");await as(C,"select public.rs_friend_action($1,'accept')",[B]);
+ await as(B,"select public.rs_upsert_profile('route_friend','Friend')");await as(C,"select public.rs_upsert_profile('route_peer','Peer')");await legacyInternalAs(B,"select public.rs_request_friend('route_peer')");await legacyInternalAs(C,"select public.rs_friend_action($1,'accept')",[B]);
  await save(B,id(30),id(31),0,doc('friends'));assert.ok(value(await as(C,'select public.rs_get_route_projection($1) as value',[id(31)])));
- await as(C,"select public.rs_friend_action($1,'block')",[B]);assert.equal(value(await as(C,'select public.rs_get_route_projection($1) as value',[id(31)])),null);assert.equal(value(await as(C,'select public.rs_get_route_projection($1) as value',[id(11)])),null);
+ await legacyInternalAs(C,"select public.rs_friend_action($1,'block')",[B]);assert.equal(value(await as(C,'select public.rs_get_route_projection($1) as value',[id(31)])),null);assert.equal(value(await as(C,'select public.rs_get_route_projection($1) as value',[id(11)])),null);
 });
 test('delete receipts and tombstones prevent lost-ACK replay from resurrecting routes',async()=>{
  const ack=value(await as(B,'select public.rs_delete_route_v2($1,$2,$3) as value',[id(40),id(11),3]));assert.equal(ack.action,'delete');assert.equal(ack.current_revision,null);assert.equal(value(await as(B,'select public.rs_get_route_owner($1) as value',[id(11)])),null);

@@ -60,6 +60,8 @@ The user has authorized native implementation and chosen MapLibre/OpenFreeMap + 
 
 ## M5 — friends, convoy and challenges
 
+- [x] M5A: exact-handle friend requests/actions, private blocked list, paged invitations, owner-only durable operation receipts, status consent/expiry and one scope-fenced provider. Migration007 deployed; Thai/English owner reads and guest gate checked. See `docs/design/m5a-acceptance-v5.md`.
+- [x] M5A: 397 app tests, 118 backend tests, typecheck/lint and all-platform export; commit the verified slice before continuing M5B. This does not complete the remaining M5 requirements below.
 - [ ] Friend username/QR/invite links/search and requests/block; server private presence riding/online/offline/ghost, explicit opt-in map sharing, expiry/revocation; notification token/preferences/outbox and credential gates.
 - [ ] Convoy host/join-code/session membership, rate-bound hashed expiring codes, private live positions 1–2 Hz; map markers actual authorized peers only.
 - [ ] Async route-time trials first; then approved closed-course live lobby/ready/countdown/running/finish/results/rematch state machine with server schedule/clock uncertainty. No user checkbox grants course approval.

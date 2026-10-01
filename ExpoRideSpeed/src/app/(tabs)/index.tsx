@@ -25,6 +25,7 @@ function MapHome(){
  const map=useRef<MapHandle>(null),centered=useRef(false),follow=useRef(false);
  const [status,setStatus]=useState<MapStatus>({state:'loading'}),[retry,setRetry]=useState(0),[expanded,setExpanded]=useState(false),[layers,setLayers]=useState(false),[permission,setPermission]=useState<TranslationKey|null>(null);
  const moving=ride.movingLocked;
+ const onlineCount=online.presence.filter(row=>row.online).length;
  const captureMessage=ride.message?errorKey(ride.message,'ride'):null;
  const {ready:rideReady,locate:locateOnce}=ride;
  useFocusEffect(useCallback(()=>{if(rideReady)void locateOnce();},[rideReady,locateOnce]));
@@ -45,7 +46,7 @@ function MapHome(){
     <Glass style={{borderRadius:28}}><Pressable accessibilityRole="button" accessibilityLabel={t('m2.map.planRoute')} disabled={moving} onPress={()=>router.push('/routes')} style={{minHeight:56,paddingHorizontal:18,flexDirection:'row',alignItems:'center',gap:12}}><Icon name="search-outline"/><T muted style={{flex:1}}>{t('m2.map.planRoute')}</T><Icon name="arrow-forward" size={18}/></Pressable></Glass>
     {status.state==='loading'&&<Row><ActivityIndicator color={app.colors.accent}/><T size={12} muted>{t('m2.map.loading')}</T></Row>}
    </View>
-   <View pointerEvents="box-none" style={{position:'absolute',top:insets.top+96,left:20}}><MapControl label={t('m2.map.friendsOnline')} icon="people-outline" disabled={moving} onPress={()=>router.push('/friends')}/>{!!online.presence.filter(p=>p.online).length&&<View style={{position:'absolute',top:-3,right:-3,borderRadius:10,backgroundColor:app.colors.good,paddingHorizontal:5}}><T numeric size={11} style={{color:app.colors.bg}}>{online.presence.filter(p=>p.online).length}</T></View>}</View>
+   <View pointerEvents="box-none" style={{position:'absolute',top:insets.top+96,left:20}}><MapControl label={onlineCount?t('m5a.mapLoadedOnline',{count:onlineCount}):t('m2.map.friendsOnline')} icon="people-outline" disabled={moving} onPress={()=>router.push('/friends')}/>{!!onlineCount&&<View style={{position:'absolute',top:-3,right:-3,borderRadius:10,backgroundColor:app.colors.good,paddingHorizontal:5}}><T numeric size={11} style={{color:app.colors.bg}}>{onlineCount}</T></View>}</View>
    <View pointerEvents="box-none" style={{position:'absolute',top:insets.top+96,right:20,gap:12}}>
     <MapControl label={t('m2.map.recenter')} icon="locate-outline" disabled={moving||ride.locating} onPress={()=>{void locate().catch(()=>setPermission('m2.map.locationDenied'));}}/>
     <MapControl label={t('m2.map.layers')} icon="layers-outline" disabled={moving} onPress={()=>setLayers(!layers)}/>

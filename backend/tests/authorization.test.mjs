@@ -2,8 +2,10 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
+import { createLegacyInternalAs } from './legacy-internal.mjs';
 
 let db;
+const legacyInternalAs=createLegacyInternalAs(()=>db);
 const A = '00000000-0000-4000-8000-000000000001';
 const B = '00000000-0000-4000-8000-000000000002';
 const C = '00000000-0000-4000-8000-000000000003';
@@ -44,11 +46,11 @@ test('profile data is private, sender cannot accept their own friend request, an
   await as(B, `select public.rs_upsert_profile('mint_ride','Mint')`);
   await as(C, `select public.rs_upsert_profile('stranger','Stranger')`);
   assert.equal((await as(C, 'select * from public.rs_profiles where user_id=$1', [A])).rows.length, 0);
-  await as(A, `select public.rs_request_friend('mint_ride')`);
-  await as(A, `select public.rs_request_friend('mint_ride')`);
+  await legacyInternalAs(A,`select public.rs_request_friend('mint_ride')`);
+  await legacyInternalAs(A,`select public.rs_request_friend('mint_ride')`);
   assert.equal((await admin('select * from public.rs_friendships')).rows.length, 1);
-  await assert.rejects(as(A, `select public.rs_friend_action($1,'accept')`, [B]), /recipient|permission|incoming/i);
-  await as(B, `select public.rs_friend_action($1,'accept')`, [A]);
+  await assert.rejects(legacyInternalAs(A,`select public.rs_friend_action($1,'accept')`, [B]), /recipient|permission|incoming/i);
+  await legacyInternalAs(B,`select public.rs_friend_action($1,'accept')`, [A]);
   assert.equal((await as(B, 'select * from public.rs_profiles where user_id=$1', [A])).rows.length, 1);
 });
 
@@ -74,14 +76,14 @@ test('saved-route revisions protect edits; explicit shares and challenge snapsho
   await as(A, 'select public.rs_share_route($1,$2,true)', [routeId,B]);
   assert.equal((await as(B, 'select * from public.rs_routes')).rows.length, 1);
   await assert.rejects(as(B, `select public.rs_save_route($1,1,'Stolen','motorcycle',$2::jsonb)`, [routeId,JSON.stringify(stops)]), /unavailable|conflict/i);
-  await as(A, `select public.rs_create_challenge($1,$2,1,'group_ride',null,now()+interval '1 hour',now()+interval '2 hours')`, [challengeId,routeId]);
-  await as(A, `select public.rs_invite_challenge($1,$2)`, [challengeId,B]);
-  await assert.rejects(as(C, `select public.rs_challenge_action($1,'accept')`, [challengeId]), /unavailable|invitation/i);
-  await as(B, `select public.rs_challenge_action($1,'accept')`, [challengeId]);
+  await legacyInternalAs(A,`select public.rs_create_challenge($1,$2,1,'group_ride',null,now()+interval '1 hour',now()+interval '2 hours')`, [challengeId,routeId]);
+  await legacyInternalAs(A,`select public.rs_invite_challenge($1,$2)`, [challengeId,B]);
+  await assert.rejects(legacyInternalAs(C,`select public.rs_challenge_action($1,'accept')`, [challengeId]), /unavailable|invitation/i);
+  await legacyInternalAs(B,`select public.rs_challenge_action($1,'accept')`, [challengeId]);
   await as(A, `select public.rs_save_route($1,1,'Changed later','motorcycle',$2::jsonb)`, [routeId,JSON.stringify(stops)]);
   const snapshot = (await as(B, 'select route_snapshot from public.rs_challenges where id=$1',[challengeId])).rows[0].route_snapshot;
   assert.equal(snapshot.title,'Weekend'); assert.equal(snapshot.revision,1);
-  await assert.rejects(as(A, `select public.rs_create_challenge(gen_random_uuid(),$1,2,'timed_race',gen_random_uuid(),now()+interval '1 hour',now()+interval '2 hours')`,[routeId]), /closed-course/i);
+  await assert.rejects(legacyInternalAs(A,`select public.rs_create_challenge(gen_random_uuid(),$1,2,'timed_race',gen_random_uuid(),now()+interval '1 hour',now()+interval '2 hours')`,[routeId]), /closed-course/i);
 });
 
 test('posts require explicit audience, all supplied speeds remain self-reported, private media cannot be signed by arbitrary readers', async () => {
@@ -103,31 +105,31 @@ test('posts require explicit audience, all supplied speeds remain self-reported,
 
 test('presence is opt-in, server TTL expires, and block revokes shares, posts, invitations and presence generations', async () => {
   await assert.rejects(as(A,'select public.rs_heartbeat()'),/disabled/i);
-  await as(A,'select public.rs_set_presence(true)');
+  await legacyInternalAs(A,'select public.rs_set_presence(true)');
   await as(A,'select public.rs_heartbeat()');
   const before = (await as(B,'select * from public.rs_friend_presence()')).rows[0];
   assert.equal(before.online,true);
   assert.equal((await as(C,'select * from public.rs_friend_presence()')).rows.length,0);
   await admin("update ride_private.presence_sessions set expires_at=now()-interval '1 second'");
   assert.equal((await as(B,'select * from public.rs_friend_presence()')).rows[0].online,false);
-  await as(B,`select public.rs_friend_action($1,'block')`,[A]);
+  await legacyInternalAs(B,`select public.rs_friend_action($1,'block')`,[A]);
   assert.equal((await as(B,'select * from public.rs_routes')).rows.length,0);
   assert.equal((await as(B,'select * from public.rs_posts')).rows.length,0);
   assert.equal((await as(B,'select * from public.rs_challenges')).rows.length,0);
   assert.equal((await as(B,'select * from public.rs_friend_presence()')).rows.length,0);
   assert.equal((await as(B,'select ride_private.can_read_presence($1) as allowed',[before.topic])).rows[0].allowed,false);
-  await assert.rejects(as(A,`select public.rs_friend_action($1,'accept')`,[B]),/unavailable/i);
-  await as(B,`select public.rs_friend_action($1,'unblock')`,[A]);
+  await assert.rejects(legacyInternalAs(A,`select public.rs_friend_action($1,'accept')`,[B]),/unavailable/i);
+  await legacyInternalAs(B,`select public.rs_friend_action($1,'unblock')`,[A]);
   await admin("update public.rs_friendships set updated_at=now()-interval '2 days'");
-  await as(A,"select public.rs_request_friend('mint_ride')");
-  await as(B,"select public.rs_friend_action($1,'accept')",[A]);
+  await legacyInternalAs(A,"select public.rs_request_friend('mint_ride')");
+  await legacyInternalAs(B,"select public.rs_friend_action($1,'accept')",[A]);
   assert.equal((await as(B,'select * from public.rs_routes')).rows.length,0);
   assert.equal((await as(B,'select * from public.rs_challenges')).rows.length,0);
-  await assert.rejects(as(B,"select public.rs_challenge_action($1,'accept')",[challengeId]),/unavailable/i);
-  await as(A,'select public.rs_invite_challenge($1,$2)',[challengeId,B]);
+  await assert.rejects(legacyInternalAs(B,"select public.rs_challenge_action($1,'accept')",[challengeId]),/unavailable/i);
+  await legacyInternalAs(A,'select public.rs_invite_challenge($1,$2)',[challengeId,B]);
   assert.equal((await as(B,'select * from public.rs_challenges')).rows.length,1);
   assert.equal((await as(B,'select state from public.rs_challenge_members where challenge_id=$1 and user_id=$2',[challengeId,B])).rows[0].state,'invited');
-  await as(B,"select public.rs_friend_action($1,'block')",[A]);
+  await legacyInternalAs(B,"select public.rs_friend_action($1,'block')",[A]);
 });
 
 test('media ownership and server-only broadcast resist direct impersonation', async () => {

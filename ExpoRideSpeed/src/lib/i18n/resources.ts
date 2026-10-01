@@ -4,6 +4,7 @@ import { m3En, m3Th } from "./m3";
 import { m4En, m4Th } from "./m4";
 import { m4AdapterEn, m4AdapterTh } from "./m4Adapter";
 import { m4CompatibilityEn, m4CompatibilityTh } from "./m4Compatibility";
+import { m5aEn, m5aTh } from "./m5a";
 
 const en = {
   ...m1En,
@@ -12,6 +13,7 @@ const en = {
   ...m4En,
   ...m4AdapterEn,
   ...m4CompatibilityEn,
+  ...m5aEn,
   "common.close": "Close",
   "common.retry": "Try again",
   "common.wait": "Just a moment",
@@ -173,6 +175,7 @@ const th: Record<TranslationKey, string> = {
   ...m4Th,
   ...m4AdapterTh,
   ...m4CompatibilityTh,
+  ...m5aTh,
   "common.close": "ปิด",
   "common.retry": "ลองอีกครั้ง",
   "common.wait": "รอสักครู่",

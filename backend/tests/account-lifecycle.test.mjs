@@ -2,8 +2,10 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
+import { createLegacyInternalAs } from './legacy-internal.mjs';
 
 let db;
+const legacyInternalAs=createLegacyInternalAs(()=>db);
 const A='00000000-0000-4000-8000-000000000011', B='00000000-0000-4000-8000-000000000012', C='00000000-0000-4000-8000-000000000013';
 const D='00000000-0000-4000-8000-000000000014';
 const U='10000000-0000-4000-8000-000000000011', V='10000000-0000-4000-8000-000000000012';
@@ -44,7 +46,7 @@ before(async()=> {
     if(file==='202609300001_online_foundation.sql') {
       await as(A,"select public.rs_upsert_profile('existing_a','Existing A')");
       await as(B,"select public.rs_upsert_profile('existing_b','Existing B')");
-      await as(B,'select public.rs_set_presence(true)');
+      await legacyInternalAs(B,'select public.rs_set_presence(true)');
     }
   }
 });
@@ -76,9 +78,9 @@ test('account state uses optimistic revisions and a bounded preferences whitelis
 });
 
 test('ghost mode revokes server presence and explicit legacy consent synchronizes the preference',async()=> {
-  await as(A,"select public.rs_request_friend('existing_b')");
-  await as(B,"select public.rs_friend_action($1,'accept')",[A]);
-  await as(A,'select public.rs_set_presence(true)');
+  await legacyInternalAs(A,"select public.rs_request_friend('existing_b')");
+  await legacyInternalAs(B,"select public.rs_friend_action($1,'accept')",[A]);
+  await legacyInternalAs(A,'select public.rs_set_presence(true)');
   await as(A,'select public.rs_heartbeat()');
   const state=result(await as(A,'select public.rs_get_account_state() as value'));
   assert.equal(state.preferences.ghost_mode,false);
@@ -93,7 +95,7 @@ test('ghost mode revokes server presence and explicit legacy consent synchronize
   assert.equal(visible.revision,next.revision+1);
   await as(A,'select public.rs_heartbeat()');
   assert.equal((await as(B,'select * from public.rs_friend_presence()')).rows[0].online,true);
-  await as(A,'select public.rs_set_presence(true)');
+  await legacyInternalAs(A,'select public.rs_set_presence(true)');
   assert.equal(result(await as(A,'select public.rs_get_account_state() as value')).preferences.ghost_mode,false);
 });
 
@@ -118,10 +120,10 @@ test('avatar reservations bind UUID, MIME and owner; arbitrary or overwritten pa
 
 test('avatar visibility follows friendship and replacement checks actual private object size',async()=> {
   assert.equal(result(await as(C,'select public.rs_avatar_for_view($1) as value',[A])),null);
-  await as(A,"select public.rs_request_friend('existing_b')");
-  await as(B,"select public.rs_friend_action($1,'accept')",[A]);
+  await legacyInternalAs(A,"select public.rs_request_friend('existing_b')");
+  await legacyInternalAs(B,"select public.rs_friend_action($1,'accept')",[A]);
   assert.equal(result(await as(B,'select public.rs_avatar_for_view($1) as value',[A])).avatar_id,U);
-  await as(B,"select public.rs_friend_action($1,'block')",[A]);
+  await legacyInternalAs(B,"select public.rs_friend_action($1,'block')",[A]);
   assert.equal(result(await as(B,'select public.rs_avatar_for_view($1) as value',[A])),null);
   const reserved=result(await as(A,"select public.rs_reserve_avatar($1,'image/png') as value",[V]));
   await as(A,"insert into storage.objects(bucket_id,name,metadata) values('ride-avatars',$1,'{\"size\":1048577,\"mimetype\":\"image/png\"}')",[reserved.path]);

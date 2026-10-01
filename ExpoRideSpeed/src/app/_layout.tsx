@@ -15,6 +15,7 @@ import { RiderProfileProvider } from "../state/RiderProfile";
 import { RideProvider,useRide } from "../state/RideState";
 import { GarageProvider } from "../state/GarageState";
 import { RouteProvider } from "../state/RouteState";
+import { SocialProvider } from "../state/SocialState";
 import { Button, T } from "../components/ui";
 import { errorKey, useI18n } from "../lib/i18n";
 
@@ -74,11 +75,9 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AuthProvider>
         <AppProvider>
-          <OnlineProvider>
             <RiderProfileProvider>
-              <GarageProvider><RideProvider><RouteProvider><MotionProvider><Navigation /></MotionProvider></RouteProvider></RideProvider></GarageProvider>
+              <GarageProvider><RideProvider><RouteProvider><SocialProvider><OnlineProvider><MotionProvider><Navigation /></MotionProvider></OnlineProvider></SocialProvider></RouteProvider></RideProvider></GarageProvider>
             </RiderProfileProvider>
-          </OnlineProvider>
         </AppProvider>
       </AuthProvider>
     </SafeAreaProvider>

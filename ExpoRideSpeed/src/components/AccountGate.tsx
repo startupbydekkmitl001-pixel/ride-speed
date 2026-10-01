@@ -5,7 +5,7 @@ import { useOnline } from "../state/OnlineState";
 import { errorKey, useI18n } from "../lib/i18n";
 export function AccountGate({ children }: { children: React.ReactNode }) {
   const { session, ready } = useAuth(),
-    { profileReady, error, refresh } = useOnline();
+    { ready: socialReady, loading, profileReady, error, refresh } = useOnline();
   const { t } = useI18n();
   if (!ready)
     return (
@@ -38,6 +38,8 @@ export function AccountGate({ children }: { children: React.ReactNode }) {
         <Button label={t("common.retry")} onPress={() => void refresh()} />
       </Empty>
     );
+  if (loading || (!socialReady && !error))
+    return <Empty icon="person-circle-outline" title={t("account.loading")} body={t("common.wait")} />;
   if (!profileReady)
     return (
       <Empty

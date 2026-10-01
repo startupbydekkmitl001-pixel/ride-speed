@@ -1,12 +1,15 @@
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Alert, Image, Switch, View } from "react-native";
+import { Alert, Image, View } from "react-native";
 import { AccountGate } from "../../components/AccountGate";
-import Challenges from "../../components/Challenges";
+import InvitationsScreen from "../../features/social/InvitationsScreen";
+import FriendsScreen from "../../features/social/FriendsScreen";
+import {useI18n} from "../../lib/i18n";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
+import {useRide} from "../../state/RideState";
 import {
   Button,
   Empty,
-  Field,
   Heading,
   Icon,
   IconButton,
@@ -24,8 +27,6 @@ import {
   isAccountCurrent,
   useAuth,
 } from "../../state/AuthState";
-import { useOnline } from "../../state/OnlineState";
-import { useNow } from "../../lib/useNow";
 
 type Post = {
   id: string;
@@ -320,267 +321,14 @@ function Feed() {
     </View>
   );
 }
-function Friends() {
-  const now = useNow();
-  const { session, scope } = useAuth();
-  const actionLock = useRef(false);
-  const { colors } = useApp(),
-    online = useOnline();
-  const [handle, setHandle] = useState(""),
-    [message, setMessage] = useState(""),
-    [busy, setBusy] = useState(false);
-  async function action(fn: () => Promise<unknown>) {
-    if (actionLock.current || !isAccountCurrent(scope)) return;
-    actionLock.current = true;
-    setBusy(true);
-    setMessage("");
-    try {
-      await fn();
-      if (isAccountCurrent(scope)) await online.refresh();
-    } catch (e) {
-      if (isAccountCurrent(scope))
-        setMessage(e instanceof Error ? e.message : "ลองอีกครั้ง");
-    } finally {
-      actionLock.current = false;
-      if (isAccountCurrent(scope)) setBusy(false);
-    }
-  }
-  return (
-    <View style={{ gap: 20 }}>
-      <Panel>
-        <Row style={{ justifyContent: "space-between" }}>
-          <View style={{ flex: 1 }}>
-            <T weight="semibold">แสดงสถานะออนไลน์</T>
-            <T size={12} muted>
-              เฉพาะเพื่อน · ไม่แชร์ตำแหน่ง
-            </T>
-          </View>
-          <Switch
-            accessibilityLabel="แสดงสถานะออนไลน์ให้เพื่อน"
-            value={online.optedIn}
-            disabled={busy}
-            onValueChange={(enabled) =>
-              void action(() => online.setPresence(enabled))
-            }
-            trackColor={{ true: colors.accent }}
-          />
-        </Row>
-      </Panel>
-      <Field
-        label="เพิ่มเพื่อนด้วยชื่อผู้ใช้"
-        placeholder="rider_name"
-        value={handle}
-        onChangeText={setHandle}
-        autoCapitalize="none"
-        autoCorrect={false}
-      />
-      <Button
-        icon="person-add-outline"
-        label="ส่งคำขอเป็นเพื่อน"
-        disabled={!handle.trim()}
-        busy={busy}
-        onPress={() =>
-          void action(async () => {
-            const result = await accountRpc<string>(
-              scope,
-              session,
-              "rs_request_friend",
-              { p_handle: handle.trim() },
-            );
-            if (!isAccountCurrent(scope)) return;
-            setHandle("");
-            setMessage(
-              result === "incoming"
-                ? "เพื่อนส่งคำขอมาแล้ว กดยอมรับด้านล่าง"
-                : result === "accepted"
-                  ? "เป็นเพื่อนกันอยู่แล้ว"
-                  : "ส่งคำขอแล้ว",
-            );
-          })
-        }
-      />
-      {!!message && <Note>{message}</Note>}
-      {!!online.error && <Note error>{online.error}</Note>}
-      <Row style={{ justifyContent: "space-between" }}>
-        <T size={21} weight="semibold">
-          เพื่อนร่วมทาง
-        </T>
-        <IconButton
-          name="refresh-outline"
-          label="รีเฟรชเพื่อน"
-          onPress={() => void online.refresh()}
-        />
-      </Row>
-      {!online.friends.length && (
-        <Empty
-          icon="people-outline"
-          title="ชวนเพื่อนมาเจอกัน"
-          body="ใช้ชื่อผู้ใช้ส่งคำขอ เพื่อนจะต้องกดยอมรับก่อนแชร์สถานะและส่งคำท้า"
-        />
-      )}
-      {online.friends.map((friend) => {
-        const p = online.presence.find((row) => row.user_id === friend.user_id),
-          isOnline =
-            !!p?.online && !!p.expires_at && Date.parse(p.expires_at) > now;
-        return (
-          <Panel key={friend.user_id}>
-            <Row>
-              <View
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 22,
-                  backgroundColor: colors.raised,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <T size={22}>{friend.display_name.slice(0, 1)}</T>
-              </View>
-              <View style={{ flex: 1 }}>
-                <T weight="semibold">{friend.display_name}</T>
-                <T size={12} muted>
-                  @{friend.handle}
-                </T>
-              </View>
-              {friend.state === "accepted" && (
-                <Row style={{ gap: 5 }}>
-                  <View
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: 3,
-                      backgroundColor: isOnline ? colors.good : colors.muted,
-                    }}
-                  />
-                  <T size={11} muted>
-                    {isOnline ? "ออนไลน์" : "ออฟไลน์"}
-                  </T>
-                </Row>
-              )}
-            </Row>
-            {friend.state === "pending" ? (
-              friend.direction === "incoming" ? (
-                <Row>
-                  <Button
-                    small
-                    label="ยอมรับ"
-                    disabled={busy}
-                    onPress={() =>
-                      void action(() =>
-                        accountRpc(scope, session, "rs_friend_action", {
-                          p_other: friend.user_id,
-                          p_action: "accept",
-                        }),
-                      )
-                    }
-                    style={{ flex: 1 }}
-                  />
-                  <Button
-                    small
-                    secondary
-                    label="ปฏิเสธ"
-                    disabled={busy}
-                    onPress={() =>
-                      void action(() =>
-                        accountRpc(scope, session, "rs_friend_action", {
-                          p_other: friend.user_id,
-                          p_action: "decline",
-                        }),
-                      )
-                    }
-                    style={{ flex: 1 }}
-                  />
-                </Row>
-              ) : (
-                <Button
-                  small
-                  secondary
-                  label="ยกเลิกคำขอ"
-                  disabled={busy}
-                  onPress={() =>
-                    void action(() =>
-                      accountRpc(scope, session, "rs_friend_action", {
-                        p_other: friend.user_id,
-                        p_action: "cancel",
-                      }),
-                    )
-                  }
-                />
-              )
-            ) : (
-              <Row>
-                <Button
-                  small
-                  secondary
-                  label="นำเพื่อนออก"
-                  onPress={() =>
-                    void action(() =>
-                      accountRpc(scope, session, "rs_friend_action", {
-                        p_other: friend.user_id,
-                        p_action: "remove",
-                      }),
-                    )
-                  }
-                />
-                <Button
-                  small
-                  secondary
-                  label="บล็อก"
-                  onPress={() =>
-                    Alert.alert(
-                      "บล็อกเพื่อน?",
-                      "หยุดแสดงสถานะและแชร์ข้อมูลระหว่างกัน",
-                      [
-                        { text: "ยกเลิก", style: "cancel" },
-                        {
-                          text: "บล็อก",
-                          onPress: () =>
-                            void action(() =>
-                              accountRpc(scope, session, "rs_friend_action", {
-                                p_other: friend.user_id,
-                                p_action: "block",
-                              }),
-                            ),
-                        },
-                      ],
-                    )
-                  }
-                />
-              </Row>
-            )}
-          </Panel>
-        );
-      })}
-    </View>
-  );
-}
 export default function CommunityScreen() {
-  const { scope } = useAuth();
-  const [tab, setTab] = useState<"feed" | "friends" | "challenges">("feed");
-  return (
-    <Screen>
-      <Heading eyebrow="BETTER TOGETHER" title="เพื่อนร่วมทาง" />
-      <Segments
-        items={[
-          { value: "feed", label: "ชุมชน" },
-          { value: "friends", label: "เพื่อน" },
-          { value: "challenges", label: "ชาเลนจ์" },
-        ]}
-        value={tab}
-        onChange={setTab}
-      />
-      <AccountGate>
-        <View key={scope.generation}>
-          {tab === "feed" ? (
-            <Feed />
-          ) : tab === "friends" ? (
-            <Friends />
-          ) : (
-            <Challenges />
-          )}
-        </View>
-      </AccountGate>
-    </Screen>
-  );
+  const {scope}=useAuth(),{colors}=useApp(),{movingLocked}=useRide(),{t}=useI18n(),insets=useSafeAreaInsets();
+  const [tab,setTab]=useState<"feed"|"friends"|"challenges">("feed");
+  return <View style={{flex:1,backgroundColor:colors.bg}}>
+    <View style={{paddingHorizontal:24,paddingTop:insets.top+18,paddingBottom:12,gap:18}}>
+      <Heading eyebrow={t('m5a.communityEyebrow')} title={t('m5a.communityTitle')}/>
+      <Segments items={[{value:'feed',label:t('m5a.community')},{value:'friends',label:t('m5a.friends')},{value:'challenges',label:t('m5a.invitations')}]} value={tab} onChange={value=>{if(!movingLocked)setTab(value);}}/>
+    </View>
+    {tab==='feed'?<Screen style={{paddingTop:8}}><AccountGate><View key={scope.generation}><Feed/></View></AccountGate></Screen>:tab==='friends'?<FriendsScreen key={scope.generation} embedded/>:<InvitationsScreen key={scope.generation} embedded/>}
+  </View>;
 }
