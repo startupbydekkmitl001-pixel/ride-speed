@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 2,
+  "id": "garage-car-dark",
+  "video": "build/garage-car-dark.mp4",
+  "width": 1280,
+  "height": 720,
+  "fps": 60,
+  "frames": 480,
+  "durationSeconds": 8,
+  "bytes": 50047,
+  "codec": "h264",
+  "pixelFormat": "yuv420p",
+  "color": {
+    "range": "tv",
+    "space": "bt709",
+    "transfer": "bt709",
+    "primaries": "bt709"
+  },
+  "audioTracks": 0,
+  "seam": {
+    "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+    "sourceEndpointMAE0To255": 0,
+    "sourceVelocityEndpointIdentical": true,
+    "encodedSeamMAE0To255": 0.10068865740740741,
+    "encodedOrdinaryMeanMAE0To255": 0.0027030053931802363,
+    "encodedOrdinaryMaximumMAE0To255": 0.09227430555555556,
+    "acceptedMaximumMAE0To255": 0.23534288194444444,
+    "passed": true
+  },
+  "readingZone": {
+    "rectSourcePixels": [
+      0,
+      0,
+      1280,
+      452
+    ],
+    "sourceMaximumChannelError0To255": 0,
+    "encodedMaximumChannelError0To255": 0,
+    "encodedMaximumTemporalChannelChange0To255": 0,
+    "nominalText": "#FFFFFF",
+    "minimumEncodedContrast": 21,
+    "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+  },
+  "motionMask": {
+    "resolution": [
+      320,
+      180
+    ],
+    "outsideReadingZoneChangedPixelCount": 5055,
+    "channelRangeThreshold0To255": 2
+  }
+}

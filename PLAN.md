@@ -89,7 +89,7 @@ The user has authorized native implementation and chosen MapLibre/OpenFreeMap + 
 
 ## M8 — motion, performance, accessibility/store prep
 
-- [ ] Complete periodic garage×3, podium×3, period headers, auth/onboard, empty, lobby and HUD loop family; ≤1.5 MB each/poster/manifest/hash/seam proof, ≤20 MB total or private CDN caching.
+- [x] Render periodic garage×3, podium×3, period headers, auth/onboard, empty, lobby, HUD and profile loop family in both themes;28outputs/1,552,874bytes with manifest/hash/source+encoded seam/poster proofs. Integration/hardware gates remain below; see motion/DELIVERY.md.
 - [ ] Native route/presence/needle/digits/rank/glass touch polish; no layout/blur/per-frame React updates, offscreen videos stop and ≤2 budget globally.
 - [ ] Dynamic Type/screens readers/44 pt/Thai tones/Reduce Motion/Transparency, safe-area/landscape and all offline/error states; measured native iPhone/Android performance matrix.
 - [ ] Android artifact pipeline alongside verified unsigned iOS builds; provider/entitlement/legal/account deletion/UGC moderation/background rationale readiness. Publish only truthful build/source acceptance and explicit remaining hardware/store gates.

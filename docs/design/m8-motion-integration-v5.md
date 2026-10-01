@@ -1,0 +1,13 @@
+# M8 motion integration — partial source acceptance
+
+1 October 2026. This records the completed material family and the first integrated screens; it does not mark the whole M8 milestone complete.
+
+All 14 roles have dark/light original procedural materials: 28 silent H.264 loops at1280×720/60fps,6–8seconds. Video+poster files total1,552,874bytes; the largest MP4 is78,304bytes. The app manifest includes source/media/proof hashes and the typed registry resolves every role/theme without dynamic Metro paths. Source and encoded seams, reading zones and poster handoff were checked; see `/motion/DELIVERY.md` for exact measurements and reproduction.
+
+Garage category cards resolve their own material, profile uses the unified license material, and auth/onboarding share a native-text hero with edge light. The expanded HUD uses the quiet speedometer material at35%opacity; compact HUD has no video. Its caller explicitly permits playback only while stationary. Existing global FIFO pause-before-grant leases limit playback to two, revoke on blur/background, and use posters under Reduce Motion, unknown native power, Low Power Mode or failed decode. Poster theme fallback uses the same central theme as the content. These backgrounds contain no identity, measurements, countdowns or baked text.
+
+Actual browser review at428×926 covered the pure-black map home, expanded unavailable-GPS instrument, Thai sign-in hero and isolated guest race gate. Map attribution remains visible; expanding the instrument releases the map renderer. A visible speedometer video reported1280×720, muted, looping and playing. No live GPS was requested, no ride was fabricated and no account credentials were entered for these visual checks. Screenshots are kept in ignored `build/review-v5/m8`; profile dark/light evidence from the earlier owner review remains separate. Web playback is not an iPhone FPS, power or native-font measurement.
+
+Fresh integration verification:687 app tests passed with0failures/skips; TypeScript and full app lint passed;6 independent motion/media/registry tests passed. These values are the source snapshot at this integration pass, not permanent totals. Further native export/build and later ranked/community changes need their own checks.
+
+Remaining M8 acceptance: integrate real-data ranked/lobby/empty surfaces; inspect Thai/English light/dark text, saved photos and Dynamic Type at native scale; measure gesture/frame pacing, startup,50markers,30-minute memory/battery and power/accessibility transitions on iPhone14Plus/iOS26 and mid-range Android. The iPhone14Plus target is60fps.120Hz requires different supported hardware. Encoding at60fps cannot prove app performance.

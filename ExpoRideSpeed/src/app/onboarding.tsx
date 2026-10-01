@@ -9,6 +9,7 @@ import { errorKey, useI18n, type TranslationKey } from "../lib/i18n";
 import { useApp } from "../state/AppState";
 import { accountRpc, isAccountCurrent, useAuth } from "../state/AuthState";
 import { useRiderProfile } from "../state/RiderProfile";
+import { MotionHero } from '../features/motion';
 
 export default function OnboardingScreen() {
   const { scope } = useAuth();
@@ -68,11 +69,11 @@ function AccountOnboarding() {
       <T size={12} muted>{t("onboard.progress", { step: index + 1 })}</T>
     </Row>
     <Row>{[0, 1, 2, 3].map(item => <View key={item} style={{ flex: 1, height: 3, borderRadius: 2, backgroundColor: item <= index ? colors.accent : colors.line }} />)}</Row>
-    <View style={{ paddingTop: 24, gap: 24 }}>
+    <MotionHero>
       <Icon name={step === "location" ? "navigate-outline" : step === "profile" ? "person-outline" : step === "vehicle" ? "key-outline" : "language-outline"} size={36} color={colors.accent} />
       <Heading eyebrow="" title={t(title)} />
       <T muted>{t(body)}</T>
-    </View>
+    </MotionHero>
     {!status.ready && <Note>{t("onboard.loading")}</Note>}
     {step === "language" && <>
       <Segments items={[{ value: "system", label: t("profile.system") }, { value: "th", label: t("profile.languageThai") }, { value: "en", label: t("profile.languageEnglish") }]} value={data.language} onChange={language => { update({ language }); }} />

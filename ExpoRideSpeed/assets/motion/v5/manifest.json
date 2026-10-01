@@ -1,21 +1,67 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "generator": {
     "framework": "Remotion",
     "version": "4.0.531",
+    "node": "v24.14.0",
+    "browser": "Chrome/154.0.8037.58",
+    "ffmpeg": "ffmpeg version N-124675-g468a743af1-20260529 Copyright (c) 2000-2026 the FFmpeg developers",
+    "ffprobe": "ffprobe version N-124675-g468a743af1-20260529 Copyright (c) 2007-2026 the FFmpeg developers",
+    "graphics": "swangle / software host baseline",
     "entry": "motion/src/index.jsx",
-    "command": "cd motion && npm ci && npm run render"
+    "command": "cd motion && npm ci && npm run render -- --all",
+    "encode": {
+      "codec": "h264",
+      "crf": 24,
+      "pixelFormat": "yuv420p",
+      "colorSpace": "bt709",
+      "frameCapture": "png",
+      "concurrency": 4
+    }
+  },
+  "aliases": {
+    "garage-scooter": "garage-scooter-dark"
+  },
+  "expectedAssetCount": 28,
+  "complete": true,
+  "budget": {
+    "maximumVideoBytes": 1500000,
+    "maximumFamilyBytes": 20000000,
+    "familyBytes": 1552874,
+    "maximumConcurrentPlayback": 2
+  },
+  "provenance": {
+    "authorship": "Original procedural vectors created for Ride Speed",
+    "externalAssets": [],
+    "sourceHashNormalization": "UTF-8 text with CRLF normalized to LF; media/proof/validation hashes use exact bytes",
+    "referenceUse": "Principles only: travelling edge illumination, independent material planes and stable opaque reading zones. No reference media/layout/assets redistributed.",
+    "sourceSha256": {
+      "motion/src/catalog.mjs": "98f80a5f659732fff6636cc82d660249ab7e6dae4beb99696c734fd41833aef7",
+      "motion/src/MaterialLoop.jsx": "073d471c9a7bc0c5f2ee4dbd3576571b231bdbd0facb3efaa0cde2270bd76478",
+      "motion/src/index.jsx": "c6666dbb82e6604a758ed8701e84c39921ad241b41bcc3bf1a0695ce945006bb",
+      "motion/scripts/render.mjs": "55e7100d6e3fcd76c38673f50870bea763b966576fe7dc055073b138be3af6b5",
+      "motion/scripts/verify.mjs": "6c3644b5ed8df072a9a14a6a1f02d73246737af8f02f60c0bef85dbc8e99835b",
+      "motion/scripts/media-tools.mjs": "da342bc8776dee5e0cddbd25b6dd6fa738c097acb853ee1fceefab0d4986c974",
+      "motion/scripts/generate-registry.mjs": "26a124eee8f368c233e246df65f2fa641d1f747c620176314ea3c1403678b355",
+      "motion/scripts/inspect.py": "1b204baaf5a4dcd9d6a7736c0beeab05e72a7dc43cceeb8f27f69896d96eebff",
+      "motion/package.json": "2b8b655daad7fd364fcf40dcff19c9decb5918b60ae98a72bcfe5daa7019b581",
+      "motion/package-lock.json": "e332e858a80891bb1e32580230a365184206d13489aaa9e38da9de182d780a4d",
+      "ExpoRideSpeed/src/lib/theme.ts": "eb644aaa4c326728a45e253299a2f37192ef88b74c0228d300b87299229e2479"
+    }
   },
   "assets": {
-    "garage-scooter": {
-      "component": "AmbientLoop",
-      "composition": "GarageScooter",
-      "video": "garage-scooter.mp4",
-      "poster": "garage-scooter-poster.jpg",
-      "videoSha256": "77bf0b4e272ad3447a942b9ff4e7308234c31a063f37c727d8ad1882b830d4ac",
-      "posterSha256": "b8ecea63aff356e43048dc353646d57f876616432e2b9aeee41742d0be2fd735",
-      "videoBytes": 117180,
-      "posterBytes": 8455,
+    "garage-scooter-dark": {
+      "role": "garage-scooter",
+      "theme": "dark",
+      "component": "GarageCard / scooter",
+      "description": "Rounded painted-panel sleeve",
+      "composition": "garage-scooter-dark",
+      "video": "garage-scooter-dark.mp4",
+      "poster": "garage-scooter-dark-poster.jpg",
+      "videoSha256": "0fa053e19940161d50ac9f6c5d338702dd0deadd78fc95a47c7cd5bf304ec45d",
+      "posterSha256": "e6bad6051fdba358bccf2b426924f759272dd749160bad520ad3d6b0815513dc",
+      "videoBytes": 61846,
+      "posterBytes": 7910,
       "width": 1280,
       "height": 720,
       "frames": 360,
@@ -23,29 +69,2169 @@
       "durationSeconds": 6,
       "codec": "h264",
       "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
       "audio": false,
       "accent": "#FF5A1F",
       "background": "#000000",
-      "provenance": {
-        "authorship": "Original procedural vector material created for Ride Speed",
-        "externalAssets": [],
-        "referenceUse": "Principles only: slow travelling edge light, depth from reflection, stable reading zone. No source media copied.",
-        "sourceSha256": {
-          "motion/src/GarageScooter.jsx": "4650bf84953d6907acdb910aa725c9620d56fa2a974e4262fdac2a6850849d70",
-          "motion/src/parameters.mjs": "9300db5a7e4e3b9bc4929840cafe63277a8e6ecfc89f2c066da3b559dd91d6e2",
-          "motion/src/index.jsx": "98b83dba9c0e076aa866e6f800d211418b0267e3f8ac700bef9471eee9b2f3ac",
-          "motion/scripts/render.mjs": "50ff881e577019b9e111532461cc776e6216617ffc4277490053b4c11fc34fc0",
-          "motion/scripts/verify.mjs": "759a2adcde0f0a7db25924b3f293419f6310bdade4acf54820925b06a0677155"
-        }
+      "safeZone": [
+        0,
+        0,
+        780,
+        720
+      ],
+      "proofFrames": {
+        "0": "4e79785f6c5e5af43f982e16f23bd89dd3fa597f42ce1da3fe5380813f1a612b",
+        "1": "96313c2b39976007b2b2f25c6ea1b41c2536fd1a1057ce8aca5011001a15bd82",
+        "90": "c6ee187d48f0337b8abcbcf9573399dc558abda914d5011cd8cd95dcee2d0838",
+        "180": "c760e5163336f97dce5843e0475a3c2aa77c87e0022c394459e73d187ae4554f",
+        "270": "59d0d450e530454210d632fc5aa3c4d70659f6679fce865576231f8c9bcfd3e6",
+        "359": "fccf015f2b6018b157aa62264f436f3ec314a48a445807390ac84991a8a36fa6",
+        "360": "4e79785f6c5e5af43f982e16f23bd89dd3fa597f42ce1da3fe5380813f1a612b"
       },
+      "validation": "motion/validation/garage-scooter-dark.json",
+      "validationSha256": "5182bb41973fc61c6a262565cecd608a7650d47a43d1d67b117fbfe95dded4ba",
       "seamVerification": {
-        "method": "Source frame 0 versus virtual endpoint; encoded last-to-first versus every ordinary frame step, downsampled to 320x180 RGB",
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
         "sourceEndpointMAE0To255": 0,
-        "encodedSeamMAE0To255": 0.08431712962962963,
-        "encodedOrdinaryMeanMAE0To255": 0.020765533116682156,
-        "encodedOrdinaryMaximumMAE0To255": 0.0733738425925926,
-        "acceptedMaximumMAE0To255": 0.21171730324074073,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.10476273148148148,
+        "encodedOrdinaryMeanMAE0To255": 0.010753427086557311,
+        "encodedOrdinaryMaximumMAE0To255": 0.09585069444444444,
+        "acceptedMaximumMAE0To255": 0.23981336805555553,
         "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          780,
+          720
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 0,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#FFFFFF",
+        "minimumEncodedContrast": 21,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 6609,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "garage-scooter-light": {
+      "role": "garage-scooter",
+      "theme": "light",
+      "component": "GarageCard / scooter",
+      "description": "Rounded painted-panel sleeve",
+      "composition": "garage-scooter-light",
+      "video": "garage-scooter-light.mp4",
+      "poster": "garage-scooter-light-poster.jpg",
+      "videoSha256": "9eff507f6674cfd6c6cbd762cf2edfd85ea7c9f8977b1cd0db29fb7e085f09fc",
+      "posterSha256": "e12430c1acfd708f7439e97f99ab2a015b6e706f2ab3118352dc254e6a6cd382",
+      "videoBytes": 53217,
+      "posterBytes": 7479,
+      "width": 1280,
+      "height": 720,
+      "frames": 360,
+      "fps": 60,
+      "durationSeconds": 6,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#FAFAF8",
+      "safeZone": [
+        0,
+        0,
+        780,
+        720
+      ],
+      "proofFrames": {
+        "0": "06149ca5ab22a3ddd316482b3a31f25c50c3f5a3f99565da31f35ef503960301",
+        "1": "784b8070fc451f11410dcddfea4f5ddf359ded7e061fe42938b40206a159d31f",
+        "90": "533f8066a1c7045b3f04bcee8d9aa99abb9f458021380a7b5e726feb6e05652b",
+        "180": "a016b37e199aa10afde430c80cc02c8a2bb0abb112a0d4dade7b1ee65cda05dc",
+        "270": "609e2e8576b27870e6d8d27e037c02ad1625f5ec8482af1f0e980d9297e6d40d",
+        "359": "16bd5ca6d34bdac799d50ffcec5c630c97aa9da26fa3ab4266f82583b27ff750",
+        "360": "06149ca5ab22a3ddd316482b3a31f25c50c3f5a3f99565da31f35ef503960301"
+      },
+      "validation": "motion/validation/garage-scooter-light.json",
+      "validationSha256": "64be1f9c50a5f6ea8498f89c9e6f0e1a027409e855bef46588062b3d92a3e67f",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.08363425925925926,
+        "encodedOrdinaryMeanMAE0To255": 0.005300248890952231,
+        "encodedOrdinaryMaximumMAE0To255": 0.07870949074074074,
+        "acceptedMaximumMAE0To255": 0.21838686342592592,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          780,
+          720
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 2,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#171717",
+        "minimumEncodedContrast": 16.996432860012337,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 6386,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "garage-bigbike-dark": {
+      "role": "garage-bigbike",
+      "theme": "dark",
+      "component": "GarageCard / motorcycle",
+      "description": "Shallow chamfered facet",
+      "composition": "garage-bigbike-dark",
+      "video": "garage-bigbike-dark.mp4",
+      "poster": "garage-bigbike-dark-poster.jpg",
+      "videoSha256": "dafeec97bbb495c5f3a092309b29723d4e664d7cc584080fb4a65e0f1c70729f",
+      "posterSha256": "f0855e716539da76e6ef981e0a8d640356347fc72cb0e8b67e805573cd267d96",
+      "videoBytes": 55107,
+      "posterBytes": 8311,
+      "width": 1280,
+      "height": 720,
+      "frames": 360,
+      "fps": 60,
+      "durationSeconds": 6,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#000000",
+      "safeZone": [
+        0,
+        0,
+        768,
+        720
+      ],
+      "proofFrames": {
+        "0": "551d95e56ca3714a40a4ff2fcb75d73ec2ad55a1f63afd453e1d9e812a6d5146",
+        "1": "6ca9a4ed0eb69592333ba4a20f4dcb41b860ff162d3753d4c10159bac75c02e0",
+        "90": "6fb3a5df0ccf35515620b0ff9ee747da34d2a3319bee71182f8cd0b15bc9fb45",
+        "180": "baea30c5bc8d9a6944976dec9aa74af001fa53556356db72fb54095f2c22fe97",
+        "270": "92cad5cd611a35dfec1ac4709981b46b5bc0d16cd1e6804edca963c02d817a57",
+        "359": "c893a859ffabd77c980869326f3bc684f30311be7ca0dc88a3c87d6b9655c77f",
+        "360": "551d95e56ca3714a40a4ff2fcb75d73ec2ad55a1f63afd453e1d9e812a6d5146"
+      },
+      "validation": "motion/validation/garage-bigbike-dark.json",
+      "validationSha256": "562b444ea719f0abf782a7ad522d31efa29f7e5f256fc3152373e1a6b3797199",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.08072916666666667,
+        "encodedOrdinaryMeanMAE0To255": 0.007629378159496546,
+        "encodedOrdinaryMaximumMAE0To255": 0.08814236111111111,
+        "acceptedMaximumMAE0To255": 0.23017795138888889,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          768,
+          720
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 0,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#FFFFFF",
+        "minimumEncodedContrast": 21,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 5338,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "garage-bigbike-light": {
+      "role": "garage-bigbike",
+      "theme": "light",
+      "component": "GarageCard / motorcycle",
+      "description": "Shallow chamfered facet",
+      "composition": "garage-bigbike-light",
+      "video": "garage-bigbike-light.mp4",
+      "poster": "garage-bigbike-light-poster.jpg",
+      "videoSha256": "0ec8c346a49ee9c677eb74907bcfc023b7e6f82a0e958b8b91d5080423b52aac",
+      "posterSha256": "d064047caf3c68d3b9a8568199326eae2de1f251d7e42a792424784ddb799862",
+      "videoBytes": 49875,
+      "posterBytes": 7885,
+      "width": 1280,
+      "height": 720,
+      "frames": 360,
+      "fps": 60,
+      "durationSeconds": 6,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#FAFAF8",
+      "safeZone": [
+        0,
+        0,
+        768,
+        720
+      ],
+      "proofFrames": {
+        "0": "eb74f0368e75d2ce28cb95229ef25f4b641b2a427ae2f2bd3f9920da0dd30f2c",
+        "1": "fa3d9c76b6f6ab89106d04066f992a7a09778cf30f04e2c886bb3dd924cd01e4",
+        "90": "48f9fca66a8f47419de449603c6da32edcf34bd82de2c2f8389aa880dc8decb6",
+        "180": "4c8c990e17e7762e7425ac8edf035f869c7318c486868a816effc00dc1610bd8",
+        "270": "1967660af39055f90c4145bd684b76b9e109a0ee79d6411a04f09dc795b98ae6",
+        "359": "1ef8e8092274177d82dffcdbd0340b5eae78f433931c1b949fa89856b05b9a18",
+        "360": "eb74f0368e75d2ce28cb95229ef25f4b641b2a427ae2f2bd3f9920da0dd30f2c"
+      },
+      "validation": "motion/validation/garage-bigbike-light.json",
+      "validationSha256": "40603635bde5c1ecd4edf08a485414fbd3627c65b62ab372912bdd1ff9468ce7",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.10112847222222222,
+        "encodedOrdinaryMeanMAE0To255": 0.004436819741050246,
+        "encodedOrdinaryMaximumMAE0To255": 0.08217013888888888,
+        "acceptedMaximumMAE0To255": 0.2227126736111111,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          768,
+          720
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 2,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#171717",
+        "minimumEncodedContrast": 16.996432860012337,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 5036,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "garage-car-dark": {
+      "role": "garage-car",
+      "theme": "dark",
+      "component": "GarageCard / car",
+      "description": "Broad lower roof bevel",
+      "composition": "garage-car-dark",
+      "video": "garage-car-dark.mp4",
+      "poster": "garage-car-dark-poster.jpg",
+      "videoSha256": "772fcc557a7cc6e37e69d1c9a3e077007ded8e16d064c78238b14bef028eaa28",
+      "posterSha256": "1ca0064f73345aa48fcdd7e3790b544a869c4978198a4b5d2980515d3be4281f",
+      "videoBytes": 50047,
+      "posterBytes": 8925,
+      "width": 1280,
+      "height": 720,
+      "frames": 480,
+      "fps": 60,
+      "durationSeconds": 8,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#000000",
+      "safeZone": [
+        0,
+        0,
+        1280,
+        452
+      ],
+      "proofFrames": {
+        "0": "adf12dae2cd58f8c9b948d0ee42df05b95d5ead8d3122011e383fab4050575dd",
+        "1": "1f46596466273ca4a2c97751687d91f4caa552599fad45bc3e6dd64fd7de8666",
+        "120": "6f89794e01ad0e3112109cc88df65c1bfdfb28f33229b09a09324902ce925285",
+        "240": "df327d586bfdf8d986258806aea08cd0155f3152b0d3da616b2062a7ef6680d6",
+        "360": "c97bafcd88a4c66405b3d5e9fd10c8907cb1e061e67308b1bd9a16fb4681596a",
+        "479": "e1d7b10f37672bebac25189d93e4113ceb2de6a6883768547a940f83dcc7b26a",
+        "480": "adf12dae2cd58f8c9b948d0ee42df05b95d5ead8d3122011e383fab4050575dd"
+      },
+      "validation": "motion/validation/garage-car-dark.json",
+      "validationSha256": "e002d0fae5587d2efd5ad8d24165c3607c93bfdd8a6f41997aedd1bde84178db",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.10068865740740741,
+        "encodedOrdinaryMeanMAE0To255": 0.0027030053931802363,
+        "encodedOrdinaryMaximumMAE0To255": 0.09227430555555556,
+        "acceptedMaximumMAE0To255": 0.23534288194444444,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          1280,
+          452
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 0,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#FFFFFF",
+        "minimumEncodedContrast": 21,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 5055,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "garage-car-light": {
+      "role": "garage-car",
+      "theme": "light",
+      "component": "GarageCard / car",
+      "description": "Broad lower roof bevel",
+      "composition": "garage-car-light",
+      "video": "garage-car-light.mp4",
+      "poster": "garage-car-light-poster.jpg",
+      "videoSha256": "137961ccbda63dfb688467f2c38f3ae2a786c33459f9b93f0b6a4b49eaddade2",
+      "posterSha256": "efd54be8c03fd98dfc5e9b61a29568a1edb4506b263fd575f94ba00c03a8e669",
+      "videoBytes": 49085,
+      "posterBytes": 8439,
+      "width": 1280,
+      "height": 720,
+      "frames": 480,
+      "fps": 60,
+      "durationSeconds": 8,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#FAFAF8",
+      "safeZone": [
+        0,
+        0,
+        1280,
+        452
+      ],
+      "proofFrames": {
+        "0": "08608ab7c628c8509f70dd85ad451e155d3959f7ae86fb09ed251938442c1b88",
+        "1": "0391e140ba1b6a1026f775b82c61509056008a0ae9801a52c094fcc87d233eec",
+        "120": "db8b40eac28959948692eeafdceda41ce835e1291d4a8fcd6139b104cc0a7ef6",
+        "240": "e86565dd7229cfc0b3c46731489f189a17ee52821f994bec3061154c39431bc9",
+        "360": "3461bf73c1c724f284c062f50297866a391e039d442baeb990f193899219c596",
+        "479": "7a62676edbf441110c8670b504aeec7814bed28770bea18493733416290f0bf6",
+        "480": "08608ab7c628c8509f70dd85ad451e155d3959f7ae86fb09ed251938442c1b88"
+      },
+      "validation": "motion/validation/garage-car-light.json",
+      "validationSha256": "33e0f41568bab43728ab4a625939efba653f520cf1545f70968c3776ea4f30ae",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.08871527777777778,
+        "encodedOrdinaryMeanMAE0To255": 0.0018834570478620592,
+        "encodedOrdinaryMaximumMAE0To255": 0.07982060185185186,
+        "acceptedMaximumMAE0To255": 0.21977575231481483,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          1280,
+          452
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 2,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#171717",
+        "minimumEncodedContrast": 16.996432860012337,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 4807,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "podium-first-dark": {
+      "role": "podium-first",
+      "theme": "dark",
+      "component": "Ranked / actual first row",
+      "description": "Etched raised stepped plate",
+      "composition": "podium-first-dark",
+      "video": "podium-first-dark.mp4",
+      "poster": "podium-first-dark-poster.jpg",
+      "videoSha256": "b29a22cd0fd81ed069bf88a2fee010179287c6048efc0e18384b8b916b899fee",
+      "posterSha256": "06838dc309098306302c5eb80a73a115db726ac69b555439cd078c7f88cf8892",
+      "videoBytes": 40020,
+      "posterBytes": 8478,
+      "width": 1280,
+      "height": 720,
+      "frames": 360,
+      "fps": 60,
+      "durationSeconds": 6,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#000000",
+      "safeZone": [
+        0,
+        0,
+        1280,
+        400
+      ],
+      "proofFrames": {
+        "0": "f573c9ef56dfed0b3b104085c2933d43f7cab44b33cf4a2f80582d6cebc09eab",
+        "1": "1c9411b62301e175de2e9a51751b70c2a3bff944aedef85c1a4f02ca040d6570",
+        "90": "bfb83b53fc3082d14a37777829a06d3a43169cc42a3e06cb53ca7d3dc7dfb7e9",
+        "180": "959e45a79246bdfc95d9ba1013b5fe8bac59d6a45b6a3e50a0c6f898ee439995",
+        "270": "d4588785950e7841c0ac5d2ec597d331ee21cfa888f6b07fc246fd926868da54",
+        "359": "e8e98dec116f261b44b25b63e88624ad1113895cd876c80076b8b3ab72ea0b68",
+        "360": "f573c9ef56dfed0b3b104085c2933d43f7cab44b33cf4a2f80582d6cebc09eab"
+      },
+      "validation": "motion/validation/podium-first-dark.json",
+      "validationSha256": "d40f9ab918c5603ed9587afe4143dd5a0c29b2275f7afb5e857773e9a9fc645b",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.10252314814814815,
+        "encodedOrdinaryMeanMAE0To255": 0.0031938641287527097,
+        "encodedOrdinaryMaximumMAE0To255": 0.08519675925925926,
+        "acceptedMaximumMAE0To255": 0.22649594907407408,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          1280,
+          400
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 0,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#FFFFFF",
+        "minimumEncodedContrast": 21,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 4702,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "podium-first-light": {
+      "role": "podium-first",
+      "theme": "light",
+      "component": "Ranked / actual first row",
+      "description": "Etched raised stepped plate",
+      "composition": "podium-first-light",
+      "video": "podium-first-light.mp4",
+      "poster": "podium-first-light-poster.jpg",
+      "videoSha256": "786769ccd20acd05ffb664ac82eb4343997f959c2415f28077fab6173129dcba",
+      "posterSha256": "a9cc07c782665bbaabd5fe3d5c919fa19e244bbe182744f9d7898e0328671594",
+      "videoBytes": 39438,
+      "posterBytes": 7957,
+      "width": 1280,
+      "height": 720,
+      "frames": 360,
+      "fps": 60,
+      "durationSeconds": 6,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#FAFAF8",
+      "safeZone": [
+        0,
+        0,
+        1280,
+        400
+      ],
+      "proofFrames": {
+        "0": "7368ac71931001444af76aae81e7a04c4d96e1540263b7703ac975de40def4b2",
+        "1": "61bef2071d84e0917de6da1f6ea8fd6cf0d086c648bdcfa88b500fb5b85c62e2",
+        "90": "0e3c927acbea8321f50ad27ed3d2b9fda3663557db8f6c25a2adfbdc7f1f1ba7",
+        "180": "d8e08746f6ab414d0ccad161a0ec6ea63186a47f8cd12ba02400e76f1e69afd2",
+        "270": "37baf4c0008bd28f9928596bfc64f595d083c01eeb162ab51453e8698ce1ac2d",
+        "359": "d3d98bb6df0427d4ca7d53fb3d9e36833b02bc5b8d0dbf1b0d1f189b5f9e655e",
+        "360": "7368ac71931001444af76aae81e7a04c4d96e1540263b7703ac975de40def4b2"
+      },
+      "validation": "motion/validation/podium-first-light.json",
+      "validationSha256": "b80c890330fc00c57b5a261c31cc177101695ee36905e6dc7aaa7bb3a93744b1",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.09679976851851851,
+        "encodedOrdinaryMeanMAE0To255": 0.003028135639121018,
+        "encodedOrdinaryMaximumMAE0To255": 0.08648726851851851,
+        "acceptedMaximumMAE0To255": 0.22810908564814814,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          1280,
+          400
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 2,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#171717",
+        "minimumEncodedContrast": 16.996432860012337,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 4054,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "podium-second-dark": {
+      "role": "podium-second",
+      "theme": "dark",
+      "component": "Ranked / actual second row",
+      "description": "Quiet middle stepped plate",
+      "composition": "podium-second-dark",
+      "video": "podium-second-dark.mp4",
+      "poster": "podium-second-dark-poster.jpg",
+      "videoSha256": "330172da7e3313c5bba3b8eb78b9e1499211aed9afbf39220179c667c023ecef",
+      "posterSha256": "4658f7f35eafe74ccd83279c97eee92a2c064c587776d7db16fff2c7e50f3c1e",
+      "videoBytes": 37514,
+      "posterBytes": 7881,
+      "width": 1280,
+      "height": 720,
+      "frames": 360,
+      "fps": 60,
+      "durationSeconds": 6,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#000000",
+      "safeZone": [
+        0,
+        0,
+        1280,
+        432
+      ],
+      "proofFrames": {
+        "0": "0e136bc8e838b61998f8869535a6827bb5b69f70662e980e06b7c77475f7d7f5",
+        "1": "42a941cd1606de6179ecdb5a0c612444e7addd39949d4d7cdc9814066712c80e",
+        "90": "0ca5df563e3ea8e6eff214b21992b75cb1e0a5c54c317722292ad94d5389e6a5",
+        "180": "5502a921010985d0aff29e68a53a7e7629052297442888ba73f86043f7703bef",
+        "270": "4aeb637117346f24c1965a5a2a5fd43e54a31c5cd7f0670ab2f3530f29204c7f",
+        "359": "26bd780c58fd83a49e6e579a92f5704ae19e4a37dba99c591bb90c1fa1c64ba3",
+        "360": "0e136bc8e838b61998f8869535a6827bb5b69f70662e980e06b7c77475f7d7f5"
+      },
+      "validation": "motion/validation/podium-second-dark.json",
+      "validationSha256": "c3ec9dc71a5788930dfa97c15edcc97719424dbe504a4598b0d7c54caafc8bf1",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.07703703703703704,
+        "encodedOrdinaryMeanMAE0To255": 0.0021541640874858147,
+        "encodedOrdinaryMaximumMAE0To255": 0.0664525462962963,
+        "acceptedMaximumMAE0To255": 0.20306568287037036,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          1280,
+          432
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 0,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#FFFFFF",
+        "minimumEncodedContrast": 21,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 2815,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "podium-second-light": {
+      "role": "podium-second",
+      "theme": "light",
+      "component": "Ranked / actual second row",
+      "description": "Quiet middle stepped plate",
+      "composition": "podium-second-light",
+      "video": "podium-second-light.mp4",
+      "poster": "podium-second-light-poster.jpg",
+      "videoSha256": "d94d6d78ab91ce20d085b41e1a5eb63d4ffedf23a24102a0cadc956541df1331",
+      "posterSha256": "2c16510cb0a22264464a89143e13ce1777fb4f3f8d4808037cf7baf3b0248101",
+      "videoBytes": 33552,
+      "posterBytes": 7243,
+      "width": 1280,
+      "height": 720,
+      "frames": 360,
+      "fps": 60,
+      "durationSeconds": 6,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#FAFAF8",
+      "safeZone": [
+        0,
+        0,
+        1280,
+        432
+      ],
+      "proofFrames": {
+        "0": "af11e5c9654d2f631ed07a7174497b685f59fe83403e8b131d10cf47ff95b82f",
+        "1": "021a31df5cb7ab3520a50e309aa52cf5048320b3023104169d1ac03ff498d3e9",
+        "90": "9ca62e7c5501b1c6863d96bea0fd18056254a1d5ede1db1dacdcec80f9822f25",
+        "180": "ad30034f2a88b408520505cf9502b3d7ea94800f22bd6f83d895b6bc0d98cd49",
+        "270": "5cc78e1978db6600d424c50031798bb1f997749b5ed880b5442fd67a84e48488",
+        "359": "ba2088d0a29ab03b245db86357a1324297b0f4ef2a45c819a4493537788eab54",
+        "360": "af11e5c9654d2f631ed07a7174497b685f59fe83403e8b131d10cf47ff95b82f"
+      },
+      "validation": "motion/validation/podium-second-light.json",
+      "validationSha256": "a26b204780168c706049437f17e6c95b7896506c1af6469d25213d7c6d81706c",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.05946759259259259,
+        "encodedOrdinaryMeanMAE0To255": 0.0015332585370886193,
+        "encodedOrdinaryMaximumMAE0To255": 0.05806712962962963,
+        "acceptedMaximumMAE0To255": 0.19258391203703704,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          1280,
+          432
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 2,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#171717",
+        "minimumEncodedContrast": 16.996432860012337,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 2073,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "podium-third-dark": {
+      "role": "podium-third",
+      "theme": "dark",
+      "component": "Ranked / actual third row",
+      "description": "Shallow stepped plate",
+      "composition": "podium-third-dark",
+      "video": "podium-third-dark.mp4",
+      "poster": "podium-third-dark-poster.jpg",
+      "videoSha256": "96b40c193dc2bbf286f94b882bd182306ed8e7b766c8826e9ab6c64274c200ce",
+      "posterSha256": "7a2c2cb4274ca3deef14ec0256fcc6efde96486951b5185da0a3a64a180bcf8c",
+      "videoBytes": 29159,
+      "posterBytes": 7635,
+      "width": 1280,
+      "height": 720,
+      "frames": 360,
+      "fps": 60,
+      "durationSeconds": 6,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#000000",
+      "safeZone": [
+        0,
+        0,
+        1280,
+        456
+      ],
+      "proofFrames": {
+        "0": "4462c65ae45d7f60f32acc1498fb71bd430cd3e2baa038362bc53ef90af2ee71",
+        "1": "c8032001bf172686acc7781351170f1a39a87f839e1f2fecec2cdd46b02113b9",
+        "90": "366380912e68a48c0e9bbd588280ec4a83863b9c64727152f40556df14d2de47",
+        "180": "047713713d4b7cefd70f0039cc06c5b7489da74ce99b18555dae4a14953fc470",
+        "270": "7c4ae4f5ae4b40e92fe9900894628984307ba791060a79f214dd0c235e8bca58",
+        "359": "87ee924081f3f7223bfef03c4239ff5b78a385d9680589f0d623ab7e2022da43",
+        "360": "4462c65ae45d7f60f32acc1498fb71bd430cd3e2baa038362bc53ef90af2ee71"
+      },
+      "validation": "motion/validation/podium-third-dark.json",
+      "validationSha256": "1ab94f4decc763f1a3fd05be22810ef894bcb8646b593f6d69c8062787062b8a",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.04418402777777778,
+        "encodedOrdinaryMeanMAE0To255": 0.001019598550500361,
+        "encodedOrdinaryMaximumMAE0To255": 0.03589699074074074,
+        "acceptedMaximumMAE0To255": 0.16487123842592594,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          1280,
+          456
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 0,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#FFFFFF",
+        "minimumEncodedContrast": 21,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 1514,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "podium-third-light": {
+      "role": "podium-third",
+      "theme": "light",
+      "component": "Ranked / actual third row",
+      "description": "Shallow stepped plate",
+      "composition": "podium-third-light",
+      "video": "podium-third-light.mp4",
+      "poster": "podium-third-light-poster.jpg",
+      "videoSha256": "1aab479235d67551916dde4a68b3892ace9edc9a3d66f512929cc68933b07832",
+      "posterSha256": "93ffe10646013efd9fe4da52e6b586f24d88d3e3b0b2432e4757564a0612eabd",
+      "videoBytes": 30193,
+      "posterBytes": 7212,
+      "width": 1280,
+      "height": 720,
+      "frames": 360,
+      "fps": 60,
+      "durationSeconds": 6,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#FAFAF8",
+      "safeZone": [
+        0,
+        0,
+        1280,
+        456
+      ],
+      "proofFrames": {
+        "0": "570a3d498af020b11acde3a2b2fac1799a88a85a0ec981440c4f4a85e6632f21",
+        "1": "34bac99b5d0655392320b63aa4ba53b9c0ad3311853b789a549beb4eebb87ab4",
+        "90": "1a4cfbfa135049a0bf564ffd113ed040cf2ec53260d105a4c2e2c6387d250637",
+        "180": "b2d5f8699fd01e7b855a0c95217a5a259c9d1698c4de193c205c95851e2faf5a",
+        "270": "22be9b23538a73c201f8f6ea679d1f2b95496b386558351056f87521164fad02",
+        "359": "9b2753436fca2949118d73e271e3c6304273b702a8c480967c1e294f2c389ec5",
+        "360": "570a3d498af020b11acde3a2b2fac1799a88a85a0ec981440c4f4a85e6632f21"
+      },
+      "validation": "motion/validation/podium-third-light.json",
+      "validationSha256": "3b3df5905c3b937618f68e8e734bb2b022c70fba77afba1f01fff120303eb41d",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.047453703703703706,
+        "encodedOrdinaryMeanMAE0To255": 0.0013030988857938724,
+        "encodedOrdinaryMaximumMAE0To255": 0.04299189814814815,
+        "acceptedMaximumMAE0To255": 0.17373987268518518,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          1280,
+          456
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 2,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#171717",
+        "minimumEncodedContrast": 16.996432860012337,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 1498,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "ranked-today-dark": {
+      "role": "ranked-today",
+      "theme": "dark",
+      "component": "Ranked / today header",
+      "description": "Single narrow reflected horizon",
+      "composition": "ranked-today-dark",
+      "video": "ranked-today-dark.mp4",
+      "poster": "ranked-today-dark-poster.jpg",
+      "videoSha256": "af26437747cf27d8d1a662e1c47053e57611bafbd2d732264e3392a4626618c7",
+      "posterSha256": "1b7775e3013eb843b26ac10db69f86685b025a893a91d09f90295a093f63a8a7",
+      "videoBytes": 37064,
+      "posterBytes": 9139,
+      "width": 1280,
+      "height": 720,
+      "frames": 360,
+      "fps": 60,
+      "durationSeconds": 6,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#000000",
+      "safeZone": [
+        0,
+        0,
+        1280,
+        520
+      ],
+      "proofFrames": {
+        "0": "f0249992fdd885595367c069e9868f4a9db68820402bd99516aa0eb1554b82e6",
+        "1": "0380b81fe1cc3fb4763716024b779e52f5d2ff911aca40c6723e049d3b747894",
+        "90": "67cca6e94454e41db98770d017bab1a1e8bf17906e47542435005b30ae3ad9aa",
+        "180": "4bc75ae5d6ab41f70236dd068fa8d6a32a74107b3dbb010b4689c3e462185134",
+        "270": "6c2c9d6a52ec92fa985f781c3a6f798c95eb18c0ed54939805ee91371e405e30",
+        "359": "17b201dc6e47ec514985b5ef384f1a1010bf1c0bcf1371811ff8389f2b3ba3ff",
+        "360": "f0249992fdd885595367c069e9868f4a9db68820402bd99516aa0eb1554b82e6"
+      },
+      "validation": "motion/validation/ranked-today-dark.json",
+      "validationSha256": "236712caf02641bab9f8f4d310d9a00530d31c45c942a239786a79da4c82101b",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.08392361111111112,
+        "encodedOrdinaryMeanMAE0To255": 0.001968430826369545,
+        "encodedOrdinaryMaximumMAE0To255": 0.06983796296296296,
+        "acceptedMaximumMAE0To255": 0.2072974537037037,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          1280,
+          520
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 0,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#FFFFFF",
+        "minimumEncodedContrast": 21,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 2917,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "ranked-today-light": {
+      "role": "ranked-today",
+      "theme": "light",
+      "component": "Ranked / today header",
+      "description": "Single narrow reflected horizon",
+      "composition": "ranked-today-light",
+      "video": "ranked-today-light.mp4",
+      "poster": "ranked-today-light-poster.jpg",
+      "videoSha256": "df5ae715912164dac9d24b6fc0b03bb52f6796ec96d9ea08b477c2b0a4c6bb68",
+      "posterSha256": "6f659459251bbdee6355bd6c31828c506b552b2a28d5a284ee5cd20cf85db2ea",
+      "videoBytes": 37972,
+      "posterBytes": 8225,
+      "width": 1280,
+      "height": 720,
+      "frames": 360,
+      "fps": 60,
+      "durationSeconds": 6,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#FAFAF8",
+      "safeZone": [
+        0,
+        0,
+        1280,
+        520
+      ],
+      "proofFrames": {
+        "0": "837839b38a69d0a2e4d74c638c57567398ffc3d7e19359c77e36accc31cafe3b",
+        "1": "5411af47ff4ee599e0878e7b798efda9f544ed426e02aa567380e023fd347c15",
+        "90": "f10b09a53931c5b3e405c0aa123f57bce946910439b7d47dacbc9440493d1cbe",
+        "180": "f84dda5ea7280a4beae2f162c718d9f6b3494b8e8334fab8368d763b09a3b54a",
+        "270": "47980989f2e67bfb1e90a87b4468525cb4bf59b211cf8e07e11ccbfd7987be21",
+        "359": "039b05e96c1867ebc66d1138fc4b0fd6e2ed9d152f6cd51249ba4fcf04c2733c",
+        "360": "837839b38a69d0a2e4d74c638c57567398ffc3d7e19359c77e36accc31cafe3b"
+      },
+      "validation": "motion/validation/ranked-today-light.json",
+      "validationSha256": "38b27e862b93bf9f9f8f8ae0f7689a693567d3f9929be381601e4b585c54bb30",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.07671296296296297,
+        "encodedOrdinaryMeanMAE0To255": 0.0023875477148457666,
+        "encodedOrdinaryMaximumMAE0To255": 0.07059027777777778,
+        "acceptedMaximumMAE0To255": 0.20823784722222222,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          1280,
+          520
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 2,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#171717",
+        "minimumEncodedContrast": 16.996432860012337,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 2403,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "ranked-week-dark": {
+      "role": "ranked-week",
+      "theme": "dark",
+      "component": "Ranked / week header",
+      "description": "Two etched parallel bands",
+      "composition": "ranked-week-dark",
+      "video": "ranked-week-dark.mp4",
+      "poster": "ranked-week-dark-poster.jpg",
+      "videoSha256": "cd0ae3c001dc5b7db777d1b559cfbe0834274ee1b019c9e38d69cb27a096ab5e",
+      "posterSha256": "2e80d8e8137e0a1db87d06123b8f1fd6886bfa30e262123b25c0cb656c0fdc76",
+      "videoBytes": 43666,
+      "posterBytes": 9443,
+      "width": 1280,
+      "height": 720,
+      "frames": 480,
+      "fps": 60,
+      "durationSeconds": 8,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#000000",
+      "safeZone": [
+        0,
+        0,
+        1280,
+        520
+      ],
+      "proofFrames": {
+        "0": "0eb131c351d0558d296b154d1040ca3d81946b2a48fb26fa70d1ee04c3262691",
+        "1": "2c0c0ee5e4e92402b9cf6e3c354c14bde9de99fa1f1668270b852756f0a3fd63",
+        "120": "6d9db2be8f7dc26e739e38196ce688edc22c97656dd9851d2496964c0fcf15ea",
+        "240": "63b9fe0c74fa3aa81ce23a96296fd1d52b37e9282d96e087db8e267b7f7feb6b",
+        "360": "20f482a90fbce6b79ccfb1401f431028fbb919d4185947bb0da02b910e741696",
+        "479": "89bdb04c8fa4b0e50cddc71a3d816779dfd369c343a7e7482e60d0c1b25c1d81",
+        "480": "0eb131c351d0558d296b154d1040ca3d81946b2a48fb26fa70d1ee04c3262691"
+      },
+      "validation": "motion/validation/ranked-week-dark.json",
+      "validationSha256": "869b17d88775fa26006cdc78176973e8e62d67898748882803dc55c85bf06264",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.0783912037037037,
+        "encodedOrdinaryMeanMAE0To255": 0.0013070488285780565,
+        "encodedOrdinaryMaximumMAE0To255": 0.06641782407407408,
+        "acceptedMaximumMAE0To255": 0.2030222800925926,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          1280,
+          520
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 0,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#FFFFFF",
+        "minimumEncodedContrast": 21,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 3158,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "ranked-week-light": {
+      "role": "ranked-week",
+      "theme": "light",
+      "component": "Ranked / week header",
+      "description": "Two etched parallel bands",
+      "composition": "ranked-week-light",
+      "video": "ranked-week-light.mp4",
+      "poster": "ranked-week-light-poster.jpg",
+      "videoSha256": "a1133e5737e5346b840a510f2960f1aba5f301a5cadc496aacdb8015eeb65fc2",
+      "posterSha256": "029b211d4a502703d7dca68c4e72b2a6ec0341a6346dcb69baef3635582cf4c9",
+      "videoBytes": 47492,
+      "posterBytes": 9083,
+      "width": 1280,
+      "height": 720,
+      "frames": 480,
+      "fps": 60,
+      "durationSeconds": 8,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#FAFAF8",
+      "safeZone": [
+        0,
+        0,
+        1280,
+        520
+      ],
+      "proofFrames": {
+        "0": "426bb5b9e5a448f510163e290c16da9e25205f5bb9b633da9f698b5788729db4",
+        "1": "a8dd56cff890c518d6bf3c34b55f9027b8fa819ea89c629ef2c1a64f2061e435",
+        "120": "34d1bb1e50b705841250c128d8bcf14947f70aa6d91b19fcaa1b792c76614587",
+        "240": "dbb0c69db491d6233032b2ef83161ab7a8d43f5b582e9014d7b4ae013cf9e7fc",
+        "360": "182fa3773d7f2b3332f2535f68da892a08e219d8fc95914601d0c7886c67e750",
+        "479": "fdef1799b6be9eaaefe3d67b1f8dcb99438e2f4ac2ec1748aa6be1860910bcad",
+        "480": "426bb5b9e5a448f510163e290c16da9e25205f5bb9b633da9f698b5788729db4"
+      },
+      "validation": "motion/validation/ranked-week-light.json",
+      "validationSha256": "e60108b3269c0e1a91fca1faf0f5040047745c9e1a9d3ed2da3af62ff84372fa",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.0802951388888889,
+        "encodedOrdinaryMeanMAE0To255": 0.0021733767300703612,
+        "encodedOrdinaryMaximumMAE0To255": 0.07529513888888889,
+        "acceptedMaximumMAE0To255": 0.21411892361111112,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          1280,
+          520
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 2,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#171717",
+        "minimumEncodedContrast": 16.996432860012337,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 2645,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "ranked-month-dark": {
+      "role": "ranked-month",
+      "theme": "dark",
+      "component": "Ranked / month header",
+      "description": "Wide low-amplitude return contour",
+      "composition": "ranked-month-dark",
+      "video": "ranked-month-dark.mp4",
+      "poster": "ranked-month-dark-poster.jpg",
+      "videoSha256": "b71501df21472273150c5598c3e6eba1d312e35535a51b689c04a21dc892395b",
+      "posterSha256": "eca2c10afb0562abb869f4ffa61dc3baad88c2f25d42370472b0c08bc09bbf86",
+      "videoBytes": 43754,
+      "posterBytes": 9571,
+      "width": 1280,
+      "height": 720,
+      "frames": 480,
+      "fps": 60,
+      "durationSeconds": 8,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#000000",
+      "safeZone": [
+        0,
+        0,
+        1280,
+        520
+      ],
+      "proofFrames": {
+        "0": "d00458bd97e7fc3ce2c99f9042dbf59fb891d6b4c4818d9d89f23b8b7a2ec0ca",
+        "1": "abb50bc15c8816e61a376cc6c6c041ba66c1a591cb1057ef762d32af69252ed6",
+        "120": "df5bf197fe9ca3a3e9f181208a063020127fcb06b7e070fafb9695cc12cd832f",
+        "240": "ec1b921c752135abdc44e71114ea64589525f6f6cf3226a6359c5eaae27c9026",
+        "360": "173f333e115c91d0803cc9bb026eddca15f0b26771c0932a40239b38a93c27e6",
+        "479": "22c37fe909cfc821bfa3f04656a3b941471370b95d17e89a4a01f2dc5ed11345",
+        "480": "d00458bd97e7fc3ce2c99f9042dbf59fb891d6b4c4818d9d89f23b8b7a2ec0ca"
+      },
+      "validation": "motion/validation/ranked-month-dark.json",
+      "validationSha256": "1bde0c8e8e763b8667feaabcf47922083d2e716f59b765c2483876657a8b97ec",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.0784837962962963,
+        "encodedOrdinaryMeanMAE0To255": 0.0013069521766024893,
+        "encodedOrdinaryMaximumMAE0To255": 0.06454282407407408,
+        "acceptedMaximumMAE0To255": 0.2006785300925926,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          1280,
+          520
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 0,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#FFFFFF",
+        "minimumEncodedContrast": 21,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 3200,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "ranked-month-light": {
+      "role": "ranked-month",
+      "theme": "light",
+      "component": "Ranked / month header",
+      "description": "Wide low-amplitude return contour",
+      "composition": "ranked-month-light",
+      "video": "ranked-month-light.mp4",
+      "poster": "ranked-month-light-poster.jpg",
+      "videoSha256": "f54ff41abbb395a4134d3d45e2b0dc169449063c4c2888538866a5b65767d46d",
+      "posterSha256": "4a6fe03434489d99f6f44735d108dde516c92e2cc0d87facd8280c83b8b9365e",
+      "videoBytes": 46510,
+      "posterBytes": 9408,
+      "width": 1280,
+      "height": 720,
+      "frames": 480,
+      "fps": 60,
+      "durationSeconds": 8,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#FAFAF8",
+      "safeZone": [
+        0,
+        0,
+        1280,
+        520
+      ],
+      "proofFrames": {
+        "0": "e01af3283976d4dc6e25f3f3b9fe22a58a36c9538cf9ea67d188ba904ec896be",
+        "1": "ef32be5eb871b0faeb526b07624cf4a658e1fb0ef5dd2a2bcd998fad01a5b80f",
+        "120": "eca8c06f954f551e4050f98f063c5329ddea032b076f92e934fdc3d0ffff7eb7",
+        "240": "33fb69aa034966029a5829c97bac636e58e480ab1459357b554f8f17bc7b6cd3",
+        "360": "35e26955b32c33909537887da2aac3f6b645c8a13d70a0df25f46be125666347",
+        "479": "421b2c58631ba34e4086e0ddaae96f99d7a74f070f922e8365dc26112cb1ac09",
+        "480": "e01af3283976d4dc6e25f3f3b9fe22a58a36c9538cf9ea67d188ba904ec896be"
+      },
+      "validation": "motion/validation/ranked-month-light.json",
+      "validationSha256": "4b3045308ba402b4f5d5faab17a838d111ed761e1e1460f9406b270e7a437292",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.07981481481481481,
+        "encodedOrdinaryMeanMAE0To255": 0.0017271708033712208,
+        "encodedOrdinaryMaximumMAE0To255": 0.06839699074074074,
+        "acceptedMaximumMAE0To255": 0.2054962384259259,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          1280,
+          520
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 2,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#171717",
+        "minimumEncodedContrast": 16.996432860012337,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 2827,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "auth-onboarding-dark": {
+      "role": "auth-onboarding",
+      "theme": "dark",
+      "component": "Auth / onboarding hero",
+      "description": "Continuous layered sleeve bend",
+      "composition": "auth-onboarding-dark",
+      "video": "auth-onboarding-dark.mp4",
+      "poster": "auth-onboarding-dark-poster.jpg",
+      "videoSha256": "c4081ee6a762fed2c4541373790feacce3a9b5e2732571107ae62aa0292d80f1",
+      "posterSha256": "b05b9274e16c8865e03ebdd2d7084755abebc0d86e90e25540be15a6de9d1fea",
+      "videoBytes": 78304,
+      "posterBytes": 9139,
+      "width": 1280,
+      "height": 720,
+      "frames": 480,
+      "fps": 60,
+      "durationSeconds": 8,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#000000",
+      "safeZone": [
+        0,
+        0,
+        790,
+        720
+      ],
+      "proofFrames": {
+        "0": "0d672295f97755f9acd9b830dd51d46e2c0d4fbdba639c07a6f647a3693c915e",
+        "1": "235973fa18aafdf91a80c2d90c4ddbb801891571082c27ad3fc1604dac731707",
+        "120": "9866ec8e0ff8f96da2693314a3239eb8369f8447d9f7d671cfef396efe98f290",
+        "240": "c6378ea4921731f3e3d01b3ccc0f9ae4460f25547f8d446580aff3c13d4374c5",
+        "360": "1b0062053a647e9c88067bdcacc8ff538f888a7d19c07df42cdcd6107158ad83",
+        "479": "5a9c3c82fbe8481a32f137982be2e38bad13e4f40820d50b07744319ed44e62a",
+        "480": "0d672295f97755f9acd9b830dd51d46e2c0d4fbdba639c07a6f647a3693c915e"
+      },
+      "validation": "motion/validation/auth-onboarding-dark.json",
+      "validationSha256": "dffe74bbfbef3599b59ec21889a03f7fb27ee8771e2d17565bcd62362a95fb04",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.10259837962962963,
+        "encodedOrdinaryMeanMAE0To255": 0.008650798828578056,
+        "encodedOrdinaryMaximumMAE0To255": 0.09809606481481481,
+        "acceptedMaximumMAE0To255": 0.2426200810185185,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          790,
+          720
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 0,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#FFFFFF",
+        "minimumEncodedContrast": 21,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 6339,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "auth-onboarding-light": {
+      "role": "auth-onboarding",
+      "theme": "light",
+      "component": "Auth / onboarding hero",
+      "description": "Continuous layered sleeve bend",
+      "composition": "auth-onboarding-light",
+      "video": "auth-onboarding-light.mp4",
+      "poster": "auth-onboarding-light-poster.jpg",
+      "videoSha256": "20afe9b3ba58ef797463b2f4f15080f32c1bb16f48b858d94a03b3e8b4b936b1",
+      "posterSha256": "a5f1e638b3eeac4ad556e3169236d622cfb74d18ac266f3236f64b67a6489d00",
+      "videoBytes": 63157,
+      "posterBytes": 7786,
+      "width": 1280,
+      "height": 720,
+      "frames": 480,
+      "fps": 60,
+      "durationSeconds": 8,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#FAFAF8",
+      "safeZone": [
+        0,
+        0,
+        790,
+        720
+      ],
+      "proofFrames": {
+        "0": "68d506bbf4d205da3f9ba31445494f9bb84e6e7e654b7d6d8667fd5b951ec42b",
+        "1": "80a9a4e0ab5a77e08e6275a354aa332dba95066af0d42122b510ec05e5ac2684",
+        "120": "dc01330a985096b90894e77bfc5bdf365c4d3af4a3127bdec915a09f0a8adaee",
+        "240": "9089874d9a442419a06471e327a481afaf1405ec25a8b8a2f204f64a0a8a1bd6",
+        "360": "c4294ee551c1d83abb28c4f966604fba6a20650e3a3d58b656dac2ace4c2c23d",
+        "479": "1ec691cdab983012c78209c3d84c12639e4b0815904ba14674aca46a856a68c4",
+        "480": "68d506bbf4d205da3f9ba31445494f9bb84e6e7e654b7d6d8667fd5b951ec42b"
+      },
+      "validation": "motion/validation/auth-onboarding-light.json",
+      "validationSha256": "386cc25b518fa5df8787cd1d53fc1a6f4a08230e9588765272849473f73afdc3",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.08432291666666666,
+        "encodedOrdinaryMeanMAE0To255": 0.003949598411041524,
+        "encodedOrdinaryMaximumMAE0To255": 0.07556712962962962,
+        "acceptedMaximumMAE0To255": 0.21445891203703704,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          790,
+          720
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 2,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#171717",
+        "minimumEncodedContrast": 16.996432860012337,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 5875,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "empty-state-dark": {
+      "role": "empty-state",
+      "theme": "dark",
+      "component": "Native empty state",
+      "description": "Fixed open etched annulus",
+      "composition": "empty-state-dark",
+      "video": "empty-state-dark.mp4",
+      "poster": "empty-state-dark-poster.jpg",
+      "videoSha256": "a66893d987462102438889ba32e9ea89b8827cacc45b5d129f4d6977bc02fb20",
+      "posterSha256": "4cb3a474f5183fbfcb7d96e6a4cff78aa4e0d4ba837afd6dc1ddc1ba8cfa9852",
+      "videoBytes": 51560,
+      "posterBytes": 6747,
+      "width": 1280,
+      "height": 720,
+      "frames": 360,
+      "fps": 60,
+      "durationSeconds": 6,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#000000",
+      "safeZone": [
+        0,
+        0,
+        768,
+        720
+      ],
+      "proofFrames": {
+        "0": "c642ba11e965b3a2c5dad3bf9b7c0ead287829414142b56847b92e2a9a5a3435",
+        "1": "3778a63d6a43da71e870df2f8a4ec5b6a000cc0da11b26c8bf3ee06ceb53f2ce",
+        "90": "ec500249d0d4c25d00bb7c9d7634e8117ccb75024fa0ec43923ef7288ab86c5a",
+        "180": "fa2fbe38b3f930af3f60599e60ad71d80a26c66faf079f0502e17fc1d23a5dc6",
+        "270": "26bf2e677dc9bba15783a76ade31ff9a2fa685ef1d2edc96ef87d66c31e295be",
+        "359": "5b850ece10dfd1066c1327ee15af5eb6221cfd30407a9d1f0102d6881cfd08fa",
+        "360": "c642ba11e965b3a2c5dad3bf9b7c0ead287829414142b56847b92e2a9a5a3435"
+      },
+      "validation": "motion/validation/empty-state-dark.json",
+      "validationSha256": "758bef55436a779da7927ee173500137497971a86a9dcf1f3c506893a2b50eee",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.04178819444444445,
+        "encodedOrdinaryMeanMAE0To255": 0.007866711157536368,
+        "encodedOrdinaryMaximumMAE0To255": 0.030497685185185187,
+        "acceptedMaximumMAE0To255": 0.15812210648148148,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          768,
+          720
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 0,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#FFFFFF",
+        "minimumEncodedContrast": 21,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 5817,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "empty-state-light": {
+      "role": "empty-state",
+      "theme": "light",
+      "component": "Native empty state",
+      "description": "Fixed open etched annulus",
+      "composition": "empty-state-light",
+      "video": "empty-state-light.mp4",
+      "poster": "empty-state-light-poster.jpg",
+      "videoSha256": "3f3ebd22990bb48c25bed74db142fe1c97a569285b6e3fa8c5491a52c9c54396",
+      "posterSha256": "c7296e4a47682b6921fc7b8406088809a5e99c1d70fc654fc737ab3b27fdb582",
+      "videoBytes": 41069,
+      "posterBytes": 6225,
+      "width": 1280,
+      "height": 720,
+      "frames": 360,
+      "fps": 60,
+      "durationSeconds": 6,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#FAFAF8",
+      "safeZone": [
+        0,
+        0,
+        768,
+        720
+      ],
+      "proofFrames": {
+        "0": "2477040ba9f07f5d95d13a4e48e0afdb30907ecadfd8b18b072c4838201c9f4e",
+        "1": "1ddb013c87377b1192e30ece0dee8f5c2c5dd4bcf0d4a0235f02599e2e299702",
+        "90": "c52cc862284352f6f09c149e0b9ceacaa09609b295d0b7af3904d278d55166e2",
+        "180": "992aa62b60944b70f58c01c97fbdfff2b7f18523605e390debe28803db2385e4",
+        "270": "aae9a6c1ccb0e52c3cb98fa54910cbfa9798d78cd7e492ed70f236afbbbd3ad8",
+        "359": "bbe34420b7638d084b6cd77e15c5dd7537d80b0c6273560cfbd12e2019e4d103",
+        "360": "2477040ba9f07f5d95d13a4e48e0afdb30907ecadfd8b18b072c4838201c9f4e"
+      },
+      "validation": "motion/validation/empty-state-light.json",
+      "validationSha256": "ca83987eafbf2798b0ecdd042cab6c4f82bbe73b2397b145db5a9f036e996e29",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.047453703703703706,
+        "encodedOrdinaryMeanMAE0To255": 0.007046193129062209,
+        "encodedOrdinaryMaximumMAE0To255": 0.04251157407407408,
+        "acceptedMaximumMAE0To255": 0.17313946759259258,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          768,
+          720
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 2,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#171717",
+        "minimumEncodedContrast": 16.996432860012337,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 6766,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "challenge-lobby-dark": {
+      "role": "challenge-lobby",
+      "theme": "dark",
+      "component": "Challenge lobby / actual members",
+      "description": "Two fixed quiet contours",
+      "composition": "challenge-lobby-dark",
+      "video": "challenge-lobby-dark.mp4",
+      "poster": "challenge-lobby-dark-poster.jpg",
+      "videoSha256": "d80d4f32b99cb5c35de7827f05a726c94849e3426dfdd6c03500e5893b603034",
+      "posterSha256": "2c5a4097646bff936efc44ad285be9c67412e662d96e233aad41625de2161f2e",
+      "videoBytes": 66287,
+      "posterBytes": 9959,
+      "width": 1280,
+      "height": 720,
+      "frames": 360,
+      "fps": 60,
+      "durationSeconds": 6,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#000000",
+      "safeZone": [
+        0,
+        0,
+        768,
+        720
+      ],
+      "proofFrames": {
+        "0": "f7f6c749df264e27c356ca996403e65d0135ba2aad99b4a276c685a35057d119",
+        "1": "9e480c3f9aa1b2075ba66d4a7fa1f235306dfb12dc0915267ecebfc4c30b6259",
+        "90": "6640f9d6d05ecf59bbca3847498e08264c2e3ae651a93871ec04dc014cbce2c4",
+        "180": "939ff188c4dd64655f54c198ea38944a54e348e70c59205ac169bdbefe7435e0",
+        "270": "ca84b25cc86805bd597a0253c8954c428ec36fd9c97a19317108aeef5d2de9ef",
+        "359": "21cc44db175b9a99de09e4b1a43e4bf8093b11ca634c0ad9f1c066d00dd0f2c0",
+        "360": "f7f6c749df264e27c356ca996403e65d0135ba2aad99b4a276c685a35057d119"
+      },
+      "validation": "motion/validation/challenge-lobby-dark.json",
+      "validationSha256": "302d8424e7d99d5e2976513afc8a9f2598eb6ec30930c46fb831e9d6c191dc2e",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.13012731481481482,
+        "encodedOrdinaryMeanMAE0To255": 0.009655614876715157,
+        "encodedOrdinaryMaximumMAE0To255": 0.12579282407407408,
+        "acceptedMaximumMAE0To255": 0.2772410300925926,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          768,
+          720
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 0,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#FFFFFF",
+        "minimumEncodedContrast": 21,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 8133,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "challenge-lobby-light": {
+      "role": "challenge-lobby",
+      "theme": "light",
+      "component": "Challenge lobby / actual members",
+      "description": "Two fixed quiet contours",
+      "composition": "challenge-lobby-light",
+      "video": "challenge-lobby-light.mp4",
+      "poster": "challenge-lobby-light-poster.jpg",
+      "videoSha256": "c0cdf5792129a53abe358363b62e31760c2fbed5d1bef51470a7f972318b98cc",
+      "posterSha256": "64a95ac02c8e3991dcf7fcc00214dc80655d2b15bcafdc191e6c0f00ff675c3d",
+      "videoBytes": 46943,
+      "posterBytes": 9025,
+      "width": 1280,
+      "height": 720,
+      "frames": 360,
+      "fps": 60,
+      "durationSeconds": 6,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#FAFAF8",
+      "safeZone": [
+        0,
+        0,
+        768,
+        720
+      ],
+      "proofFrames": {
+        "0": "13a07407bcd5a2eaa80e3ae3361f1c6316eaa6f0c45d4d51f886be8748bbf0f4",
+        "1": "c4c78608ec1ffcd45c6ce82feb8761640899773a3cfd418caf4e790fdfe075b0",
+        "90": "e473805dbb55bc9e8a134c2f1424d06801361909e0fef58115c86752f8cfbf6b",
+        "180": "126563dc02188c414ccb7f37b746b2683e901cb368381f8fea35225964ba39cc",
+        "270": "aa57f2be47938e6bc5072b994e98ccfea24b874e8d279ec4033d4dd2436196bf",
+        "359": "0961ceb8381496ad9910a67b1da97978305a854df9ae45c17c40ee531d57f754",
+        "360": "13a07407bcd5a2eaa80e3ae3361f1c6316eaa6f0c45d4d51f886be8748bbf0f4"
+      },
+      "validation": "motion/validation/challenge-lobby-light.json",
+      "validationSha256": "1a94b03888f464c43c4dd20121eaecb2590e1e01056b1fb3e9f7466686d0dc55",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.12830439814814815,
+        "encodedOrdinaryMeanMAE0To255": 0.004327978309089037,
+        "encodedOrdinaryMaximumMAE0To255": 0.11684606481481481,
+        "acceptedMaximumMAE0To255": 0.2660575810185185,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          768,
+          720
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 2,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#171717",
+        "minimumEncodedContrast": 16.996432860012337,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 6838,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "speedometer-glow-dark": {
+      "role": "speedometer-glow",
+      "theme": "dark",
+      "component": "Expanded stationary HUD",
+      "description": "Soft lower-rim reflected glow",
+      "composition": "speedometer-glow-dark",
+      "video": "speedometer-glow-dark.mp4",
+      "poster": "speedometer-glow-dark-poster.jpg",
+      "videoSha256": "a3bf6e3079e3bf7aa3497d0d7ab805fab6549b43a7e827ab11248295dd596f69",
+      "posterSha256": "2834b41307c7ef403257859cefb3da13a651a0a9e91a2424db36152b66cd3dc0",
+      "videoBytes": 44830,
+      "posterBytes": 8329,
+      "width": 1280,
+      "height": 720,
+      "frames": 480,
+      "fps": 60,
+      "durationSeconds": 8,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#000000",
+      "safeZone": [
+        0,
+        0,
+        1280,
+        452
+      ],
+      "proofFrames": {
+        "0": "f7e7b259cd55253d5ff076cbdfb4103a14862389a1c9863096c207444dc866a5",
+        "1": "ea192c947bda97c5307022201c8a1c6538030f26c5a6a945e6032a87e19f64ea",
+        "120": "e59fc961f4e4fa28e3aa95cfe7b9b3e5012c961ae480b9a2ee26eb975af44eb2",
+        "240": "202a814290751e204e5b4a8efbf9e2b33ffca68b082018c158a8d79ca06cc5a6",
+        "360": "108330225a10053af204a34ca814c26473812eab768d4160f97d0222e03ff9dc",
+        "479": "0063d86c70f492e811b6d7aad23c5b222bcd6b021c2fc9d064f3b6806705740d",
+        "480": "f7e7b259cd55253d5ff076cbdfb4103a14862389a1c9863096c207444dc866a5"
+      },
+      "validation": "motion/validation/speedometer-glow-dark.json",
+      "validationSha256": "86e0b4f592b013bfe9a0cf94142ffcb31aa9d196d7ca061c409f755a886db440",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.05227430555555555,
+        "encodedOrdinaryMeanMAE0To255": 0.0013746206409959033,
+        "encodedOrdinaryMaximumMAE0To255": 0.05234375,
+        "acceptedMaximumMAE0To255": 0.1854296875,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          1280,
+          452
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 0,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#FFFFFF",
+        "minimumEncodedContrast": 21,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 3237,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "speedometer-glow-light": {
+      "role": "speedometer-glow",
+      "theme": "light",
+      "component": "Expanded stationary HUD",
+      "description": "Soft lower-rim reflected glow",
+      "composition": "speedometer-glow-light",
+      "video": "speedometer-glow-light.mp4",
+      "poster": "speedometer-glow-light-poster.jpg",
+      "videoSha256": "47aa780535380972bd76c749da1bfa9ad47407c6f780eae4dde7ec190f32aab9",
+      "posterSha256": "1d13fe1a0ceb14b8fbc3cf9008fc70161e647febfd2b41f0df6c307115b0870a",
+      "videoBytes": 38115,
+      "posterBytes": 7646,
+      "width": 1280,
+      "height": 720,
+      "frames": 480,
+      "fps": 60,
+      "durationSeconds": 8,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#FAFAF8",
+      "safeZone": [
+        0,
+        0,
+        1280,
+        452
+      ],
+      "proofFrames": {
+        "0": "7aeeb30699e91151535ea5060ae7356c66c4dde66ef91ec31d07d5fb8e3ac408",
+        "1": "25c4ac7e727d58352d8695f95facbdb151635dd23d12bf6d9428a559fa4ac3a4",
+        "120": "a4df798bbbdcb5d4ca2740eae864f42f4f316212924f1276908881bf046ab4c5",
+        "240": "393bf3791604adcd29278dc469eceb30ef45010a1c3dc438f655c7a9d6666435",
+        "360": "12f4df4062d0e0767477ef4cdb54b8da8e78caaac59b49caaaea67d1be31eab7",
+        "479": "622cdb1d579dcf2539c2600914eeac37f61370056974ca554a3e7cae630f7521",
+        "480": "7aeeb30699e91151535ea5060ae7356c66c4dde66ef91ec31d07d5fb8e3ac408"
+      },
+      "validation": "motion/validation/speedometer-glow-light.json",
+      "validationSha256": "a7f2f711e166fc4be5ba7c401a9d2883833d77414f15a0f1af2b9d7b2180a83d",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.04672453703703704,
+        "encodedOrdinaryMeanMAE0To255": 0.00082722009587876,
+        "encodedOrdinaryMaximumMAE0To255": 0.04137152777777778,
+        "acceptedMaximumMAE0To255": 0.1717144097222222,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          1280,
+          452
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 2,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#171717",
+        "minimumEncodedContrast": 16.996432860012337,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 1432,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "profile-license-dark": {
+      "role": "profile-license",
+      "theme": "dark",
+      "component": "RiderCard / native identity",
+      "description": "Curved optical ridge",
+      "composition": "profile-license-dark",
+      "video": "profile-license-dark.mp4",
+      "poster": "profile-license-dark-poster.jpg",
+      "videoSha256": "8affaa445fd0b4a4f6ef2a26a5830fcad4680e3584051d56aa36b278f0436a1a",
+      "posterSha256": "6be28a93aef632a44444931fddca3076f45aabc0718dd26400188c55fa1199f3",
+      "videoBytes": 53912,
+      "posterBytes": 7997,
+      "width": 1280,
+      "height": 720,
+      "frames": 360,
+      "fps": 60,
+      "durationSeconds": 6,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#000000",
+      "safeZone": [
+        0,
+        0,
+        760,
+        720
+      ],
+      "proofFrames": {
+        "0": "484b449e05f54e8d774fd9c64a9a3a4c751d60d7ad2cbe4cf7f4180d486234d0",
+        "1": "d9fb6716f9fed2af32391abb5d24b9a95bb9a11c6d33199b876fb612eccee90f",
+        "90": "f501eea1af1bcf9b12ec54858cdb037eec18edaa5766bb621771c5c64d291c0a",
+        "180": "d72c67335e1b9e0b899d6be62256f45b0e76252f5ead2309c7b86ea12ec5e029",
+        "270": "3290ba27e968500f6a3d68136f7fc1cc62d84f71794ec4393d20cb28ded7efa6",
+        "359": "ea564a27699baa4f1eb24b9b54a5afe01fc5615b17397df14c18ee65a7f1967f",
+        "360": "484b449e05f54e8d774fd9c64a9a3a4c751d60d7ad2cbe4cf7f4180d486234d0"
+      },
+      "validation": "motion/validation/profile-license-dark.json",
+      "validationSha256": "2cb76e3112678385fba5477977bf732134a29a2c9c3b132a5921364db6a3baf8",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.09181134259259259,
+        "encodedOrdinaryMeanMAE0To255": 0.00703008936861652,
+        "encodedOrdinaryMaximumMAE0To255": 0.07807291666666667,
+        "acceptedMaximumMAE0To255": 0.21759114583333333,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          760,
+          720
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 0,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#FFFFFF",
+        "minimumEncodedContrast": 21,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 4626,
+        "channelRangeThreshold0To255": 2
+      }
+    },
+    "profile-license-light": {
+      "role": "profile-license",
+      "theme": "light",
+      "component": "RiderCard / native identity",
+      "description": "Curved optical ridge",
+      "composition": "profile-license-light",
+      "video": "profile-license-light.mp4",
+      "poster": "profile-license-light-poster.jpg",
+      "videoSha256": "93ecd73322e7bc646ec1a9be862cfb3b98658abb38935f495d2f05b63ff39b71",
+      "posterSha256": "7a573676754586dfc841cd495b524c4bd777b0167a0c948bad7474f2c837e0f9",
+      "videoBytes": 52494,
+      "posterBytes": 7615,
+      "width": 1280,
+      "height": 720,
+      "frames": 360,
+      "fps": 60,
+      "durationSeconds": 6,
+      "codec": "h264",
+      "pixelFormat": "yuv420p",
+      "color": {
+        "range": "tv",
+        "space": "bt709",
+        "transfer": "bt709",
+        "primaries": "bt709"
+      },
+      "audio": false,
+      "accent": "#FF5A1F",
+      "background": "#FAFAF8",
+      "safeZone": [
+        0,
+        0,
+        760,
+        720
+      ],
+      "proofFrames": {
+        "0": "5fa40b513f42f3e619540c6cc72c02c0eb006685339b687ef26cbb435df6bcd7",
+        "1": "3f9347d1665424858bdf38975f05053d0512220b3fe0192fd6ab19e8eaa8b5b6",
+        "90": "637d1f7b731db20a98519520fa04e433f7e19afdc257c08fb8ee6d76ffbb1c94",
+        "180": "cf0d94ee575740c9daf13223e9653ab083bc6b573fb77f86a13032548522cf4d",
+        "270": "fd677d5cbd50dfb3d078616e3e615380579d4ced1b570c3f90351d33778466c1",
+        "359": "685cd5ec5d3cbb7330178b25c7bc76325132ffd30633c22187130726d6391d56",
+        "360": "5fa40b513f42f3e619540c6cc72c02c0eb006685339b687ef26cbb435df6bcd7"
+      },
+      "validation": "motion/validation/profile-license-light.json",
+      "validationSha256": "f0b4bdae364d826c52aad05e59ebd4aecbece7c16e5dd6a61525dd15e26c06fa",
+      "seamVerification": {
+        "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+        "sourceEndpointMAE0To255": 0,
+        "sourceVelocityEndpointIdentical": true,
+        "encodedSeamMAE0To255": 0.10158564814814815,
+        "encodedOrdinaryMeanMAE0To255": 0.004142712524502214,
+        "encodedOrdinaryMaximumMAE0To255": 0.07278935185185186,
+        "acceptedMaximumMAE0To255": 0.21098668981481483,
+        "passed": true
+      },
+      "readingZoneVerification": {
+        "rectSourcePixels": [
+          0,
+          0,
+          760,
+          720
+        ],
+        "sourceMaximumChannelError0To255": 0,
+        "encodedMaximumChannelError0To255": 2,
+        "encodedMaximumTemporalChannelChange0To255": 0,
+        "nominalText": "#171717",
+        "minimumEncodedContrast": 16.996432860012337,
+        "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+      },
+      "motionMask": {
+        "resolution": [
+          320,
+          180
+        ],
+        "outsideReadingZoneChangedPixelCount": 3576,
+        "channelRangeThreshold0To255": 2
       }
     }
   }

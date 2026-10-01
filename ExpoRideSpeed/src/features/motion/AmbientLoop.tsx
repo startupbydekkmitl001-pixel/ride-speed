@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { ambientAssets, type AmbientAsset } from "./assets";
 import { useMotionPlaybackLease } from "./MotionProvider";
+import {theme} from '../../lib/theme';
 
 export type AmbientLoopProps = {
   asset: AmbientAsset;
@@ -30,7 +31,7 @@ export const AmbientLoop = memo(function AmbientLoop({
   const sources = ambientAssets[asset];
   return (
     <View
-      style={[styles.material, style]}
+      style={[styles.material, {backgroundColor:asset.endsWith('-light')?theme.light.bg:theme.dark.bg}, style]}
       pointerEvents="none"
       accessible={false}
       accessibilityElementsHidden
@@ -123,5 +124,5 @@ function PlayingMaterial({
 }
 
 const styles = StyleSheet.create({
-  material: { overflow: "hidden", backgroundColor: "#000000" },
+  material: { overflow: "hidden" },
 });

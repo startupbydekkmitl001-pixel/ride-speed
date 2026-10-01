@@ -1,0 +1,32 @@
+{
+  "count": 28,
+  "familyBytes": 1552874,
+  "videoBytes": 1322182,
+  "posterBytes": 230692,
+  "largestVideoBytes": 78304,
+  "largestPosterBytes": 9959,
+  "largestSeamMAE": 0.13012731481481482,
+  "lowestNominalTextContrast": 16.996432860012337,
+  "largestReadingZoneTemporalChange": 0,
+  "largestPosterMAE": 0.47724754050925927,
+  "largestPosterReadingZoneDifference": 1,
+  "generator": {
+    "framework": "Remotion",
+    "version": "4.0.531",
+    "node": "v24.14.0",
+    "browser": "Chrome/154.0.8037.58",
+    "ffmpeg": "ffmpeg version N-124675-g468a743af1-20260529 Copyright (c) 2000-2026 the FFmpeg developers",
+    "ffprobe": "ffprobe version N-124675-g468a743af1-20260529 Copyright (c) 2007-2026 the FFmpeg developers",
+    "graphics": "swangle / software host baseline",
+    "entry": "motion/src/index.jsx",
+    "command": "cd motion && npm ci && npm run render -- --all",
+    "encode": {
+      "codec": "h264",
+      "crf": 24,
+      "pixelFormat": "yuv420p",
+      "colorSpace": "bt709",
+      "frameCapture": "png",
+      "concurrency": 4
+    }
+  }
+}

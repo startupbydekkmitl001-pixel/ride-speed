@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 2,
+  "id": "profile-license-light",
+  "video": "build/profile-license-light.mp4",
+  "width": 1280,
+  "height": 720,
+  "fps": 60,
+  "frames": 360,
+  "durationSeconds": 6,
+  "bytes": 52494,
+  "codec": "h264",
+  "pixelFormat": "yuv420p",
+  "color": {
+    "range": "tv",
+    "space": "bt709",
+    "transfer": "bt709",
+    "primaries": "bt709"
+  },
+  "audioTracks": 0,
+  "seam": {
+    "method": "Pixel-identical source 0/N and analytic position/velocity; encoded N-1/0 against every ordinary frame step at 320x180 RGB",
+    "sourceEndpointMAE0To255": 0,
+    "sourceVelocityEndpointIdentical": true,
+    "encodedSeamMAE0To255": 0.10158564814814815,
+    "encodedOrdinaryMeanMAE0To255": 0.004142712524502214,
+    "encodedOrdinaryMaximumMAE0To255": 0.07278935185185186,
+    "acceptedMaximumMAE0To255": 0.21098668981481483,
+    "passed": true
+  },
+  "readingZone": {
+    "rectSourcePixels": [
+      0,
+      0,
+      760,
+      720
+    ],
+    "sourceMaximumChannelError0To255": 0,
+    "encodedMaximumChannelError0To255": 2,
+    "encodedMaximumTemporalChannelChange0To255": 0,
+    "nominalText": "#171717",
+    "minimumEncodedContrast": 16.996432860012337,
+    "measurement": "All decoded frames at 320x180; four-source-pixel boundary inset. Contrast assumes nominal native text above this opaque zone; screen layout is a separate integration check."
+  },
+  "motionMask": {
+    "resolution": [
+      320,
+      180
+    ],
+    "outsideReadingZoneChangedPixelCount": 3576,
+    "channelRangeThreshold0To255": 2
+  }
+}

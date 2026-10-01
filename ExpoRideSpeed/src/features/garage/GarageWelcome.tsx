@@ -1,4 +1,3 @@
-import { useIsFocused } from "expo-router";
 import { useEffect } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import Animated, {
@@ -13,7 +12,8 @@ import Animated, {
 import { Icon, T } from "../../components/ui";
 import { theme } from "../../lib/theme";
 import { useApp } from "../../state/AppState";
-import { AmbientLoop } from "../motion";
+import { AmbientLoop,resolveAmbientAsset } from "../motion";
+import {useScreenActivity} from '../../lib/useScreenActivity';
 
 export function GarageWelcome({
   title,
@@ -26,10 +26,9 @@ export function GarageWelcome({
   label: string;
   onAdd: () => void;
 }) {
-  const { colors, motion } = useApp();
-  // This material is always black, including on light pages and its still poster.
-  const material = theme.dark;
-  const focused = useIsFocused();
+  const { colors, motion,dark } = useApp();
+  const material = colors;
+  const focused = useScreenActivity().active;
   const glow = useSharedValue(1);
   const scale = useSharedValue(1);
   useEffect(() => {
@@ -65,7 +64,7 @@ export function GarageWelcome({
       }}
     >
       <AmbientLoop
-        asset="garage-scooter"
+        asset={resolveAmbientAsset('garage-scooter',dark?'dark':'light')}
         visible={focused}
         style={StyleSheet.absoluteFill}
       />
@@ -133,7 +132,7 @@ export function GarageWelcome({
         >
           {body}
         </T>
-        <T size={14} weight="medium" style={{ color: colors.accent }}>
+        <T size={14} weight="medium" style={{ color: colors.accentText }}>
           {label}
         </T>
       </View>

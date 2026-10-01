@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import { Image, Pressable, StyleSheet, View } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { Button, Icon, IconButton, Row, T } from "../../components/ui";
 import type { GarageVehicle } from "../../lib/domain";
 import { useI18n } from "../../lib/i18n";
 import { theme } from "../../lib/theme";
 import { useApp } from "../../state/AppState";
 import { useAuth } from "../../state/AuthState";
-import { AmbientLoop } from "../motion";
+import { AmbientLoop,resolveAmbientAsset } from "../motion";
 import { CategoryGlyph } from "./CategoryGlyph";
 import { vehicleDisplayName, vehicleMeasure } from "./model";
 
@@ -88,7 +87,7 @@ export function GarageCard({
   getPhotoUrl: (path: string) => Promise<string | null>;
   photoPreview?: string | null;
 }) {
-  const { colors } = useApp(),
+  const { colors,dark } = useApp(),
     { scope } = useAuth(),
     { t } = useI18n();
   const [photo, setPhoto] = useState<{
@@ -137,6 +136,7 @@ export function GarageCard({
   const failedRead =
     photoFailure?.scope === scope && photoFailure?.path === vehicle.photoPath;
   const reloadPhoto = () => setRetry((value) => value + 1);
+  const material=url?theme.dark:colors;
   return (
     <View
       style={{
@@ -150,7 +150,7 @@ export function GarageCard({
       <View
         style={{
           height: 180,
-          backgroundColor: theme.dark.bg,
+          backgroundColor: material.bg,
           overflow: "hidden",
         }}
       >
@@ -160,17 +160,10 @@ export function GarageCard({
             url={url}
             onReload={reloadPhoto}
           />
-        ) : vehicle.category === "scooter" ? (
-          <AmbientLoop
-            asset="garage-scooter"
-            visible={visible && active && !failedRead}
-            style={StyleSheet.absoluteFill}
-          />
         ) : (
-          <LinearGradient
-            colors={[theme.dark.bg, theme.dark.raised, theme.dark.bg]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+          <AmbientLoop
+            asset={resolveAmbientAsset(vehicle.category==='scooter'?'garage-scooter':vehicle.category==='bigbike'?'garage-bigbike':'garage-car',dark?'dark':'light')}
+            visible={visible && active && !failedRead}
             style={StyleSheet.absoluteFill}
           />
         )}
@@ -181,7 +174,7 @@ export function GarageCard({
             <CategoryGlyph
               category={vehicle.category}
               size={144}
-              color={theme.dark.ink}
+              color={material.ink}
             />
           </View>
         ) : null}
@@ -204,12 +197,12 @@ export function GarageCard({
               borderRadius: theme.radius.pill,
               paddingHorizontal: 12,
               paddingVertical: 6,
-              backgroundColor: theme.dark.glassScrim,
+              backgroundColor: material.glassScrim,
               borderWidth: 1,
-              borderColor: theme.dark.line,
+              borderColor: material.line,
             }}
           >
-            <T size={12} style={{ color: theme.dark.ink }}>
+            <T size={12} style={{ color: material.ink }}>
               {t(`m3.category.${vehicle.category}`)}
             </T>
           </View>
@@ -224,12 +217,12 @@ export function GarageCard({
               borderRadius: 22,
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: theme.dark.glassScrim,
+              backgroundColor: material.glassScrim,
               borderWidth: 1,
-              borderColor: theme.dark.line,
+              borderColor: material.line,
             }}
           >
-            <Icon name="camera-outline" size={21} color={theme.dark.ink} />
+            <Icon name="camera-outline" size={21} color={material.ink} />
           </Pressable>
         </View>
       </View>

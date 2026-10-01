@@ -8,6 +8,8 @@ import { useI18n, type TranslationKey } from "../../lib/i18n";
 import { theme } from "../../lib/theme";
 import type { SpeedSnapshot } from "../../speedEngine";
 import { useApp } from "../../state/AppState";
+import { useScreenActivity } from '../../lib/useScreenActivity';
+import { AmbientLoop, resolveAmbientAsset } from '../motion';
 import { formatRideDuration, metricDistance, presentSpeed, rollingDigitPosition, speedFactor, speedScale, type RideMetrics, type SpeedUnits } from "./presentation";
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -26,6 +28,7 @@ export type SpeedometerHUDProps = {
   metrics: RideMetrics;
   units: SpeedUnits;
   expanded?: boolean;
+  backgroundMotionAllowed?: boolean;
   onToggleExpanded: () => void;
   onUnitsChange?: (value: SpeedUnits) => void;
   style?: StyleProp<ViewStyle>;
@@ -119,8 +122,9 @@ function Metric({ label, value, unit }: { label: TranslationKey; value: string; 
   </View>;
 }
 
-export const SpeedometerHUD = memo(function SpeedometerHUD({ snapshot, metrics, units, expanded = false, onToggleExpanded, onUnitsChange, style }: SpeedometerHUDProps) {
-  const { colors } = useApp(), { t, locale } = useI18n();
+export const SpeedometerHUD = memo(function SpeedometerHUD({ snapshot, metrics, units, expanded = false, backgroundMotionAllowed = false, onToggleExpanded, onUnitsChange, style }: SpeedometerHUDProps) {
+  const { colors, dark } = useApp(), { t, locale } = useI18n();
+  const { active } = useScreenActivity();
   const { width, height, fontScale } = useWindowDimensions();
   const landscape = width > height;
   const presentation = presentSpeed(snapshot, units), range = speedScale(presentation.live, presentation.maximum, units);
@@ -144,6 +148,7 @@ export const SpeedometerHUD = memo(function SpeedometerHUD({ snapshot, metrics, 
     </Row>
   </GlassSurface>;
   return <View style={[{ backgroundColor: colors.bg, borderRadius: theme.radius.sheet, overflow: "hidden" }, style]}>
+    <AmbientLoop asset={resolveAmbientAsset('speedometer-glow', dark ? 'dark' : 'light')} visible={active && backgroundMotionAllowed} style={[StyleSheet.absoluteFill, { opacity: 0.35 }]} />
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, gap: 12 }}>
       <Row style={{ justifyContent: "space-between" }}><View style={{ flexShrink: 1 }}><T weight="semibold" size={18}>{t("m2.hud.live")}</T>{signal}</View><IconButton name="contract-outline" label={t("m2.hud.compact")} onPress={onToggleExpanded} /></Row>
       <View style={{ flexDirection: landscape ? "row" : "column", alignItems: "center", gap: 12 }}>

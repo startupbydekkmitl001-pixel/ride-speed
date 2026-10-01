@@ -1,60 +1,10 @@
-import { useVideoPlayer, VideoView } from "expo-video";
-import { useEffect, useLayoutEffect, useState } from "react";
 import { Image, StyleSheet, View } from "react-native";
-import { useMotionPlaybackLease } from "../features/motion";
+import { AmbientLoop,resolveAmbientAsset } from "../features/motion";
 import { useI18n } from "../lib/i18n";
 import { useApp } from "../state/AppState";
 import { useRiderProfile } from "../state/RiderProfile";
 import { Icon, Row, T } from "./ui";
 
-function PlayingMaterial({ dark, registerStop, playIfAllowed }: {
-  dark: boolean;
-  registerStop: (stop: () => void) => () => void;
-  playIfAllowed: (play: () => void) => void;
-}) {
-  const [rendered, setRendered] = useState(false);
-  const player = useVideoPlayer(
-    dark
-      ? require("../../assets/motion/card-loop-dark.mp4")
-      : require("../../assets/motion/card-loop.mp4"),
-    (p) => {
-      p.loop = true;
-      p.muted = true;
-      p.audioMixingMode = "mixWithOthers";
-    },
-  );
-  useLayoutEffect(() => {
-    const unregister = registerStop(() => player.pause());
-    return () => { player.pause(); unregister(); };
-  }, [player, registerStop]);
-  useEffect(() => {
-    // Expo's web VideoView registers the video element in its passive effect.
-    playIfAllowed(() => player.play());
-  }, [player, playIfAllowed]);
-  return (
-      <VideoView
-        player={player}
-        nativeControls={false}
-        contentFit="cover"
-        playsInline
-        onFirstFrameRender={() => setRendered(true)}
-        style={[
-          StyleSheet.absoluteFill,
-          { width: "100%", height: "100%", opacity: rendered ? 1 : 0 },
-        ]}
-        accessible={false}
-      />
-  );
-}
-
-function Material({ dark, visible }: { dark: boolean; visible: boolean }) {
-  const { canPlay, registerStop, playIfAllowed } = useMotionPlaybackLease(visible);
-  const poster = dark ? require("../../assets/motion/card-loop-dark-poster.png") : require("../../assets/motion/card-loop-poster.png");
-  return <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-    <Image source={poster} style={[StyleSheet.absoluteFill, { width: "100%", height: "100%" }]} />
-    {canPlay ? <PlayingMaterial dark={dark} registerStop={registerStop} playIfAllowed={playIfAllowed} /> : null}
-  </View>;
-}
 export function RiderCard({
   handle,
   visible = true,
@@ -84,10 +34,11 @@ export function RiderCard({
           gap: 26,
         }}
       >
-        <Material
+        <AmbientLoop
           key={dark ? "dark" : "light"}
-          dark={dark}
+          asset={resolveAmbientAsset('profile-license',dark?'dark':'light')}
           visible={visible}
+          style={StyleSheet.absoluteFill}
         />
         <Row style={{ justifyContent: "space-between" }}>
           <Row style={{ gap: 7 }}>

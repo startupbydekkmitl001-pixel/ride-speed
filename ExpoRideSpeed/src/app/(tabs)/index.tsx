@@ -59,7 +59,7 @@ function MapHome(){
   <View pointerEvents="box-none" style={{position:'absolute',left:20,right:20,bottom:bottom,gap:12,...(expanded?{top:insets.top+12,justifyContent:'center' as const}:{})}}>
    {(permission||ride.error||captureMessage||status.state==='error'||status.state==='unsupported'||status.state==='degraded')&&<View style={{backgroundColor:app.colors.bg,borderRadius:16,padding:12,gap:8}}><T size={13}>{t(permission??(ride.error as TranslationKey)??captureMessage??'m2.map.mapError')}</T><Button small secondary label={t('common.retry')} onPress={()=>{setPermission(null);setRetry(n=>n+1);void ride.retrySave();}}/></View>}
    {ride.ride?.status==='interrupted'&&<Note>{t('m2.ride.recoveryBody')}</Note>}
-   <SpeedometerHUD snapshot={ride.snapshot} metrics={ride.metrics} units={app.data.unit} expanded={expanded} onToggleExpanded={()=>setExpanded(v=>!v)} onUnitsChange={unit=>app.update({unit})}/>
+   <SpeedometerHUD snapshot={ride.snapshot} metrics={ride.metrics} units={app.data.unit} expanded={expanded} backgroundMotionAllowed={!moving} onToggleExpanded={()=>setExpanded(v=>!v)} onUnitsChange={unit=>app.update({unit})}/>
    {compactControls}
    {!expanded&&<Row style={{gap:8}}><Button small secondary style={{flex:1}} label={t('m2.map.planRoute')} icon="git-branch-outline" disabled={moving} onPress={()=>router.push('/routes')}/><Button small secondary style={{flex:1}} label={t('m2.map.challenge')} icon="flag-outline" disabled={moving} onPress={()=>router.push('/challenges')}/></Row>}
    <T size={11} style={{textAlign:'center',color:app.colors.muted}}>{t('m2.ride.foregroundOnly')}</T>

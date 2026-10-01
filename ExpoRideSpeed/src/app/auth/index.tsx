@@ -18,6 +18,7 @@ import { configured, supabase } from "../../lib/supabase";
 import { publicService } from "../../lib/publicService";
 import { errorKey, useI18n, type TranslationKey } from "../../lib/i18n";
 import { useAuth } from "../../state/AuthState";
+import { MotionHero } from '../../features/motion';
 
 const publicRegistrationAvailable =
   publicService.publicEmailRegistration && publicService.publicEmailDelivery;
@@ -136,6 +137,7 @@ export default function AuthScreen() {
   }
   return (
     <Screen>
+      <MotionHero>
       <Heading
         eyebrow=""
         title={
@@ -156,6 +158,7 @@ export default function AuthScreen() {
         }
       />
       <T muted>{t("auth.googleIntro")}</T>
+      </MotionHero>
       {sessionError && <Note error>{t(errorKey(sessionError, "login"))}</Note>}
       {params.deletion === "unconfirmed" && <Note>{t("delete.sessionEnded")}</Note>}
       <Button

@@ -1,0 +1,204 @@
+{
+  "schemaVersion": 1,
+  "generator": "motion/scripts/check-posters.mjs",
+  "sourceSha256": "af947e1005cefe955ff29f5d2e969200251c10c2e3979d474e42fa6121f73a66",
+  "measurement": "Decoded full-resolution 1280x720 RGB poster against encoded first video frame; exact source bytes hashed",
+  "assets": {
+    "garage-scooter-dark": {
+      "videoSha256": "0fa053e19940161d50ac9f6c5d338702dd0deadd78fc95a47c7cd5bf304ec45d",
+      "posterSha256": "e6bad6051fdba358bccf2b426924f759272dd749160bad520ad3d6b0815513dc",
+      "posterFirstEncodedFrameMAE0To255": 0.14241825810185185,
+      "readingZoneMaximumChannelDifference0To255": 0,
+      "passed": true
+    },
+    "garage-scooter-light": {
+      "videoSha256": "9eff507f6674cfd6c6cbd762cf2edfd85ea7c9f8977b1cd0db29fb7e085f09fc",
+      "posterSha256": "e12430c1acfd708f7439e97f99ab2a015b6e706f2ab3118352dc254e6a6cd382",
+      "posterFirstEncodedFrameMAE0To255": 0.4104806857638889,
+      "readingZoneMaximumChannelDifference0To255": 1,
+      "passed": true
+    },
+    "garage-bigbike-dark": {
+      "videoSha256": "dafeec97bbb495c5f3a092309b29723d4e664d7cc584080fb4a65e0f1c70729f",
+      "posterSha256": "f0855e716539da76e6ef981e0a8d640356347fc72cb0e8b67e805573cd267d96",
+      "posterFirstEncodedFrameMAE0To255": 0.14390299479166666,
+      "readingZoneMaximumChannelDifference0To255": 0,
+      "passed": true
+    },
+    "garage-bigbike-light": {
+      "videoSha256": "0ec8c346a49ee9c677eb74907bcfc023b7e6f82a0e958b8b91d5080423b52aac",
+      "posterSha256": "d064047caf3c68d3b9a8568199326eae2de1f251d7e42a792424784ddb799862",
+      "posterFirstEncodedFrameMAE0To255": 0.4297819010416667,
+      "readingZoneMaximumChannelDifference0To255": 1,
+      "passed": true
+    },
+    "garage-car-dark": {
+      "videoSha256": "772fcc557a7cc6e37e69d1c9a3e077007ded8e16d064c78238b14bef028eaa28",
+      "posterSha256": "1ca0064f73345aa48fcdd7e3790b544a869c4978198a4b5d2980515d3be4281f",
+      "posterFirstEncodedFrameMAE0To255": 0.15515335648148149,
+      "readingZoneMaximumChannelDifference0To255": 0,
+      "passed": true
+    },
+    "garage-car-light": {
+      "videoSha256": "137961ccbda63dfb688467f2c38f3ae2a786c33459f9b93f0b6a4b49eaddade2",
+      "posterSha256": "efd54be8c03fd98dfc5e9b61a29568a1edb4506b263fd575f94ba00c03a8e669",
+      "posterFirstEncodedFrameMAE0To255": 0.4207114438657407,
+      "readingZoneMaximumChannelDifference0To255": 1,
+      "passed": true
+    },
+    "podium-first-dark": {
+      "videoSha256": "b29a22cd0fd81ed069bf88a2fee010179287c6048efc0e18384b8b916b899fee",
+      "posterSha256": "06838dc309098306302c5eb80a73a115db726ac69b555439cd078c7f88cf8892",
+      "posterFirstEncodedFrameMAE0To255": 0.1352047164351852,
+      "readingZoneMaximumChannelDifference0To255": 0,
+      "passed": true
+    },
+    "podium-first-light": {
+      "videoSha256": "786769ccd20acd05ffb664ac82eb4343997f959c2415f28077fab6173129dcba",
+      "posterSha256": "a9cc07c782665bbaabd5fe3d5c919fa19e244bbe182744f9d7898e0328671594",
+      "posterFirstEncodedFrameMAE0To255": 0.4282421875,
+      "readingZoneMaximumChannelDifference0To255": 1,
+      "passed": true
+    },
+    "podium-second-dark": {
+      "videoSha256": "330172da7e3313c5bba3b8eb78b9e1499211aed9afbf39220179c667c023ecef",
+      "posterSha256": "4658f7f35eafe74ccd83279c97eee92a2c064c587776d7db16fff2c7e50f3c1e",
+      "posterFirstEncodedFrameMAE0To255": 0.10182110821759259,
+      "readingZoneMaximumChannelDifference0To255": 0,
+      "passed": true
+    },
+    "podium-second-light": {
+      "videoSha256": "d94d6d78ab91ce20d085b41e1a5eb63d4ffedf23a24102a0cadc956541df1331",
+      "posterSha256": "2c16510cb0a22264464a89143e13ce1777fb4f3f8d4808037cf7baf3b0248101",
+      "posterFirstEncodedFrameMAE0To255": 0.39834129050925926,
+      "readingZoneMaximumChannelDifference0To255": 1,
+      "passed": true
+    },
+    "podium-third-dark": {
+      "videoSha256": "96b40c193dc2bbf286f94b882bd182306ed8e7b766c8826e9ab6c64274c200ce",
+      "posterSha256": "7a2c2cb4274ca3deef14ec0256fcc6efde96486951b5185da0a3a64a180bcf8c",
+      "posterFirstEncodedFrameMAE0To255": 0.08205222800925926,
+      "readingZoneMaximumChannelDifference0To255": 0,
+      "passed": true
+    },
+    "podium-third-light": {
+      "videoSha256": "1aab479235d67551916dde4a68b3892ace9edc9a3d66f512929cc68933b07832",
+      "posterSha256": "93ffe10646013efd9fe4da52e6b586f24d88d3e3b0b2432e4757564a0612eabd",
+      "posterFirstEncodedFrameMAE0To255": 0.38319299768518517,
+      "readingZoneMaximumChannelDifference0To255": 1,
+      "passed": true
+    },
+    "ranked-today-dark": {
+      "videoSha256": "af26437747cf27d8d1a662e1c47053e57611bafbd2d732264e3392a4626618c7",
+      "posterSha256": "1b7775e3013eb843b26ac10db69f86685b025a893a91d09f90295a093f63a8a7",
+      "posterFirstEncodedFrameMAE0To255": 0.12462745949074074,
+      "readingZoneMaximumChannelDifference0To255": 0,
+      "passed": true
+    },
+    "ranked-today-light": {
+      "videoSha256": "df5ae715912164dac9d24b6fc0b03bb52f6796ec96d9ea08b477c2b0a4c6bb68",
+      "posterSha256": "6f659459251bbdee6355bd6c31828c506b552b2a28d5a284ee5cd20cf85db2ea",
+      "posterFirstEncodedFrameMAE0To255": 0.4083127170138889,
+      "readingZoneMaximumChannelDifference0To255": 1,
+      "passed": true
+    },
+    "ranked-week-dark": {
+      "videoSha256": "cd0ae3c001dc5b7db777d1b559cfbe0834274ee1b019c9e38d69cb27a096ab5e",
+      "posterSha256": "2e80d8e8137e0a1db87d06123b8f1fd6886bfa30e262123b25c0cb656c0fdc76",
+      "posterFirstEncodedFrameMAE0To255": 0.12689308449074074,
+      "readingZoneMaximumChannelDifference0To255": 0,
+      "passed": true
+    },
+    "ranked-week-light": {
+      "videoSha256": "a1133e5737e5346b840a510f2960f1aba5f301a5cadc496aacdb8015eeb65fc2",
+      "posterSha256": "029b211d4a502703d7dca68c4e72b2a6ec0341a6346dcb69baef3635582cf4c9",
+      "posterFirstEncodedFrameMAE0To255": 0.41659324363425926,
+      "readingZoneMaximumChannelDifference0To255": 1,
+      "passed": true
+    },
+    "ranked-month-dark": {
+      "videoSha256": "b71501df21472273150c5598c3e6eba1d312e35535a51b689c04a21dc892395b",
+      "posterSha256": "eca2c10afb0562abb869f4ffa61dc3baad88c2f25d42370472b0c08bc09bbf86",
+      "posterFirstEncodedFrameMAE0To255": 0.11767578125,
+      "readingZoneMaximumChannelDifference0To255": 0,
+      "passed": true
+    },
+    "ranked-month-light": {
+      "videoSha256": "f54ff41abbb395a4134d3d45e2b0dc169449063c4c2888538866a5b65767d46d",
+      "posterSha256": "4a6fe03434489d99f6f44735d108dde516c92e2cc0d87facd8280c83b8b9365e",
+      "posterFirstEncodedFrameMAE0To255": 0.40836263020833335,
+      "readingZoneMaximumChannelDifference0To255": 1,
+      "passed": true
+    },
+    "auth-onboarding-dark": {
+      "videoSha256": "c4081ee6a762fed2c4541373790feacce3a9b5e2732571107ae62aa0292d80f1",
+      "posterSha256": "b05b9274e16c8865e03ebdd2d7084755abebc0d86e90e25540be15a6de9d1fea",
+      "posterFirstEncodedFrameMAE0To255": 0.17170319733796297,
+      "readingZoneMaximumChannelDifference0To255": 0,
+      "passed": true
+    },
+    "auth-onboarding-light": {
+      "videoSha256": "20afe9b3ba58ef797463b2f4f15080f32c1bb16f48b858d94a03b3e8b4b936b1",
+      "posterSha256": "a5f1e638b3eeac4ad556e3169236d622cfb74d18ac266f3236f64b67a6489d00",
+      "posterFirstEncodedFrameMAE0To255": 0.41661566840277775,
+      "readingZoneMaximumChannelDifference0To255": 1,
+      "passed": true
+    },
+    "empty-state-dark": {
+      "videoSha256": "a66893d987462102438889ba32e9ea89b8827cacc45b5d129f4d6977bc02fb20",
+      "posterSha256": "4cb3a474f5183fbfcb7d96e6a4cff78aa4e0d4ba837afd6dc1ddc1ba8cfa9852",
+      "posterFirstEncodedFrameMAE0To255": 0.031443142361111114,
+      "readingZoneMaximumChannelDifference0To255": 0,
+      "passed": true
+    },
+    "empty-state-light": {
+      "videoSha256": "3f3ebd22990bb48c25bed74db142fe1c97a569285b6e3fa8c5491a52c9c54396",
+      "posterSha256": "c7296e4a47682b6921fc7b8406088809a5e99c1d70fc654fc737ab3b27fdb582",
+      "posterFirstEncodedFrameMAE0To255": 0.3489058883101852,
+      "readingZoneMaximumChannelDifference0To255": 1,
+      "passed": true
+    },
+    "challenge-lobby-dark": {
+      "videoSha256": "d80d4f32b99cb5c35de7827f05a726c94849e3426dfdd6c03500e5893b603034",
+      "posterSha256": "2c5a4097646bff936efc44ad285be9c67412e662d96e233aad41625de2161f2e",
+      "posterFirstEncodedFrameMAE0To255": 0.19900245949074075,
+      "readingZoneMaximumChannelDifference0To255": 0,
+      "passed": true
+    },
+    "challenge-lobby-light": {
+      "videoSha256": "c0cdf5792129a53abe358363b62e31760c2fbed5d1bef51470a7f972318b98cc",
+      "posterSha256": "64a95ac02c8e3991dcf7fcc00214dc80655d2b15bcafdc191e6c0f00ff675c3d",
+      "posterFirstEncodedFrameMAE0To255": 0.47724754050925927,
+      "readingZoneMaximumChannelDifference0To255": 1,
+      "passed": true
+    },
+    "speedometer-glow-dark": {
+      "videoSha256": "a3bf6e3079e3bf7aa3497d0d7ab805fab6549b43a7e827ab11248295dd596f69",
+      "posterSha256": "2834b41307c7ef403257859cefb3da13a651a0a9e91a2424db36152b66cd3dc0",
+      "posterFirstEncodedFrameMAE0To255": 0.07901222511574074,
+      "readingZoneMaximumChannelDifference0To255": 0,
+      "passed": true
+    },
+    "speedometer-glow-light": {
+      "videoSha256": "47aa780535380972bd76c749da1bfa9ad47407c6f780eae4dde7ec190f32aab9",
+      "posterSha256": "1d13fe1a0ceb14b8fbc3cf9008fc70161e647febfd2b41f0df6c307115b0870a",
+      "posterFirstEncodedFrameMAE0To255": 0.3871111834490741,
+      "readingZoneMaximumChannelDifference0To255": 1,
+      "passed": true
+    },
+    "profile-license-dark": {
+      "videoSha256": "8affaa445fd0b4a4f6ef2a26a5830fcad4680e3584051d56aa36b278f0436a1a",
+      "posterSha256": "6be28a93aef632a44444931fddca3076f45aabc0718dd26400188c55fa1199f3",
+      "posterFirstEncodedFrameMAE0To255": 0.16278247974537038,
+      "readingZoneMaximumChannelDifference0To255": 0,
+      "passed": true
+    },
+    "profile-license-light": {
+      "videoSha256": "93ecd73322e7bc646ec1a9be862cfb3b98658abb38935f495d2f05b63ff39b71",
+      "posterSha256": "7a573676754586dfc841cd495b524c4bd777b0167a0c948bad7474f2c837e0f9",
+      "posterFirstEncodedFrameMAE0To255": 0.4453421585648148,
+      "readingZoneMaximumChannelDifference0To255": 1,
+      "passed": true
+    }
+  }
+}

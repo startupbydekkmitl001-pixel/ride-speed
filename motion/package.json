@@ -5,7 +5,10 @@
   "scripts": {
     "studio": "remotion studio src/index.jsx --no-open --port 3035",
     "render": "node scripts/render.mjs",
-    "verify": "node scripts/verify.mjs"
+    "verify": "node scripts/verify.mjs",
+    "registry": "node scripts/generate-registry.mjs",
+    "inspect": "python scripts/inspect.py",
+    "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
     "@remotion/bundler": "4.0.531",
