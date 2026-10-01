@@ -1,7 +1,8 @@
 import type { TranslationKey } from "./resources";
 import { socialErrorKey } from './m5a';
+import { liveErrorKey } from './m5b';
 
-type ErrorContext = "google" | "apple" | "onboarding" | "avatar" | "deletion" | "login" | "signup" | "reset" | "password" | "callback" | "profile" | "photo" | "logout" | "online" | "storage" | "ride" | "rideSync" | "social";
+type ErrorContext = "google" | "apple" | "onboarding" | "avatar" | "deletion" | "login" | "signup" | "reset" | "password" | "callback" | "profile" | "photo" | "logout" | "online" | "storage" | "ride" | "rideSync" | "social" | "live";
 const fallback: Record<ErrorContext, TranslationKey> = {
   google: "errors.googleLogin", apple: "errors.appleLogin", onboarding: "errors.onboarding", avatar: "errors.avatarUnavailable", deletion: "errors.deletion", login: "errors.connection", signup: "errors.connection",
   reset: "errors.connection", password: "errors.passwordSave", callback: "errors.callbackExpired",
@@ -9,6 +10,7 @@ const fallback: Record<ErrorContext, TranslationKey> = {
   online: "errors.connection", storage: "errors.localRead", ride: "errors.gpsStart",
   rideSync: "m2.sync.unavailable",
   social: 'm5a.errors.unavailable',
+  live: 'm5b.errors.unavailable',
 };
 const codes: Record<string, TranslationKey> = {
   ACCOUNT_CHANGED: "errors.accountChanged", LOCAL_READ_FAILED: "errors.localRead", LOCAL_WRITE_FAILED: "errors.localWrite",
@@ -63,6 +65,7 @@ export function errorKey(
   options: { publicEmailDelivery?: boolean } = {},
 ): TranslationKey {
   if (context === 'social') return socialErrorKey(error);
+  if (context === 'live') return liveErrorKey(error);
   const object = error !== null && typeof error === "object" ? error : null;
   const code = object && "code" in object ? String(object.code) : "";
   if (code === "email_not_confirmed")

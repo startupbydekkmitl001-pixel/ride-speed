@@ -4,7 +4,9 @@
 
 V5 source includes M0 (black glass, bilingual theme and motion budget), M1 (owner-isolated accounts), M2 (fullscreen MapLibre maps, animated HUD and durable private rides), M3 (searchable vehicle catalog, EV kW, personal garage cards and private photo/sync handling), M4 (in-app search/road route builder, private owner geometry, trimmed sharing and durable edit/sync recovery), and M5A (friends, private status and paged invitations with durable operation recovery). These additive schemas/functions are deployed. M4's real scooter route shows4.1km/estimated8minutes, survives reload, and repeats from the private provider cache; its secret stays server-side. See [M1 acceptance](docs/design/m1-acceptance-v5.md), [M2 acceptance](docs/design/m2-acceptance-v5.md), [M3 acceptance](docs/design/m3-acceptance-v5.md), [M4 acceptance](docs/design/m4-acceptance-v5.md) and [M5A acceptance](docs/design/m5a-acceptance-v5.md) for exact source/browser evidence and device gates. M2 iOS release/development compilation succeeded in [manual run #12](https://github.com/startupbydekkmitl001-pixel/ride-speed/actions/runs/36783813984); M4 Android compilation and package validation passed [run #7](https://github.com/startupbydekkmitl001-pixel/ride-speed/actions/runs/36795867989). The matching iOS run verified source only. Published build9 still predates V5; fresh artifact publication and physical-device results remain separate gates. Live convoy, route-time races, new ranked/community features and the full motion family remain in progress.
 
-A Thai-first iPhone speed and ride recorder for a private group of friends. Target: iOS 17+, Windows development, free-Apple-ID Sideloadly installs, and free server tiers.
+M5B adds expiring private friend QR/links and foreground group-trip source, exact consent/cancellation recovery and privacy-fenced live map peers. Migration008 is deployed and its RLS/ACLs checked; live rooms remain disabled pending scheduled cleanup/private managed sockets/quotas/paired-device acceptance. See [M5B acceptance](docs/design/m5b-acceptance-v5.md). Friend links work independently of the room gate. Approved races, the expanded Ranked/Community flows and final motion family remain in progress.
+
+A bilingual Thai/English iOS and Android speed and ride recorder for friends. Windows development, free-Apple-ID Sideloadly iPhone previews and free server tiers are retained.
 
 **Current status — 1 October 2026:** native preview **0.1.0 (9.1.0)** includes the revised UI, foreground Core Location capture, embedded Apple Maps route editor, garage, animated rider card and online community. Google sign-in and cloud profile saving passed a real browser acceptance check. Release and development builds passed [run #9](https://github.com/startupbydekkmitl001-pixel/ride-speed/actions/runs/36750133009) at `df1e7db`; both unsigned IPAs are published and their downloaded hashes and packages verified. Installation, GPS and frame rate on the iPhone 14 Plus remain untested. The earlier run #2 IPAs contain the old prototype.
 
@@ -47,7 +49,7 @@ The user selected public source hosting and standard GitHub-hosted macOS runners
 
 Keep recording functional offline. Upload only bounded qualifying evidence and refuse excess submissions when backend limits are near. Supabase email sending, inactivity pauses, storage, egress and function ceilings are explicit design constraints; Firebase's required paid billing plan for this verification/storage architecture rules it out under the current constraints. The [backend report](docs/research/backend-and-routing.md) contains the detailed quota table and budget calculation.
 
-## Feature checklist
+## Historical roadmap — published build 9
 
 | Phase | Deliverables | State |
 |---|---|---|
@@ -60,7 +62,7 @@ Keep recording functional offline. Upload only bounded qualifying evidence and r
 | 6 | Community, friends, rankings, auth, verification, moderation/privacy | Backend deployed; Google login/profile checked live. Posts, friend requests/private presence, group invitations, approved-course speed challenges and day/week/month category rankings implemented. Two-account/media/device acceptance and moderation operations remain pending |
 | Later | Direct BLE GNSS, Live Activity/Dynamic Island, Apple Watch, App Store migration | Research considerations only |
 
-The owner explicitly authorized native implementation after the revised design review. The requested online features were developed alongside the native UI; this does not imply that the original phased roadmap is complete.
+This table records the older build9 roadmap. For current V5 source, use [PLAN.md](PLAN.md) and the milestone acceptance documents above; it does not claim the new race, media, leaderboard or motion requirements are finished.
 
 ## Current app on Windows
 

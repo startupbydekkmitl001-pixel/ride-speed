@@ -69,7 +69,7 @@ function mapHandle(width, height, contentInsets, reducedMotion = false, attribut
     forwardRef: render => render,
     useRef: value => ({ current: refIndex++ === 3 ? camera : refIndex === 5 || refIndex === 6 ? true : value }),
     useMemo: callback => callback(), useCallback: callback => callback,
-    useEffect: () => {}, useImperativeHandle: (target, create) => { target.current = create(); },
+    useEffect: () => {},useLayoutEffect:()=>{}, useImperativeHandle: (target, create) => { target.current = create(); },
   };
   const load = sourceLoader({ react, 'expo-constants': { default: { expoConfig: {} } } });
   const Surface = load(resolve(sourceRoot, 'features/map/MapSurface.web.tsx')).default;

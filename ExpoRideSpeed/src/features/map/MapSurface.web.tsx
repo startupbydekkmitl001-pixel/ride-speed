@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 import type { GeoJSONSource, Map as GLMap, MapMouseEvent } from 'maplibre-gl';
-import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef } from 'react';
 import { theme } from '../../lib/theme';
 import { cameraCommand, fitIntent, fitInsetsAboveFooter, fixData, fromLngLat, mapWorkerUrl, peersData, pinsData, safeCamera, safeInsets, toLngLat, trackData } from './geometry';
 import { MapStatusTracker } from './lifecycle';
@@ -14,6 +14,7 @@ import './MapSurface.web.css';
 
 type Intent = { kind: 'camera'; value: MapCameraCommand } | { kind: 'fit'; coordinates: readonly MapCoordinate[]; options: MapFitOptions };
 const sourceIds = [mapIds.track, mapIds.pins, mapIds.peers, mapIds.fix] as const;
+function showPeers(map:GLMap,visible:boolean){for(const id of [mapIds.cluster,mapIds.clusterCount,mapIds.peer,mapIds.peerName])if(map.getLayer(id))map.setLayoutProperty(id,'visibility',visible?'visible':'none');}
 function cameraOf(map: GLMap): MapCamera | null {
   const value = map.getCenter(), center = fromLngLat([value.lng, value.lat]);
   return center ? safeCamera({ center, zoom: map.getZoom(), bearing: map.getBearing(), pitch: map.getPitch() }) : null;
@@ -194,9 +195,15 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
         for (const id of sourceIds) {
           if (!map.getSource(id)) map.addSource(id, { type: 'geojson', data: latestData.current[id], ...(id === mapIds.peers ? peerClusterOptions : {}), ...(id === mapIds.track ? { lineMetrics: true } : {}) });
           const source = map.getSource(id) as GeoJSONSource;
-          writers.current.set(id, new GeoJSONUpdateQueue(value => source.setData(value), () => { if (alive.current && source === map.getSource(id)) tracker.current!.tileFailed(); }));
+          writers.current.set(id, new GeoJSONUpdateQueue(async value => {
+            await source.setData(value);
+            // A slow worker may finish obsolete GPS after an off/expiry boundary.
+            // Reveal only the newest authorized object in this renderer epoch.
+            if(id===mapIds.peers&&alive.current&&mapRef.current===map&&source===map.getSource(id)&&value===latestData.current[id])showPeers(map,latest.current.peers.length>0);
+          }, () => { if (alive.current && source === map.getSource(id)) tracker.current!.tileFailed(); }));
         }
         for (const layer of overlayLayers(latest.current.theme)) if (!map.getLayer(layer.id)) map.addLayer(layer);
+        showPeers(map,false);writers.current.get(mapIds.peers)?.update(latestData.current[mapIds.peers]);
         syncDragMarker();
         positionCredits(); credits.setAttribute('aria-label', mapCopy[latest.current.locale].attribution);
         const command = pending.current; pending.current = null;
@@ -241,6 +248,7 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
   useEffect(() => { writers.current.get(mapIds.track)?.update(track); }, [track]);
   useEffect(() => { writers.current.get(mapIds.pins)?.update(pins); }, [pins]);
   useEffect(() => { updateDragMarker.current?.(); }, [props.pins,props.selectedPinId,props.mode,props.onMovePin,props.theme,props.locale]);
+  useLayoutEffect(()=>{const map=mapRef.current;if(map)showPeers(map,false);},[peers]);
   useEffect(() => { ++peerVersion.current; writers.current.get(mapIds.peers)?.update(peers); }, [peers]);
   useEffect(() => { writers.current.get(mapIds.fix)?.update(fix); }, [fix]);
   useEffect(() => { tracker.current!.setOnline(props.online); }, [props.online]);

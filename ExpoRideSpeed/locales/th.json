@@ -1,5 +1,6 @@
 {
   "ios": {
+    "NSCameraUsageDescription": "Ride Speed ใช้กล้องเมื่อคุณเลือกสแกน QR ของเพื่อนเท่านั้น",
     "NSLocationWhenInUseUsageDescription": "Ride Speed ใช้ตำแหน่งที่ตั้งแบบแม่นยำเพื่อวัดความเร็วขณะเปิดใช้งานแอป",
     "NSLocalNetworkUsageDescription": "Ride Speed Dev เชื่อมต่อกับเซิร์ฟเวอร์บนคอมพิวเตอร์ Windows เพื่ออัปเดตแอปขณะพัฒนา"
   }

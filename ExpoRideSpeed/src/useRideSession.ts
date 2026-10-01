@@ -38,6 +38,7 @@ export function useRideSession(observer?: {
   onStopped?: (message: string | null) => void;
   onSnapshot?: (snapshot: SpeedSnapshot) => void;
   onAcquired?: (native: boolean) => void;
+  onUnavailable?: () => void;
 }): {
   active: boolean;
   snapshot: SpeedSnapshot;
@@ -211,6 +212,7 @@ export function useRideSession(observer?: {
             stopWithMessage(failure.message);
             if (mountedRef.current) setPermissionState(failure.state);
           } else {
+            observerRef.current?.onUnavailable?.();
             setSnapshot(engine.markUnavailable());
             setMessage(SIGNAL_MESSAGE);
           }
@@ -242,6 +244,7 @@ export function useRideSession(observer?: {
               }),
               () => {
                 if (!isCurrent() || !capture.owns(owner)) return;
+                observerRef.current?.onUnavailable?.();
                 setSnapshot(engine.markUnavailable());
                 setMessage(SIGNAL_MESSAGE);
               },

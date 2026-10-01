@@ -43,12 +43,14 @@ module.exports = ({ config }) => {
       ],
       "expo-secure-store",
       "expo-web-browser",
+      ["expo-camera", { microphonePermission: false, recordAudioAndroid: false, barcodeScannerEnabled: true }],
       [
         "expo-image-picker",
         {
           photosPermission:
             "Choose a photo for your rider card or a community post.",
-          cameraPermission: false,
+          // expo-camera owns the QR permission. Blocking CAMERA here would
+          // remove that permission globally from Android's merged manifest.
           microphonePermission: false,
         },
       ],

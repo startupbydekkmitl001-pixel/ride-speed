@@ -7,6 +7,7 @@ import vm from 'node:vm';
 import * as journalModel from '../src/features/rides/journalModel.ts';
 import { DurableRideQueue } from '../src/features/rides/DurableRideQueue.ts';
 import { ExclusiveLocationCapture } from '../modules/ride-location/src/sessionSupport.ts';
+import { LiveCaptureBus } from '../src/features/live/LiveCaptureBus.ts';
 
 const require = createRequire(import.meta.url), ts = require('typescript');
 const deferred = () => { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; };
@@ -19,8 +20,10 @@ vm.runInNewContext(ts.transpileModule(syncSource, { compilerOptions: { module: t
 });
 const errorModule = { exports: {} };
 const socialErrors = { exports: {} };
+const liveErrors = { exports: {} };
 vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../src/lib/i18n/m5a.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, { module:socialErrors, exports:socialErrors.exports });
-vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../src/lib/i18n/errors.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, { module: errorModule, exports: errorModule.exports, require:name=>{if(name==='./m5a')return socialErrors.exports;throw Error(name);} });
+vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../src/lib/i18n/m5b.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, { module:liveErrors, exports:liveErrors.exports });
+vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../src/lib/i18n/errors.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, { module: errorModule, exports: errorModule.exports, require:name=>{if(name==='./m5a')return socialErrors.exports;if(name==='./m5b')return liveErrors.exports;throw Error(name);} });
 
 /** Executes the real provider and journal model. Only React, platform capture and disk are ports. */
 function harness({ stored = [], scopeId = 'A', signedIn = false } = {}) {
@@ -29,7 +32,8 @@ function harness({ stored = [], scopeId = 'A', signedIn = false } = {}) {
   let scope = { userId: scopeId, generation: 1 };
   let session = signedIn ? { user: { id: scopeId }, access_token: `test-only-${scopeId}` } : null;
   const behavior = { now: 1700000000000, mono: 0, failWrites: false, failStart: false, pendingWrite: null, pendingStop: null, pendingStart: null, pendingList: null, pendingLocatePermission: null, pendingSync: new Map(), syncFailure: new Map(), pendingCloud: new Map(), starts: 0, stops: 0, idleStarts: 0, idleStops: 0, saves: [], lists: [], syncCalls: [], cloudCalls: [], active: false };
-  const idleCapture = new ExclusiveLocationCapture();
+  const idleCapture = new ExclusiveLocationCapture(), appListeners=new Set();
+  const appState={currentState:'active',addEventListener(name,fn){appListeners.add(fn);return {remove(){appListeners.delete(fn);}};}};
   const emptySnapshot = { liveMps: null, maxMps: null, quality: 'noFix', horizontalAccuracyM: null };
   let snapshot = { ...emptySnapshot }, captureId = null, evidenceSamples = [];
   class Clock extends Date { static now() { return behavior.now; } }
@@ -78,13 +82,14 @@ function harness({ stored = [], scopeId = 'A', signedIn = false } = {}) {
       Accuracy: { High: 4 },
       async watchPositionAsync(options, accept) { behavior.idleStarts++; accept({ timestamp: behavior.now, coords: { latitude: 13, longitude: 100, accuracy: 5, heading: null } }); return { remove() { behavior.idleStops++; } }; },
     },
-    'expo-crypto': { randomUUID }, 'react-native': { Platform: { OS: 'ios' }, AppState: { currentState: 'active', addEventListener: () => ({ remove() {} }) } }, 'expo-keep-awake': { useKeepAwake() {} },
+    'expo-crypto': { randomUUID }, 'react-native': { Platform: { OS: 'ios' }, AppState: appState }, 'expo-keep-awake': { useKeepAwake() {} },
     '../../modules/ride-location': { default: {}, __esModule: true },
     '../useRideSession': { useRideSession(nextObserver) { observer = nextObserver; return { ...capture, active: behavior.active, snapshot, permissionState: 'ready', message: null, nativeSource: captureId !== null, sessionId: captureId }; }, locationCapture: idleCapture },
     './AppState': { useApp: () => ({ vehicle: null }) },
     './AuthState': { useAuth: () => ({ scope, ready: true, session }), isAccountCurrent: candidate => candidate === scope },
     '../features/rides/DurableRideQueue': { DurableRideQueue }, '../features/rides/journalPort': { journalPort: port }, '../features/rides/journalModel': journalModel,
     '../features/rides/syncModel': syncModule.exports,
+    '../features/live/LiveCaptureBus': {LiveCaptureBus},
     '../lib/i18n': errorModule.exports,
     '../features/rides/syncService': {
       async syncRideSummary(requested, auth, draft) {
@@ -122,10 +127,32 @@ function harness({ stored = [], scopeId = 'A', signedIn = false } = {}) {
     confirmedSpeed(value) { snapshot = { ...emptySnapshot, quality: 'good', liveMps: value, maxMps: value }; observer?.onSnapshot?.(snapshot); dirty = true; },
     signalLost() { snapshot = { ...emptySnapshot, maxMps: snapshot.maxMps }; observer?.onSnapshot?.(snapshot); dirty = true; },
     fatalStop() { stopCapture('TEST_FATAL_GPS'); },
+    sourceUnavailable(){observer?.onUnavailable?.();},
+    foreground(value){appState.currentState=value;for(const listener of appListeners)listener(value);},
     timer() { for (const fn of timers.values()) fn(); },
   };
   h.render(); return h;
 }
+
+test('actual RideProvider passively taps future bound receipts and never emits startup, idle, snapshot or guest samples',async()=>{
+ const h=harness({signedIn:true});let ride=await h.settle();const events=[];ride.liveCapture.subscribe(e=>events.push(e));
+ const held=deferred();h.behavior.pendingStart=held;const start=ride.start();await tick();h.sample();assert.equal(events.filter(e=>e.kind==='sample').length,0);
+ held.resolve();await start;ride=await h.settle();const raw=h.sample();await h.settle();
+ const actual=events.filter(e=>e.kind==='sample');assert.equal(actual.length,1);assert.equal(actual[0].fix.binding.captureId,h.render().ride.captures.at(-1).id);
+ assert.equal(actual[0].fix.sample.timestampMs,raw.timestampMs);assert.equal(actual[0].fix.sample.mocked,null);
+ h.confirmedSpeed(20);h.timer();assert.equal(events.filter(e=>e.kind==='sample').length,1);
+ await ride.pause();await h.settle();await ride.locate();assert.equal(events.filter(e=>e.kind==='sample').length,1);
+ const guest=harness();let g=await guest.settle();const guestEvents=[];g.liveCapture.subscribe(e=>guestEvents.push(e));await g.start();guest.sample();await guest.settle();assert.equal(g.liveCapture.getBinding(),null);assert.equal(guestEvents.filter(e=>e.kind==='sample').length,0);await guest.render().pause();
+});
+
+test('actual RideProvider invalidates sharing before held stop/deletion and on inactive/source error',async()=>{
+ const h=harness({signedIn:true});let ride=await h.settle();await ride.start();ride=await h.settle();h.sample();assert.ok(ride.liveCapture.getBinding());
+ h.foreground('inactive');assert.equal(ride.liveCapture.getBinding(),null);assert.equal(h.behavior.active,true);
+ h.foreground('active');h.sample();const before=ride.liveCapture.getBinding();assert.ok(before);
+ h.sourceUnavailable();assert.equal(ride.liveCapture.getBinding(),null);h.sample();assert.ok(ride.liveCapture.getBinding().generation>before.generation);
+ const held=deferred();h.behavior.pendingStop=held;const pause=ride.pause();assert.equal(ride.liveCapture.getBinding(),null);held.resolve();await pause;await h.settle();h.behavior.pendingStop=null;
+ await h.render().start();ride=await h.settle();h.sample();assert.ok(ride.liveCapture.getBinding());const removal=h.clearAccount();assert.equal(ride.liveCapture.getBinding(),null);await removal;await h.settle();h.sample();assert.equal(ride.liveCapture.getBinding(),null);
+});
 
 test('restored recording is interrupted without fabricated samples, fixes or elapsed time', async () => {
   const stored = journalModel.createRide('interrupted', 'A', 1700000000000, null);

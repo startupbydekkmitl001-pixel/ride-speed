@@ -9,8 +9,8 @@ const require = createRequire(import.meta.url), ts = require('typescript');
 const flush = () => new Promise(resolve => setImmediate(resolve));
 const deferred = () => { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; };
 
-function harness({ nativeAvailable = true } = {}) {
-  const cells = [], effects = [], listeners = new Map(); let index = 0, uuid = 0, appListener, expoListener;
+function harness({ nativeAvailable = true,observer } = {}) {
+  const cells = [], effects = [], listeners = new Map(); let index = 0, uuid = 0, appListener, expoListener,expoError;
   const behavior = { permission: { granted: true, ios: { accuracy: 'full' } }, pendingPermission: null, starts: 0, stops: 0, fallbackStarts: 0, failStart: false, now: Date.now() };
   class CaptureClock extends Date { static now() { return behavior.now; } }
   const React = {
@@ -30,7 +30,7 @@ function harness({ nativeAvailable = true } = {}) {
   const imports = {
     react: React, 'react-native': { AppState, Platform: { OS: 'ios' } }, 'expo-crypto': { randomUUID: () => `capture-${++uuid}` },
     'expo-location': { requestForegroundPermissionsAsync: async () => behavior.pendingPermission ? behavior.pendingPermission.promise : behavior.permission,
-      hasServicesEnabledAsync: async () => true, watchPositionAsync: async (_options, listener) => { behavior.fallbackStarts++; expoListener = listener; return { remove() { expoListener = null; } }; }, Accuracy: { Highest: 6 } },
+      hasServicesEnabledAsync: async () => true, watchPositionAsync: async (_options, listener,error) => { behavior.fallbackStarts++; expoListener = listener;expoError=error; return { remove() { expoListener = null;expoError=null; } }; }, Accuracy: { Highest: 6 } },
     '../modules/ride-location': { default: nativeAvailable ? native : null, __esModule: true },
     '../modules/ride-location/src/sessionSupport': sessionSupport, './speedEngine': speedEngine,
   };
@@ -40,14 +40,23 @@ function harness({ nativeAvailable = true } = {}) {
   vm.runInNewContext(js, { require: name => { if (!(name in imports)) throw new Error(name); return imports[name]; }, module, exports: module.exports, Date: CaptureClock, Promise, Error, Symbol, Number, setInterval: () => 1, clearInterval: () => {} });
   return {
     behavior,
-    render() { index = 0; const value = module.exports.useRideSession(); while (effects.length) effects.shift()(); return value; },
+    render() { index = 0; const value = module.exports.useRideSession(observer); while (effects.length) effects.shift()(); return value; },
     sample(value) { listeners.get('onSample')?.(value); },
     expoSample(value) { expoListener?.(value); },
     error(value) { listeners.get('onError')?.(value); },
+    expoError(){expoError?.('TEST_ONLY_UNAVAILABLE');},
     background() { AppState.currentState = 'background'; appListener('background'); },
   };
 }
 const sample = { timestampMs: Date.now(), latitude: 13.7, longitude: 100.5, speedMps: 3, horizontalAccuracyM: 4, speedAccuracyMps: .4, isSimulatedBySoftware: false, isProducedByAccessory: false };
+
+test('actual native and Expo source-error callbacks notify passive consumers while retaining local capture/evidence',async()=>{
+ for(const nativeAvailable of [true,false]){let unavailable=0;const h=harness({nativeAvailable,observer:{onUnavailable(){unavailable++;}}});await h.render().start();
+  if(nativeAvailable){h.sample(sample);h.error({fatal:false,code:'TEST_SIGNAL'});}else{h.expoSample({timestamp:sample.timestampMs,coords:{latitude:13,longitude:100,speed:0,accuracy:5}});h.expoError();}
+  assert.equal(unavailable,1);assert.equal(h.render().active,true);assert.equal(h.render().getEvidence().samples.length,1);
+  h.render().stop();await flush();if(nativeAvailable)h.error({fatal:false,code:'OLD_CALLBACK'});else h.expoError();assert.equal(unavailable,1);
+ }
+});
 
 test('failed permission returns no new capture ID and cannot relabel retained old evidence', async () => {
   const h = harness(); let ride = h.render(); const original = await ride.start();

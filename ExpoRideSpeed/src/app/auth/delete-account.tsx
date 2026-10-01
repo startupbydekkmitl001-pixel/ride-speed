@@ -14,6 +14,8 @@ import { clearRideAccount,useRide } from "../../state/RideState";
 import { clearGarageAccount } from "../../state/GarageState";
 import { clearRouteAccount } from "../../state/RouteState";
 import { clearSocialAccount } from "../../state/SocialState";
+import { clearLiveAccount } from "../../state/LiveState";
+import { liveSecrets } from "../../features/live/secretStorage";
 
 export default function DeleteAccountScreen() {
   const { scope } = useAuth();
@@ -55,6 +57,7 @@ function AccountDeletion() {
           await AsyncStorage.setItem(key, JSON.stringify(value));
           ensure(); requested = value; setReceipt(value);
         }, async () => {
+          clearLiveAccount(scope); ensure();
           clearSocialAccount(scope); ensure();
           await ride.stopAsync(); ensure();
           await rider.clearAccount(); ensure();
@@ -62,6 +65,7 @@ function AccountDeletion() {
           await clearRideAccount(scope); ensure();
           await clearGarageAccount(scope); ensure();
           clearRouteAccount(scope); ensure();
+          await liveSecrets.removeOwner(scope.userId!); ensure();
           await forgetLocalAccount(); ensure();
         });
       await AsyncStorage.removeItem(key);

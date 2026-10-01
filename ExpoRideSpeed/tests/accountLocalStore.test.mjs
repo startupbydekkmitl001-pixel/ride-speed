@@ -11,6 +11,7 @@ function compile(path, dependencies={}) {
 }
 const routeSync=compile('../src/features/routes/syncModel.ts');
 imports['../features/social/model']=compile('../src/features/social/model.ts',{'../routes/syncModel':routeSync});
+imports['../features/live/model']=compile('../src/features/live/model.ts',{'../social/model':imports['../features/social/model'],'../routes/syncModel':routeSync});
 imports['../features/routes/localModel']=compile('../src/features/routes/localModel.ts',{'./syncModel':routeSync});
 imports['../features/routes/persistenceModel']=await import('../src/features/routes/persistenceModel.ts');
 const module = { exports: {} };
@@ -34,6 +35,17 @@ const fixture = () => {
 const vehicle = id => ({ id, catalogId: null, category: 'scooter', brand: 'Honda', model: 'PCX160', engineCc: 156.93, year: '' });
 const flush = () => new Promise(r => setImmediate(r));
 const socialOperation = (handle='rider_one') => ({operationId:'dddddddd-dddd-4ddd-8ddd-dddddddddddd',request:{schema_version:1,action:'request_friend',handle},queuedAt:'2026-10-01T00:00:00.000Z',lastError:null});
+const liveOperation = () => ({operationId:'dddddddd-dddd-4ddd-8ddd-dddddddddddd',request:{schema_version:1,action:'friend_link_create',link_id:'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',token_hash:'a'.repeat(64),ttl_seconds:3600},queuedAt:'2026-10-01T00:00:00Z',lastError:null});
+
+test('live control outbox retains only hash and immutable intent across owner restart',async()=>{
+ const h=fixture();await h.store.hydrate(h.scope);const old=h.scope,op=liveOperation();assert.equal(h.store.update(old,{liveOperations:[op]}),true);await h.store.flush();
+ await h.store.hydrate(h.switch('B'));assert.deepEqual(h.store.getSnapshot().owned.liveOperations,[]);await h.store.hydrate(h.switch('A'));assert.deepEqual(h.store.getSnapshot().owned.liveOperations,[op]);assert.equal(h.store.update(old,{liveOperations:[]}),false);
+ const raw=h.values.get('ride.local.v5.A');assert.equal(raw.includes('token_hash'),true);assert.equal(raw.includes('reviewedAt'),false);
+});
+test('unknown live grant bytes fail hydration and cannot overwrite owner recovery copy',async()=>{
+ const h=fixture();await h.store.hydrate(h.scope);h.store.update(h.scope,{vehicles:[vehicle('retained')]});await h.store.flush();const raw=JSON.parse(h.values.get('ride.local.v5.A'));raw.liveOperations=[{...liveOperation(),request:{schema_version:1,action:'location_grant',token:'private'}}];const bytes=JSON.stringify(raw);h.values.set('ride.local.v5.A',bytes);
+ await h.store.hydrate(h.switch('A'));assert.equal(h.store.getSnapshot().error,'LOCAL_READ_FAILED');assert.equal(h.store.update(h.scope,{liveOperations:[]}),false);await h.store.flush();assert.equal(h.values.get('ride.local.v5.A'),bytes);
+});
 
 test('social outbox survives owner restart while stale A callbacks cannot write into a later A generation',async()=>{
  const h=fixture();await h.store.hydrate(h.scope);const old=h.scope,op=socialOperation();

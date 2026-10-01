@@ -195,7 +195,7 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
         onStart={id=>startPinDrag({...latest.current,alive:alive.current,ready:styleReady.current,epoch:epoch.current},id)}
         onEnd={(ticket,coordinate)=>{const result=finishPinDrag(ticket,{...latest.current,alive:alive.current,ready:styleReady.current,epoch:epoch.current},coordinate);if(result)latest.current.onMovePin?.(result.id,result.coordinate);}}
         onSelect={id=>{if(alive.current&&styleReady.current&&latest.current.mode==='edit')latest.current.onSelectPin?.(id);}}/>}
-      <Overlay source={mapIds.peers} data={peers} layers={peerLayers} sourceRef={peerSource} onPress={onPeerPress} cluster />
+      {!!props.peers.length&&<Overlay source={mapIds.peers} data={peers} layers={peerLayers} sourceRef={peerSource} onPress={onPeerPress} cluster />}
       <Overlay source={mapIds.fix} data={fix} layers={fixLayers} />
     </>}
   </Map><Pressable accessibilityRole="button" accessibilityLabel={mapCopy[props.locale].attribution}

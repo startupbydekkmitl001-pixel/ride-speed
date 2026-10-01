@@ -1,5 +1,6 @@
 {
   "ios": {
+    "NSCameraUsageDescription": "Ride Speed uses your camera only when you choose to scan a friend's QR code.",
     "NSLocationWhenInUseUsageDescription": "Ride Speed uses your precise location to measure speed while a session is open.",
     "NSLocalNetworkUsageDescription": "Ride Speed Dev connects to the development server on your Windows PC for live updates while you develop the app."
   }

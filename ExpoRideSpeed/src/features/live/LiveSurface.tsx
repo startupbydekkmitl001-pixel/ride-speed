@@ -1,0 +1,21 @@
+import {router} from 'expo-router';
+import React,{useState} from 'react';
+import {ActivityIndicator,View} from 'react-native';
+import {Button,Heading,Note,Panel,Row,T} from '../../components/ui';
+import {useI18n,errorKey} from '../../lib/i18n';
+import type {TranslationKey} from '../../lib/i18n/resources';
+import {useApp} from '../../state/AppState';
+import {RouteSheet} from '../routes/RouteSheet';
+import type {StoredLiveOperation} from './types';
+import {useLiveScreen} from './useLiveScreen';
+
+export function LiveHeader({title,body}:{title:string;body:string}){const {t}=useI18n();return <View style={{gap:14}}><Button small secondary icon="arrow-back-outline" label={t('m5b.back')} onPress={()=>router.replace('/')}/><Heading eyebrow={t('m5a.communityEyebrow')} title={title}/><T muted>{body}</T></View>;}
+export function LiveReadState(){const screen=useLiveScreen(),{data}=screen,{t}=useI18n(),{colors}=useApp();if(!screen.auth.session)return <Panel><T>{t('m5b.errors.authRequired')}</T><Button label={t('auth.login')} onPress={()=>router.push('/auth')}/></Panel>;if(data.loading)return <Row><ActivityIndicator color={colors.accent}/><T muted>{t('m5b.loading')}</T></Row>;if(data.fresh&&!data.profileReady)return <Panel><Note>{t('m5b.errors.profileRequired')}</Note><Button label={t('profile.edit')} onPress={()=>router.push('/profile')}/></Panel>;return !data.ready||!data.fresh?<Note error>{t('m5b.readUnavailable')}</Note>:null;}
+export function LiveOutcome({id}:{id:string|null}){const {data}=useLiveScreen(),{t}=useI18n();if(!id)return null;const result=data.latest?.operationId===id?data.latest:null;return result?.status==='rejected'?<Note error>{t(errorKey(result.error,'live'))}</Note>:<Note>{t(result?.status==='applied'?'m5b.applied':'m5b.pending')}</Note>;}
+export function liveActionKey(operation:StoredLiveOperation):TranslationKey{const request=operation.request;switch(request.action){case 'friend_link_create':return 'm5b.createLink';case 'friend_link_revoke':return 'm5b.revokeLink';case 'friend_link_request':return 'm5b.friendRequest';case 'convoy_create':return 'm5b.createTrip';case 'convoy_join':return 'm5b.requestJoin';case 'convoy_start':return 'm5b.startTrip';case 'convoy_end':return request.verb==='end'?'m5b.endTrip':'m5b.cancelTrip';case 'convoy_code_rotate':return 'm5b.rotateCode';case 'location_grant':return 'm5b.sharePosition';case 'location_revoke':return 'm5b.stopSharing';case 'convoy_member':return `m5b.${request.verb==='leave'?'leave':request.verb==='remove'?'remove':request.verb}`;}}
+export function LivePending(){
+ const screen=useLiveScreen(),{data}=screen,{t}=useI18n(),[review,setReview]=useState<StoredLiveOperation|null>(null),[error,setError]=useState<TranslationKey|null>(null),[busy,setBusy]=useState(false);
+ const retry=async()=>{const captured=review;if(!captured)return;try{await screen.run(async()=>{if(!screen.latestRef.current.data.pending.some(value=>value.operationId===captured.operationId&&JSON.stringify(value.request)===JSON.stringify(captured.request)))throw Error('LIVE_OPERATION_CONFLICT');setBusy(true);await screen.latestRef.current.data.retry(captured.operationId);});if(screen.current())setReview(null);}catch(value){if(screen.current())setError(errorKey(value,'live'));}finally{if(screen.current())setBusy(false);}};
+ if(!data.pending.length)return null;
+ return <Panel><T weight="semibold">{t('m5b.pendingTitle')}</T><T muted size={13}>{t('m5b.pendingBody')}</T>{data.pending.map(operation=><View key={operation.operationId} style={{gap:8}}><T>{t(liveActionKey(operation))}</T>{operation.lastError&&<Note error>{t(errorKey(operation.lastError,'live'))}</Note>}<Button small secondary label={t('m5b.recover')} disabled={!screen.enabled} onPress={()=>{try{screen.guard();setReview(operation);setError(null);}catch(value){setError(errorKey(value,'live'));}}}/></View>)}{error&&<Note error>{t(error)}</Note>}<RouteSheet visible={!!review&&screen.focused&&screen.active&&!screen.moving} title={t('m5b.recover')} onClose={()=>setReview(null)}>{review&&<><T>{t(liveActionKey(review))}</T><T>{t('m5b.retryBody')}</T>{review.request.action==='location_grant'&&<Note>{t('m5b.retryGrant')}</Note>}<Button label={t('m5b.retry')} disabled={!screen.enabled} busy={busy} onPress={retry}/></>}</RouteSheet></Panel>;
+}

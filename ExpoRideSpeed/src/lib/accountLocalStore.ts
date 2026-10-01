@@ -5,6 +5,8 @@ import { compatibleRoutes, parseRouteRecords, type RouteLocalRecord } from '../f
 import { parseBuilderDraft, type StoredBuilderDraft } from '../features/routes/persistenceModel';
 import { parseSocialOperations } from '../features/social/model';
 import type { StoredSocialOperation } from '../features/social/types';
+import { parseLiveOperations } from '../features/live/model';
+import type { StoredLiveOperation } from '../features/live/types';
 
 export type LocalScope = Readonly<{ userId: string | null; generation: number }>;
 export type DevicePreferences = Omit<Preferences, 'welcomeDone'>;
@@ -16,6 +18,7 @@ export type OwnedLocalData = {
   routeDraft: StoredBuilderDraft | null;
   routeConsent: boolean;
   socialOperations: StoredSocialOperation[];
+  liveOperations: StoredLiveOperation[];
 };
 export type LocalPatch = Partial<DevicePreferences & OwnedLocalData>;
 type Storage = { getItem: (key: string) => Promise<string | null>; setItem: (key: string, value: string) => Promise<unknown>; removeItem?: (key: string) => Promise<unknown> };
@@ -27,7 +30,7 @@ const LEGACY = 'ridespeed.local.v4', PREFS = 'ride.preferences.v5', MIGRATED = '
 const ownerKey = (scope: LocalScope) => `ride.local.v5.${scope.userId ?? 'guest'}`;
 const text = (v: unknown, max: number): v is string => typeof v === 'string' && [...v].length > 0 && [...v].length <= max && !/[\u0000-\u001f\u007f]/.test(v);
 const object = (v: unknown): Record<string, unknown> => v && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : {};
-export const emptyOwned = (): OwnedLocalData => ({ vehicles: [], selectedVehicleId: null, routes: [], welcomeDone: false, importedGuest: false, garageSync: blankGarageSync(), routeRecords: [], routeDraft: null, routeConsent: false, socialOperations: [] });
+export const emptyOwned = (): OwnedLocalData => ({ vehicles: [], selectedVehicleId: null, routes: [], welcomeDone: false, importedGuest: false, garageSync: blankGarageSync(), routeRecords: [], routeDraft: null, routeConsent: false, socialOperations: [], liveOperations: [] });
 const preferences = (value: unknown): DevicePreferences => {
   const { welcomeDone: _welcome, ...device } = parsePreferences(value); return device;
 };
@@ -56,6 +59,7 @@ function parseOwned(value: unknown, stripCloud = false): OwnedLocalData {
   const routeRecords = parseRouteRecords(stored.routeRecords, stored.routes, stripCloud);
   return { ...blank, vehicles, routes: compatibleRoutes(routeRecords), routeRecords,
     socialOperations: parseSocialOperations(stored.socialOperations,stripCloud),
+    liveOperations: parseLiveOperations(stored.liveOperations,stripCloud),
     routeDraft: parseBuilderDraft(stored.routeDraft,stripCloud), routeConsent: !stripCloud && stored.routeConsent === true,
     selectedVehicleId: typeof stored.selectedVehicleId === 'string' && vehicleIds.has(stored.selectedVehicleId) ? stored.selectedVehicleId : null,
     welcomeDone: stored.welcomeDone === true, importedGuest: stored.importedGuest === true, garageSync: parseGarageSync(stored.garageSync,stripCloud) };
