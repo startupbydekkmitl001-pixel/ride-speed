@@ -1,4 +1,6 @@
 import Constants from 'expo-constants';
+import { Asset } from 'expo-asset';
+import { vehicleImages } from './vehicleImages';
 import type { GeoJSONSource, Map as GLMap, MapMouseEvent } from 'maplibre-gl';
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef } from 'react';
 import { theme } from '../../lib/theme';
@@ -8,13 +10,14 @@ import { mapCopy } from './mapCopy';
 import { createMapStyle } from './mapStyle';
 import { mapIds, overlayLayers, peerClusterOptions } from './overlays';
 import { GeoJSONUpdateQueue } from './sourceUpdates';
+import { WebPeerMarkers } from './WebPeerMarkers';
 import { finishPinDrag, startPinDrag, type PinDragTicket } from './pinDrag';
 import type { MapCamera, MapCameraCommand, MapCoordinate, MapFitOptions, MapHandle, MapSurfaceProps } from './MapSurface.types';
 import './MapSurface.web.css';
 
 type Intent = { kind: 'camera'; value: MapCameraCommand } | { kind: 'fit'; coordinates: readonly MapCoordinate[]; options: MapFitOptions };
 const sourceIds = [mapIds.track, mapIds.pins, mapIds.peers, mapIds.fix] as const;
-function showPeers(map:GLMap,visible:boolean){for(const id of [mapIds.cluster,mapIds.clusterCount,mapIds.peer,mapIds.peerName])if(map.getLayer(id))map.setLayoutProperty(id,'visibility',visible?'visible':'none');}
+function showPeers(map:GLMap,visible:boolean){for(const id of [mapIds.cluster,mapIds.clusterCount,mapIds.peer,mapIds.peerName,mapIds.peerInitial,mapIds.peerHeading])if(map.getLayer(id))map.setLayoutProperty(id,'visibility',visible&&(!(id===mapIds.peer||id===mapIds.peerName||id===mapIds.peerInitial||id===mapIds.peerHeading)||map.getZoom()<=14)?'visible':'none');}
 function cameraOf(map: GLMap): MapCamera | null {
   const value = map.getCenter(), center = fromLngLat([value.lng, value.lat]);
   return center ? safeCamera({ center, zoom: map.getZoom(), bearing: map.getBearing(), pitch: map.getPitch() }) : null;
@@ -34,6 +37,7 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
   const pending = useRef<Intent | null>(null), writers = useRef(new Map<string, GeoJSONUpdateQueue>());
   const restart = useRef<(() => void) | null>(null);
   const updateDragMarker = useRef<(() => void)|null>(null);
+  const peerMarkers=useRef<WebPeerMarkers|null>(null);
   const tracker = useRef<MapStatusTracker | null>(null);
   if (!tracker.current) tracker.current = new MapStatusTracker(status => { if (alive.current) latest.current.onStatus(status); });
   const style = useMemo(() => createMapStyle(props.theme, props.locale), [props.theme, props.locale]);
@@ -41,7 +45,7 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
   const editablePin = props.mode === 'edit' && props.onMovePin ? props.pins.find(pin=>pin.id===props.selectedPinId && toLngLat(pin.coordinate)) : undefined;
   const pins = useMemo(() => pinsData(editablePin ? props.pins.filter(pin=>pin.id!==editablePin.id) : props.pins, props.selectedPinId), [props.pins, props.selectedPinId, editablePin]);
   const peers = useMemo(() => peersData(props.peers), [props.peers]);
-  const fix = useMemo(() => fixData(props.userFix), [props.userFix]);
+  const fix = useMemo(() => fixData(props.userFix,props.vehicleCategory), [props.userFix,props.vehicleCategory]);
   const data = useMemo(() => ({ [mapIds.track]: track, [mapIds.pins]: pins, [mapIds.peers]: peers, [mapIds.fix]: fix }), [track, pins, peers, fix]);
   const latestData = useRef(data); latestData.current = data;
   const latestStyle = useRef(style); latestStyle.current = style;
@@ -111,6 +115,9 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
         locale: latest.current.locale === 'th' ? { 'AttributionControl.ToggleAttribution': mapCopy.th.attribution } : undefined,
       });
       mapRef.current = map;
+      peerMarkers.current=new WebPeerMarkers(map,module.Marker,id=>{if(alive.current&&latest.current.peers.some(peer=>peer.id===id))latest.current.onSelectPeer?.(id);});
+      peerMarkers.current.update(latest.current.peers,latest.current.reducedMotion);
+      map.on('zoom',()=>{if(styleReady.current)showPeers(map,latest.current.peers.length>0);});
       const attribution = new module.AttributionControl({ compact: false });
       map.addControl(attribution, 'bottom-left');
       const credits = element.querySelector<HTMLElement>('.maplibregl-ctrl-attrib');
@@ -191,6 +198,8 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
       map.on('style.load', () => {
         if (!alive.current || mapRef.current !== map) return;
         ++epoch.current;
+        const imageEpoch=epoch.current;
+        for(const [name,asset] of Object.entries(vehicleImages))void map.loadImage(Asset.fromModule(asset).uri).then(image=>{if(alive.current&&mapRef.current===map&&epoch.current===imageEpoch&&!map.hasImage(name))map.addImage(name,image.data);}).catch(()=>{});
         for (const writer of writers.current.values()) writer.dispose(); writers.current.clear();
         styleReady.current = true; tracker.current!.styleLoaded();
         for (const id of sourceIds) {
@@ -219,6 +228,7 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
       element!.addEventListener('pointerup', cancelLongPress); element!.addEventListener('pointercancel', cancelLongPress); element!.addEventListener('pointerleave', cancelLongPress);
       const resize = new ResizeObserver(() => { map.resize(); positionCredits(); }); resize.observe(element!);
       cleanup = () => {
+        peerMarkers.current?.dispose();peerMarkers.current=null;
         marker?.remove();marker=null;dragTicket=null;if(updateDragMarker.current===syncDragMarker)updateDragMarker.current=null;
         cancelLongPress(); resize.disconnect();
         element!.removeEventListener('pointerdown', pointerDown); element!.removeEventListener('pointermove', pointerMove);
@@ -249,7 +259,7 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
   useEffect(() => { writers.current.get(mapIds.track)?.update(track); }, [track]);
   useEffect(() => { writers.current.get(mapIds.pins)?.update(pins); }, [pins]);
   useEffect(() => { updateDragMarker.current?.(); }, [props.pins,props.selectedPinId,props.mode,props.onMovePin,props.theme,props.locale]);
-  useLayoutEffect(()=>{const map=mapRef.current;if(map)showPeers(map,false);},[peers]);
+  useLayoutEffect(()=>{const map=mapRef.current;if(map)showPeers(map,false);peerMarkers.current?.update(props.peers,props.reducedMotion);},[peers,props.peers,props.reducedMotion]);
   useEffect(() => { ++peerVersion.current; writers.current.get(mapIds.peers)?.update(peers); }, [peers]);
   useEffect(() => { writers.current.get(mapIds.fix)?.update(fix); }, [fix]);
   useEffect(() => { tracker.current!.setOnline(props.online); }, [props.online]);
@@ -269,5 +279,6 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
   return <div ref={container} data-testid="ride-map" data-map-theme={props.theme} aria-label={mapCopy[props.locale].map} role="application"
     className="ride-map-surface" style={{ position: 'absolute', inset: 0, backgroundColor: theme.map[props.theme].background,
       '--map-attribution-bg': theme[props.theme].glassScrim, '--map-attribution-ink': theme.map[props.theme].label,
+      '--peer-ink':theme[props.theme].ink,'--peer-bg':theme[props.theme].surface,'--peer-ring':theme[props.theme].good,'--peer-label-bg':theme[props.theme].glassScrim,
       '--map-attribution-radius': `${theme.radius.small}px` } as React.CSSProperties} />;
 });

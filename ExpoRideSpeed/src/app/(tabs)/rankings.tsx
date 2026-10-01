@@ -58,7 +58,12 @@ function AccountRankings(){
   return()=>reader.suspend();
  },[activity.active,activity.generation,auth.ready,auth.session,app.ready,ride.movingLocked,reader,privacyKey,privacyPending]);
  const current=(g:string)=>alive.current&&isAccountCurrent(scope)&&activity.current()&&g===generationRef.current;
- const guard=(g:string)=>{if(!current(g))throw Error('RANKED_CHANGED');guardRead();};
+ const guard=(g:string,kind:Parameters<RankedScreenPort['guard']>[1]='read')=>{
+  if(!current(g))throw Error('RANKED_CHANGED');
+  if(latest.current.moving)throw Error('RANKED_MOVING');
+  // Sign-in and method information are available before an authenticated read.
+  if(kind!=='navigation')guardRead();
+ };
  const port:RankedScreenPort={ownerId:scope.userId,generation,current,guard,
   gate:{signedIn:!!auth.session,focused:activity.active,foreground:activity.active,moving:ride.movingLocked,online:Platform.OS!=='web'||typeof navigator==='undefined'||navigator.onLine},
   ready:auth.ready&&app.ready,filter:state.filter,page:privacyPending?null:state.page,rows:privacyPending?[]:state.rows,read:privacyPending?{...state.read,fresh:false}:state.read,courses:state.courses,coursesRead:state.coursesRead,units:app.data.unit,locale:language,rankChanges:privacyPending?{}:state.rankChanges,

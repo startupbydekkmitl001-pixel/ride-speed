@@ -12,8 +12,8 @@ const rankedModel=rankedModule('model'),{bangkokPeriodBounds}=rankedModule('pres
 
 /** Actual account host, activity hook and reader. Only React/native OS events
  * and captured API replies are fixtures; no product gate or source is patched. */
-function harness(){
- let cells=[],index=0,dirty=false,focused=true,scope={userId:owner,generation:1},session={user:{id:owner},access_token:'A-1'},moving=false,vehicle={category:'bigbike',engineCc:999,powertrain:'petrol'},appReady=true,now=1000,pageHold=null,courseHold=null;
+function harness({guest=false}={}){
+ let cells=[],index=0,dirty=false,focused=true,scope={userId:guest?null:owner,generation:1},session=guest?null:{user:{id:owner},access_token:'A-1'},moving=false,vehicle={category:'bigbike',engineCc:999,powertrain:'petrol'},appReady=true,now=1000,pageHold=null,courseHold=null;
  const layouts=[],effects=[],listeners=new Set(),cache=new Map(),calls=[],navigation=[]; let ranked={pending:[],appliedVersion:0,armReport:(p,id,user)=>{navigation.push({p,id,user});return 'opaque-token';}},social={pending:[],accountRevision:1,latest:null};
  const same=(a,b)=>!!a&&a.length===b.length&&a.every((value,i)=>Object.is(value,b[i]));
  const memo=(fn,deps)=>{const at=index++;if(!cells[at]||!same(cells[at].deps,deps))cells[at]={deps,value:fn()};return cells[at].value;};
@@ -44,6 +44,15 @@ test('hydrated Garage big-bike class seeds once while later Garage changes prese
  const h=harness();h.render();await h.settle();assert.equal(h.port.filter.category,'motorcycle');assert.equal(h.port.filter.class_key,'motorcycle:gt900');await h.port.setFilter({...filter(),period:'month'});await h.settle();h.changeVehicle({category:'scooter',engineCc:160,powertrain:'petrol'});await h.settle();assert.equal(h.port.filter.period,'month');assert.equal(h.port.filter.category,'scooter');assert.equal(h.port.filter.class_key,'all');h.close();
 });
 test('outer host waits for unread Garage state and emits no ranked service request',()=>{const h=harness(),tree=h.unread();assert.equal(tree.type,'Screen');assert.equal(h.calls.length,0);h.close();});
+
+test('guest navigation can open sign-in and ranking information without authorizing a data read',async()=>{
+ const h=harness({guest:true});h.render();await h.settle();
+ assert.equal(h.calls.length,0);assert.equal(h.port.gate.signedIn,false);
+ assert.doesNotThrow(()=>h.port.guard(h.port.generation,'navigation'));
+ assert.throws(()=>h.port.guard(h.port.generation,'read'),/RANKED_AUTH_REQUIRED/);
+ const old=h.port;h.move(true);assert.throws(()=>old.guard(old.generation,'navigation'),/RANKED_MOVING/);
+ h.close();
+});
 
 test('pending unshare hides cached board immediately; confirmed outcome requires fresh canonical rows',async()=>{const h=harness();h.render();await h.settle();const source=h.port.page;assert.ok(source);const pending=h.holdPages(),task=h.port.refresh();await tick();h.privacy([{request:{action:'publication_set',audience:'private'}}]);assert.equal(h.port.page,null);assert.equal(h.port.rows.length,0);assert.equal(h.port.read.fresh,false);pending.resolve();await assert.rejects(task,/RANKED_CHANGED/);await h.settle();assert.equal(h.port.page,null);h.settledPrivacy();await h.settle();assert.equal(h.port.read.fresh,true);h.close();});
 

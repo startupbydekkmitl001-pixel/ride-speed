@@ -11,6 +11,7 @@
     "@supabase/supabase-js": "^2.117.2",
     "decode-uri-component": "file:vendor/decode-uri-component",
     "expo": "~57.0.26",
+    "expo-asset": "~57.0.18",
     "expo-battery": "~57.0.3",
     "expo-blur": "~57.0.3",
     "expo-camera": "~57.0.6",

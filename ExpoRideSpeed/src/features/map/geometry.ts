@@ -43,14 +43,14 @@ export function peersData(peers: readonly MapPeer[]): GeoJSON.FeatureCollection<
     const coordinate = toLngLat(peer.coordinate);
     if (!coordinate || !peer.id || seen.has(peer.id) || !['online', 'riding'].includes(peer.presence) || !Number.isFinite(peer.updatedAtMs) || peer.updatedAtMs <= 0) continue;
     seen.add(peer.id);
-    features.push({ type: 'Feature', id: peer.id, properties: { id: peer.id, name: peer.name, presence: peer.presence }, geometry: { type: 'Point', coordinates: coordinate } });
+    features.push({ type: 'Feature', id: peer.id, properties: { id: peer.id, name: peer.name, presence: peer.presence,initial:peer.name.trim().slice(0,1).toUpperCase(),heading:peer.sample?.position.heading_deg??null }, geometry: { type: 'Point', coordinates: coordinate } });
   }
   return collection(features);
 }
-export function fixData(fix: MapFix | null): GeoJSON.FeatureCollection<GeoJSON.Point> {
+export function fixData(fix: MapFix | null,vehicleCategory?:'scooter'|'bigbike'|'car'): GeoJSON.FeatureCollection<GeoJSON.Point> {
   const coordinate = fix && toLngLat(fix.coordinate);
   if (!fix || !coordinate || typeof fix.accuracyMeters !== 'number' || !Number.isFinite(fix.accuracyMeters) || fix.accuracyMeters < 0 || !Number.isFinite(fix.timestampMs) || fix.timestampMs <= 0) return collection([]);
-  return collection([{ type: 'Feature', id: 'rider-position', properties: { accuracy: fix.accuracyMeters, heading: fix.headingDegrees }, geometry: { type: 'Point', coordinates: coordinate } }]);
+  return collection([{ type: 'Feature', id: 'rider-position', properties: { accuracy: fix.accuracyMeters, heading: fix.headingDegrees,...(vehicleCategory?{vehicleImage:`ride-vehicle-${vehicleCategory}`}:{}) }, geometry: { type: 'Point', coordinates: coordinate } }]);
 }
 export type FitIntent = { kind: 'center'; center: LngLat; zoom: number } | { kind: 'bounds'; bounds: [number, number, number, number]; maxZoom: number };
 export function fitIntent(coordinates: readonly MapCoordinate[], options: MapFitOptions = {}): FitIntent | null {

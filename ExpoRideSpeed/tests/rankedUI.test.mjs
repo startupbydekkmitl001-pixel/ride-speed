@@ -11,6 +11,12 @@ function fixture(){
 function all(tree,type){const found=[];function walk(v){if(!v||typeof v!=='object')return;if(Array.isArray(v)){v.forEach(walk);return;}if(v.type===type)found.push(v);if(v.type==='RouteSheet'&&!v.props.visible)return;for(const key of ['children','ListHeaderComponent','ListEmptyComponent','ListFooterComponent','refreshControl'])if(v.props&&key in v.props)walk(v.props[key]);}walk(tree);return found;}
 function button(tree,label){const item=all(tree,'Button').find(x=>x.props.label===label);assert.ok(item,label);return item.props;}
 test('a failed unread first page offers retry without claiming an empty board',()=>{const f=fixture();f.port.page=null;f.port.rows=[];f.port.read.fresh=false;f.port.read.error='RANKED_UNAVAILABLE';const tree=f.render();assert.equal(all(tree,'Empty').length,0);assert.ok(button(tree,'m6.refresh'));});
+
+test('guest sign-in state does not present stale private board errors or cached records',()=>{
+ const f=fixture();f.port.gate.signedIn=false;f.port.read.fresh=false;f.port.read.error='RANKED_CHANGED';
+ const tree=f.render();assert.equal(all(tree,'Note').some(v=>v.props.error),false);
+ assert.equal(all(tree,'FlashList')[0].props.data.length,0);assert.equal(all(tree,'Empty').length,0);
+});
 test('only a successful fresh supported read can show genuine empty records',()=>{const f=fixture();f.port.page.items=[];f.port.page.podium=[];f.port.rows=[];assert.equal(all(f.render(),'Empty').length,1);f.port.gate.online=false;assert.equal(all(f.render(),'Empty').length,0);});
 test('actual 0–3 podium rows retain shared ranks and theme-resolved materials',()=>{for(let count=0;count<=3;count++){const f=fixture();f.port.page.podium=Array.from({length:count},(_,i)=>({...row(i+2,i+1),rank:1,tied:true}));let tree=f.render();assert.equal(all(tree,'AmbientLoop').filter(v=>v.props.asset.startsWith('podium-')).length,count);assert.equal(all(tree,'T').filter(v=>v.props.children==='m6.tied').length,count);f.theme('light');tree=f.render();assert.equal(all(tree,'AmbientLoop').every(v=>v.props.asset.endsWith('-light')),true);}});
 test('sticky own-rank shows an authoritative off-page rank rather than scanning visible rows',()=>{const f=fixture();f.port.page.self=row(1,82);f.port.page.self_status='ranked';const tree=f.render();assert.ok(all(tree,'Glass').length);assert.ok(all(tree,'T').some(v=>v.props.children===82));assert.equal(f.port.rows.length,1);});

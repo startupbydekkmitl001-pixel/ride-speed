@@ -1,0 +1,35 @@
+[
+  {
+    "category": "scooter",
+    "file": "scooter.gltf",
+    "bytes": 37223,
+    "sprite": "scooter.png",
+    "spriteBytes": 599,
+    "triangles": 252,
+    "license": "CC0-1.0",
+    "source": "src/features/map/vehicleMesh.ts",
+    "represents": "Generic category, not a manufacturer model"
+  },
+  {
+    "category": "bigbike",
+    "file": "bigbike.gltf",
+    "bytes": 37236,
+    "sprite": "bigbike.png",
+    "spriteBytes": 655,
+    "triangles": 252,
+    "license": "CC0-1.0",
+    "source": "src/features/map/vehicleMesh.ts",
+    "represents": "Generic category, not a manufacturer model"
+  },
+  {
+    "category": "car",
+    "file": "car.gltf",
+    "bytes": 54523,
+    "sprite": "car.png",
+    "spriteBytes": 773,
+    "triangles": 372,
+    "license": "CC0-1.0",
+    "source": "src/features/map/vehicleMesh.ts",
+    "represents": "Generic category, not a manufacturer model"
+  }
+]

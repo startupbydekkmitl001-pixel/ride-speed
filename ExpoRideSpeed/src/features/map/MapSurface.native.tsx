@@ -8,6 +8,8 @@ import { mapCopy } from './mapCopy';
 import { finishPinDrag, startPinDrag, type PinDragTicket } from './pinDrag';
 import { createMapStyle } from './mapStyle';
 import { mapIds, overlayLayers, peerClusterOptions } from './overlays';
+import { NativePeerSource } from './NativePeerSource';
+import { vehicleImages } from './vehicleImages';
 import type { MapCamera, MapCameraCommand, MapCoordinate, MapFitOptions, MapHandle, MapSurfaceProps } from './MapSurface.types';
 
 // An older development binary must report a build requirement without starting GPS.
@@ -72,7 +74,7 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
   const editablePin = props.mode === 'edit' && props.onMovePin ? props.pins.find(pin => pin.id === props.selectedPinId && toLngLat(pin.coordinate)) : undefined;
   const pins = useMemo(() => pinsData(editablePin ? props.pins.filter(pin=>pin.id!==editablePin.id) : props.pins, props.selectedPinId), [props.pins, props.selectedPinId, editablePin]);
   const peers = useMemo(() => peersData(props.peers), [props.peers]);
-  const fix = useMemo(() => fixData(props.userFix), [props.userFix]);
+  const fix = useMemo(() => fixData(props.userFix,props.vehicleCategory), [props.userFix,props.vehicleCategory]);
 
   const invalidate = useCallback(() => { alive.current = false; styleReady.current = false; ++epoch.current; pending.current = null; }, []);
   useEffect(() => { alive.current = true; return invalidate; }, [invalidate]);
@@ -177,7 +179,7 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
     else if (viewport.current) apply({ kind: 'camera', value: { ...viewport.current, durationMs: 0 } });
   }, [apply,style,tracker]);
   if (!runtime) return <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.map[props.theme].background }]} />;
-  const { Map, Camera } = runtime;
+  const { Map, Camera, Images } = runtime;
   return <View style={StyleSheet.absoluteFill} onLayout={event => { viewportSize.current = { width: event.nativeEvent.layout.width, height: event.nativeEvent.layout.height }; }}><Map ref={nativeMap} testID="ride-map" style={StyleSheet.absoluteFill} mapStyle={style} contentInset={rendererInsets}
     dragPan touchZoom doubleTapZoom doubleTapHoldZoom touchRotate touchPitch={props.mode !== 'glance'}
     attribution={false} logo={false} compass={false}
@@ -189,13 +191,14 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
     onDidFailLoadingMap={() => tracker.tileFailed()}>
     <Camera ref={camera} initialViewState={initial ? { ...initial, center: toLngLat(initial.center)!, padding: insets } : undefined} minZoom={0} maxZoom={22} />
     {overlaysReady && <>
+      <Images images={vehicleImages}/>
       <Overlay source={mapIds.track} data={route} layers={routeLayers} />
       <Overlay source={mapIds.pins} data={pins} layers={pinLayers} onPress={onPinPress} />
       {editablePin && <DraggablePin key={`${props.theme}:${props.locale}:${props.retryToken}:${editablePin.id}`} pin={editablePin} mode={props.theme}
         onStart={id=>startPinDrag({...latest.current,alive:alive.current,ready:styleReady.current,epoch:epoch.current},id)}
         onEnd={(ticket,coordinate)=>{const result=finishPinDrag(ticket,{...latest.current,alive:alive.current,ready:styleReady.current,epoch:epoch.current},coordinate);if(result)latest.current.onMovePin?.(result.id,result.coordinate);}}
         onSelect={id=>{if(alive.current&&styleReady.current&&latest.current.mode==='edit')latest.current.onSelectPin?.(id);}}/>}
-      {!!props.peers.length&&<Overlay source={mapIds.peers} data={peers} layers={peerLayers} sourceRef={peerSource} onPress={onPeerPress} cluster />}
+      {!!props.peers.length&&<NativePeerSource runtime={runtime} peers={props.peers} reducedMotion={props.reducedMotion} layers={peerLayers} sourceRef={peerSource} onPress={onPeerPress} />}
       <Overlay source={mapIds.fix} data={fix} layers={fixLayers} />
     </>}
   </Map><Pressable accessibilityRole="button" accessibilityLabel={mapCopy[props.locale].attribution}

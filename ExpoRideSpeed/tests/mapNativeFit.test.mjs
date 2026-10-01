@@ -44,9 +44,11 @@ function adapter() {
   const deps = { react, 'react/jsx-runtime': { jsx, jsxs: jsx, Fragment: 'Fragment' },
     'react-native': { View: 'View', Text: 'Text', Pressable: 'Pressable', StyleSheet: { absoluteFill: {} } },
     '@maplibre/maplibre-react-native': native,
+    'react-native-reanimated':{},
   };
   const cache = new Map();
   function load(path) {
+    if (path.endsWith('.png')) return 1;
     if (path.endsWith('.json')) return JSON.parse(readFileSync(path, 'utf8'));
     if (cache.has(path)) return cache.get(path).exports;
     const module = { exports: {} }; cache.set(path, module);

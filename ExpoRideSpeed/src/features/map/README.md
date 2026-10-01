@@ -14,4 +14,24 @@ The bundled, unmodified OpenFreeMap Liberty JSON is captured in styles/ with dig
 
 The installed renderer validators check all four theme/language factory outputs. Tests cover coordinate order, invalid measured fixes, antimeridian and capped bounds, disconnected parts, stable markers, actual offline/ready/tile states, reduced motion, stale/disposed source writes and worker base paths. Dev/export browser rendering and iOS/Android builds are additional gates; tests do not establish physical Thai shaping, permission behavior, 50-marker frame rate, launch timing or battery usage. Cached tiles may remain useful offline; no bulk prefetch or guaranteed offline basemap is provided.
 
+## Live Friends presentation
+
+`NativePeerSource` writes bounded, consent-aware interpolation to the MapLibre
+animatable source using Reanimated. There is no React update per animation frame.
+An independent UI-thread deadline hides the source if JavaScript is delayed.
+Web uses transform-positioned markers above cluster zoom and immediately disposes
+them on revocation. `PeerPresentation` preserves sequence/topic/member/consent
+identity; duplicate snapshots never renew an expiry deadline. Positions are for
+display only and never enter ride evidence or decide race results.
+
+`/map-vehicle` uses actual Garage selection and original generic category meshes.
+Source, CC0 provenance and sprite/glTF regeneration live in `assets/vehicles`.
+The current v1 positions contract has no peer vehicle/avatar/speed metadata.
+Do not infer it or label self-reported positions verified.
+
+For a local-only check, run the development app and open `/live-map-preview`.
+Three explicitly labeled synthetic riders move without GPS capture or upload;
+pause, hide/show and focus controls exercise interpolation and removal. This route
+redirects home in distribution builds. It is not an end-to-end live-sharing test.
+
 Official APIs and provenance: [MapLibre React Native Expo setup](https://maplibre.org/maplibre-react-native/docs/setup/expo/), [GL JS docs](https://maplibre.org/maplibre-gl-js/docs/), [OpenFreeMap quick start](https://openfreemap.org/quick_start/), [upstream styles/license](https://github.com/hyperknot/openfreemap-styles), [Expo 57 Metro](https://docs.expo.dev/versions/v57.0.0/config/metro/).

@@ -17,6 +17,7 @@ const sourceRoot = fileURLToPath(new URL('../src/', import.meta.url));
 function sourceLoader(overrides = {}) {
   const cache = new Map();
   function load(path) {
+    if (path.endsWith('.png')) return 1;
     if (!existsSync(path)) path += '.js';
     if (path.endsWith('.css')) return {};
     if (path.endsWith('.json')) return JSON.parse(readFileSync(path, 'utf8'));
@@ -31,6 +32,7 @@ function sourceLoader(overrides = {}) {
     const localRequire = createRequire(path);
     runInNewContext(output, { module, exports: module.exports,
       require: name => {
+        if (name === 'expo-asset') return {Asset:{fromModule:()=>({uri:'local-original-vehicle.png'})}};
         if (name in overrides) return overrides[name];
         if (name.startsWith('.')) {
           let target = resolve(dirname(path), name);

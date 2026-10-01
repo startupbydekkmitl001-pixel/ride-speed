@@ -15,16 +15,20 @@ import { useRide } from '../../state/RideState';
 import { useOnline } from '../../state/OnlineState';
 import { useAuth } from '../../state/AuthState';
 import { useLive } from '../../state/LiveState';
+import { useGarage } from '../../state/GarageState';
+import { LiveFriendsRail } from '../../features/map/LiveFriendsRail';
 import { errorKey,useI18n,type TranslationKey } from '../../lib/i18n';
 import {useScreenActivity} from '../../lib/useScreenActivity';
 const initialCamera:MapCamera={center:{latitude:13.7563,longitude:100.5018},zoom:11,bearing:0,pitch:0};
 const noPins:MapPin[]=[];
+const fixAge=(timestamp:number)=>Date.now()-timestamp;
 function MapControl({label,icon,onPress,disabled=false,primary=false}:{label:string;icon:IconName;onPress:()=>void;disabled?:boolean;primary?:boolean}){
  const {colors}=useApp();
  return <Glass style={{borderRadius:28}}><Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{disabled}} disabled={disabled} onPress={onPress} style={({pressed})=>({width:52,height:52,alignItems:'center',justifyContent:'center',backgroundColor:primary?colors.accent:undefined,opacity:disabled?.4:pressed?.6:1})}><Icon name={icon} color={primary?colors.onAccent:undefined}/></Pressable></Glass>;
 }
 function MapHome(){
  const app=useApp(),ride=useRide(),online=useOnline(),live=useLive(),{t,language}=useI18n(),insets=useSafeAreaInsets();
+ const garage=useGarage(),vehicle=garage.vehicles.find(row=>row.id===garage.activeId);
  const {active:screenActive,current:screenCurrent,capture,accepts}=useScreenActivity();
  const map=useRef<MapHandle>(null),centered=useRef(false),follow=useRef(false),idleController=useRef<AbortController|null>(null);
  const [status,setStatus]=useState<MapStatus>({state:'loading'}),[retry,setRetry]=useState(0),[expanded,setExpanded]=useState(false),[layers,setLayers]=useState(false),[permission,setPermission]=useState<TranslationKey|null>(null);
@@ -47,6 +51,9 @@ function MapHome(){
  const bottom=insets.bottom+92;
  const contentInsets=useMemo(()=>({top:insets.top+90,right:sidePanel?panelInset:20,bottom:sidePanel?bottom:bottom+260,left:20}),[insets.top,bottom,sidePanel,panelInset]);
  const onUserGesture=useCallback(()=>{follow.current=false;},[]);
+ const focusPeer=(id:string)=>{if(!screenCurrent())return;const peer=live.peers.find(row=>row.id===id);if(!peer||peer.sample&&performance.now()>=peer.sample.expiresMonotonicMs)return;follow.current=false;map.current?.setCamera({center:peer.coordinate,zoom:16,pitch:40,durationMs:app.motion?450:0});};
+ const zoom=async(delta:number)=>{const ticket=capture(),current=await map.current?.getCamera();if(current&&accepts(ticket))map.current?.setCamera({zoom:Math.max(0,Math.min(22,current.zoom+delta)),durationMs:app.motion?260:0});};
+ const recenter=()=>{const fix=ride.userFix,age=fix?fixAge(fix.timestampMs):Infinity;if(fix&&age>=0&&age<15000&&screenCurrent()){follow.current=true;map.current?.setCamera({center:fix.coordinate,zoom:15,durationMs:app.motion?400:0});}else if(!moving)void locate();};
  const locate=async()=>{const ticket=capture(),signal=idleController.current?.signal;if(moving||!accepts(ticket)||signal?.aborted)return;follow.current=true;setPermission(null);try{const p=await Location.requestForegroundPermissionsAsync();if(!accepts(ticket)||signal?.aborted)return;if(!p.granted){setPermission('m2.map.locationDenied');return;}if(Platform.OS==='ios'&&p.ios?.accuracy==='reduced'){setPermission('m2.map.preciseRequired');return;}await ride.locate(signal);if(accepts(ticket)&&ride.userFix)map.current?.setCamera({center:ride.userFix.coordinate,zoom:15,durationMs:app.motion?400:0});}catch{if(accepts(ticket)&&!signal?.aborted)setPermission('m2.map.locationDenied');}};
  const onStatus=useCallback((value:MapStatus)=>setStatus(value),[]);
  const pauseRide=()=>{void ride.pause().catch(()=>setPermission('m2.ride.stopError'));};
@@ -66,18 +73,22 @@ function MapHome(){
  const passengerControl=moving&&!iconTerminals&&<Button small secondary label={t('m2.ride.passengerOverride')} onPress={ride.setPassengerOverride}/>;
  const layerControls=<View style={{backgroundColor:app.colors.surface,borderRadius:24,padding:20,gap:12,borderWidth:1,borderColor:app.colors.line}}><T weight="semibold">{t('m2.map.layers')}</T><T muted size={13}>{t('m2.map.baseStyle')}</T><Button small label={t(app.dark?'profile.themeLight':'profile.themeDark')} onPress={()=>{app.update({theme:app.dark?'light':'dark'});setLayers(false);}}/><Button small secondary label={t('m2.map.close')} onPress={()=>setLayers(false)}/></View>;
  return <View style={{flex:1,backgroundColor:app.colors.bg}}>
-  <View pointerEvents={expanded?'none':'auto'} accessibilityElementsHidden={expanded} importantForAccessibility={expanded?'no-hide-descendants':'auto'} style={[StyleSheet.absoluteFill,{opacity:expanded?0:1}]}><MapSurface ref={map} visible={!expanded} theme={app.dark?'dark':'light'} locale={language} initialCamera={initialCamera} contentInsets={contentInsets} mode={moving?'glance':'browse'} reducedMotion={!app.motion} online={true} retryToken={retry} track={track} pins={noPins} selectedPinId={null} peers={live.peers} userFix={ride.userFix} onStatus={onStatus} onUserGesture={onUserGesture}/></View>
+  <View pointerEvents={expanded?'none':'auto'} accessibilityElementsHidden={expanded} importantForAccessibility={expanded?'no-hide-descendants':'auto'} style={[StyleSheet.absoluteFill,{opacity:expanded?0:1}]}><MapSurface ref={map} visible={!expanded} theme={app.dark?'dark':'light'} locale={language} initialCamera={initialCamera} contentInsets={contentInsets} mode={moving?'glance':'browse'} reducedMotion={!app.motion} online={true} retryToken={retry} track={track} pins={noPins} selectedPinId={null} peers={live.peers} userFix={ride.userFix} vehicleCategory={vehicle?.category} onStatus={onStatus} onUserGesture={onUserGesture} onSelectPeer={focusPeer}/></View>
   {!expanded&&<>
    <View pointerEvents="box-none" style={{position:'absolute',top:insets.top+16,left:20,right:sidePanel?panelInset:20,gap:12}}>
     <Glass style={{borderRadius:28}}><Pressable accessibilityRole="button" accessibilityLabel={t('m2.map.planRoute')} disabled={moving} onPress={()=>router.push('/routes')} style={{minHeight:56,paddingHorizontal:18,flexDirection:'row',alignItems:'center',gap:12}}><Icon name="search-outline"/><T muted style={{flex:1}}>{t('m2.map.planRoute')}</T><Icon name="arrow-forward" size={18}/></Pressable></Glass>
     {status.state==='loading'&&<Row><ActivityIndicator color={app.colors.accent}/><T size={12} muted>{t('m2.map.loading')}</T></Row>}
+    {!sidePanel&&<Pressable accessibilityRole="button" accessibilityLabel={t('liveMap.vehicle')} disabled={moving} onPress={()=>router.push('/map-vehicle')} style={{alignSelf:'flex-start',maxWidth:'75%',minHeight:44,flexDirection:'row',gap:8,alignItems:'center',backgroundColor:app.colors.glassScrim,borderRadius:22,paddingHorizontal:14}}><Icon name={vehicle?.category==='car'?'car-sport-outline':'bicycle-outline'} size={18}/><T size={12} numberOfLines={1} style={{flexShrink:1}}>{vehicle?.nickname||vehicle?.model||t('liveMap.noVehicle')}</T><Icon name="chevron-down" size={12}/></Pressable>}
    </View>
-   <View pointerEvents="box-none" style={{position:'absolute',top:insets.top+96,left:20}}><GlassGroup style={{gap:12}}><View><MapControl label={onlineCount?t('m5a.mapLoadedOnline',{count:onlineCount}):t('m2.map.friendsOnline')} icon="people-outline" disabled={moving} onPress={()=>router.push('/friends')}/>{!!onlineCount&&<View style={{position:'absolute',top:-3,right:-3,borderRadius:10,backgroundColor:app.colors.good,paddingHorizontal:5}}><T numeric size={11} style={{color:app.colors.bg}}>{onlineCount}</T></View>}</View><MapControl label={t('m5b.convoy')} icon="navigate-outline" disabled={moving} onPress={()=>router.push('/convoy')}/>{live.incomingFriendIntent&&<MapControl label={t('m5b.reviewLink')} icon="qr-code-outline" disabled={moving} onPress={()=>router.push('/friend-links')}/>}</GlassGroup></View>
-   <View pointerEvents="box-none" style={{position:'absolute',top:insets.top+96,right:20}}><GlassGroup style={{gap:12}}>
-    <MapControl label={t('m2.map.recenter')} icon="locate-outline" disabled={moving||ride.locating} onPress={()=>{void locate();}}/>
+   <View pointerEvents="box-none" style={{position:'absolute',top:insets.top+(sidePanel?96:152),left:20}}><Glass style={{borderRadius:28}}><GlassGroup style={{gap:12}}><View><MapControl label={onlineCount?t('m5a.mapLoadedOnline',{count:onlineCount}):t('m2.map.friendsOnline')} icon="people-outline" disabled={moving} onPress={()=>router.push('/friends')}/>{!!onlineCount&&<View style={{position:'absolute',top:-3,right:-3,borderRadius:10,backgroundColor:app.colors.good,paddingHorizontal:5}}><T numeric size={11} style={{color:app.colors.bg}}>{onlineCount}</T></View>}</View><MapControl label={t('m5b.convoy')} icon="navigate-outline" disabled={moving} onPress={()=>router.push('/convoy')}/>{live.incomingFriendIntent&&<MapControl label={t('m5b.reviewLink')} icon="qr-code-outline" disabled={moving} onPress={()=>router.push('/friend-links')}/>}</GlassGroup></Glass></View>
+   <View pointerEvents="box-none" style={{position:'absolute',top:insets.top+96,right:20}}><Glass style={{borderRadius:28}}><GlassGroup style={{gap:8}}>
+    <LiveFriendsRail peers={live.peers} onSelect={focusPeer} limit={sidePanel?0:Math.min(3,Math.max(0,Math.floor((height-bottom-500)/60)))}/>
+    <MapControl label={t('m2.map.recenter')} icon="locate-outline" disabled={ride.locating||(moving&&!ride.userFix)} onPress={recenter}/>
+    <MapControl label={t('liveMap.zoomIn')} icon="add" onPress={()=>{void zoom(1);}}/>
+    <MapControl label={t('liveMap.zoomOut')} icon="remove" onPress={()=>{void zoom(-1);}}/>
     <MapControl label={t('m2.map.layers')} icon="layers-outline" disabled={moving} onPress={()=>setLayers(!layers)}/>
-    <MapControl label={t('m2.ride.history')} icon="time-outline" disabled={moving} onPress={()=>router.push('/ride-history')}/>
-   </GlassGroup></View>
+    {!sidePanel&&<MapControl label={t('m2.ride.history')} icon="time-outline" disabled={moving} onPress={()=>router.push('/ride-history')}/>}
+   </GlassGroup></Glass></View>
   </>}
   {expanded&&<View pointerEvents="none" style={[StyleSheet.absoluteFill,{backgroundColor:app.colors.bg}]}/>}
   {sidePanel?<View pointerEvents="box-none" style={{position:'absolute',top:insets.top+16,right:92,width:panelWidth,bottom:bottom}}>

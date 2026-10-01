@@ -1,0 +1,20 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import ts from 'typescript';
+function harness(){
+ let cursor=0,active=true,moving=false,version=0,selected=null;const cells=[],effects=[],layouts=[],calls=[];
+ const hooks={useState(initial){const i=cursor++;cells[i]??={value:typeof initial==='function'?initial():initial};return[cells[i].value,next=>{cells[i].value=typeof next==='function'?next(cells[i].value):next;}];},useRef(initial){const i=cursor++;return cells[i]??={current:initial};}};
+ const effect=(queue,fn,deps)=>{const i=cursor++,old=cells[i];if(!old||deps.some((d,j)=>!Object.is(d,old.deps[j]))){cells[i]={deps};queue.push(()=>{old?.cleanup?.();cells[i].cleanup=fn();});}};
+ hooks.useEffect=(fn,deps)=>effect(effects,fn,deps);hooks.useLayoutEffect=(fn,deps)=>effect(layouts,fn,deps);
+ const jsx=(type,props)=>({type,props}),garage={vehicles:[{id:'pcx',category:'scooter',model:'PCX160',brand:'Honda',year:2026}],activeId:'pcx',select:async id=>{calls.push(id);if(selected)await selected.promise;return true;}};
+ const modules={react:hooks,'react/jsx-runtime':{jsx,jsxs:jsx},'react-native':{View:'View',Pressable:'Pressable',StyleSheet:{absoluteFill:{}}},'expo-router':{router:{back:()=>calls.push('back'),replace:path=>calls.push(path),push:path=>calls.push(path)}},'../components/ui':Object.fromEntries(['Button','Heading','Icon','Note','Row','Screen','T'].map(k=>[k,k])),'../state/AppState':{useApp:()=>({colors:{surface:'#000',accent:'#f50'},dark:true})},'../state/GarageState':{useGarage:()=>garage},'../state/RideState':{useRide:()=>({movingLocked:moving})},'../lib/i18n':{useI18n:()=>({t:k=>k})},'../lib/useScreenActivity':{useScreenActivity:()=>({active,generation:version,current:()=>active,capture:()=>active?version:null,accepts:ticket=>active&&ticket!==null&&ticket===version})},'../features/motion':{AmbientLoop:'AmbientLoop',resolveAmbientAsset:()=>null},'../features/map/VehicleStage':{default:'VehicleStage',__esModule:true}};
+ const module={exports:{}},code=ts.transpileModule(readFileSync(new URL('../src/app/map-vehicle.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;
+ new Function('require','module','exports','__DEV__',code)(name=>{assert.ok(name in modules,name);return modules[name];},module,module.exports,true);
+ const h={calls,render(){cursor=0;const tree=module.exports.default();while(layouts.length)layouts.shift()();while(effects.length)effects.shift()();return tree;},move(value){moving=value;return h.render();},active(value){active=value;version++;return h.render();},hold(){let resolve;selected={promise:new Promise(done=>resolve=done),resolve:()=>resolve()};return selected;}};return h;
+}
+function all(tree,type){const result=[];function walk(node){if(!node||typeof node!=='object')return;if(Array.isArray(node)){node.forEach(walk);return;}if(node.type===type)result.push(node);if(node.props)for(const key of ['children','right'])walk(node.props[key]);}walk(tree);return result;}
+const choose=tree=>all(tree,'Button').find(row=>row.props.label==='liveMap.choose').props;
+test('a retained vehicle-selection callback cannot edit after the driving lock activates',async()=>{const h=harness(),old=choose(h.render());const tree=h.move(true);assert.equal(all(tree,'VehicleStage').length,0);await old.onPress();assert.deepEqual(h.calls,[]);assert.equal(tree.props.scroll,false);});
+test('backgrounding a pending selection unlocks retry and ignores its later navigation',async()=>{const h=harness(),hold=h.hold();await choose(h.render()).onPress();h.active(false);h.active(true);hold.resolve();await new Promise(done=>setImmediate(done));assert.equal(choose(h.render()).busy,false);assert.deepEqual(h.calls,['pcx']);});
+test('double taps before rendering submit one active vehicle selection',async()=>{const h=harness(),hold=h.hold(),button=choose(h.render());button.onPress();button.onPress();assert.deepEqual(h.calls,['pcx']);hold.resolve();await new Promise(done=>setImmediate(done));assert.deepEqual(h.calls,['pcx','back']);});

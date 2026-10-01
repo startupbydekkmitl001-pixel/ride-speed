@@ -28,6 +28,7 @@ module.exports = ({ config }) => {
       ["expo-screen-orientation", { initialOrientation: "PORTRAIT_UP" }],
       "expo-router",
       "expo-font",
+      "expo-asset",
       "expo-image",
       "expo-localization",
       [

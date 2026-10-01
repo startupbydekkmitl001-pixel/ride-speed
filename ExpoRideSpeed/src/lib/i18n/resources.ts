@@ -1,4 +1,5 @@
 import { m1En, m1Th } from "./m1";
+import {liveMapEn,liveMapTh} from './liveMap';
 import { m2En, m2Th } from "./m2";
 import { m3En, m3Th } from "./m3";
 import { m4En, m4Th } from "./m4";
@@ -13,6 +14,7 @@ import {m7En,m7Th} from '../communityI18n';
 import {m7OwnerEn,m7OwnerTh} from '../communityOwnerI18n';
 
 const en = {
+  ...liveMapEn,
   ...m1En,
   ...m2En,
   ...m3En,
@@ -181,6 +183,7 @@ const en = {
 
 export type TranslationKey = keyof typeof en;
 const th: Record<TranslationKey, string> = {
+  ...liveMapTh,
   ...m1Th,
   ...m2Th,
   ...m3Th,

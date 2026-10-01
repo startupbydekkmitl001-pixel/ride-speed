@@ -104,3 +104,10 @@ The user has authorized native implementation and chosen MapLibre/OpenFreeMap + 
 - [ ] Smoke auth→vehicle→ride→post→eligible rank on a real approved course; lint/typecheck/core/backend/build tests, release hashes and source provenance. Physical cold start/50 markers/30 min memory/battery/countdown recorded, never inferred from code.
 - [x] Commit/push M8 source polish7bb3665 and validate its actual native artifacts. Physical/store and remaining source gates above remain open; this is preview acceptance, not a completed production milestone.
 - [x] Web MapHome follow-up: home-only full width, short-wide side instrument/clear attribution, fixed moving readout and accessible active/inactive terminal controls.1000 app/27 focused tests, typecheck/lint and exports; actual932/720/428 browser review. Later source is separate from published7bb3665 packages; see docs/design/map-web-layout-v5.md.
+
+## Live Friends extension — 1 October
+
+- [x] First source slice: consent-bound native/web peer interpolation, shared glass controls, friend focus rail, driving time/distance, generic rotatable Garage picker and category sprites, development-only simulated map. Original glTF/sprite provenance included.
+- [x] Fix duplicate-snapshot expiry renewal, mesh occlusion, false riding labels, guest Ranked navigation/stale error, and vehicle-picker movement/background/double-tap behavior. See `docs/design/live-friends-2026-10-01.md` for checks and limitations.
+- [ ] Recipient-authorized avatar/speed/model protocol, per-session speed visibility, shared destination revision and server-owned arrival-order challenge. Existing v1 convoy samples cannot provide these fields or establish arrival winners.
+- [ ] CarPlay entitlement request and provisioned native scene/voice bridge; paired native live-sharing and performance acceptance. Existing live/race policy remains disabled. The published IPA/APK still predates this extension.

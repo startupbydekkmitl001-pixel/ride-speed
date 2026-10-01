@@ -149,7 +149,10 @@ export const SpeedometerHUD = memo(function SpeedometerHUD({ snapshot, metrics, 
   if (!expanded) return <GlassSurface style={[{ paddingHorizontal: 16, paddingVertical: 12 }, style]}>
     <Row style={{ justifyContent: "space-between", gap: 8 }}>
       <View style={{ alignItems: "center", flexShrink: 1 }}>{instrument}<T numeric size={12} muted>{unitLabel}</T></View>
-      <View style={{ flex: 1, gap: 4 }}>{signal}<T muted size={11}>{t("m2.hud.max")} <T numeric muted size={11}>{maximum} {unitLabel}</T></T></View>
+      <View style={{ flex: 1, gap: 4 }}>{signal}<Row style={{gap:8,flexWrap:'wrap'}}>
+        <T numeric size={12} accessibilityLabel={`${t('m2.hud.duration')} ${formatRideDuration(metrics.durationSeconds)??'—'}`}>{formatRideDuration(metrics.durationSeconds)??'—'}</T>
+        <T numeric muted size={12} accessibilityLabel={`${t('m2.hud.distance')} ${distanceText} ${distance?t(distance.unit==='mi'?'m2.hud.mi':'m2.hud.km'):''}`}>{distanceText} {distance?t(distance.unit==='mi'?'m2.hud.mi':'m2.hud.km'):''}</T>
+      </Row><T muted size={11}>{t('m2.hud.max')} <T numeric muted size={11}>{maximum} {unitLabel}</T></T></View>
       <IconButton name="expand-outline" label={t("m2.hud.expand")} onPress={onToggleExpanded} />
     </Row>
   </GlassSurface>;

@@ -3,7 +3,10 @@ export type MapInsets = Readonly<{ top: number; right: number; bottom: number; l
 export type MapCamera = Readonly<{ center: MapCoordinate; zoom: number; bearing: number; pitch: number }>;
 export type MapPin = Readonly<{ id: string; coordinate: MapCoordinate; label: string; role: 'start' | 'via' | 'finish'; order: number }>;
 /** Only authorized, opt-in, unexpired peers may be supplied by the caller. */
-export type MapPeer = Readonly<{ id: string; coordinate: MapCoordinate; name: string; presence: 'online' | 'riding'; updatedAtMs: number }>;
+export type MapPeer = Readonly<{ id: string; coordinate: MapCoordinate; name: string; presence: 'online' | 'riding'; updatedAtMs: number;
+  /** Display only. This carries the original consent identity and absolute expiry. */
+  sample?: import('../live/types').AuthorizedPeer;
+}>;
 export type MapFix = Readonly<{ coordinate: MapCoordinate; accuracyMeters: number; timestampMs: number; headingDegrees: number | null }>;
 export type MapTrack = Readonly<{ kind: 'road' | 'recorded' | 'draft'; segments: readonly (readonly MapCoordinate[])[] }>;
 export type MapStatus =
@@ -28,6 +31,7 @@ export interface MapSurfaceProps {
   online: boolean; retryToken: number;
   track: MapTrack | null; pins: readonly MapPin[]; selectedPinId: string | null;
   peers: readonly MapPeer[]; userFix: MapFix | null;
+  vehicleCategory?: 'scooter'|'bigbike'|'car';
   onStatus(status: MapStatus): void;
   onPress?(coordinate: MapCoordinate): void;
   onLongPress?(coordinate: MapCoordinate): void;
