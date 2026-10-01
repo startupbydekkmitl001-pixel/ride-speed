@@ -3,11 +3,13 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import {raceModule,stored,uuid} from './helpers/races.mjs';
+import {rankedModule} from './rankedFixtures.mjs';
 const require = createRequire(import.meta.url), ts = require('typescript');
 const imports = { './preferences': await import('../src/lib/preferences.ts'), '../features/garage/localModel': await import('../src/features/garage/localModel.ts') };
 imports['../features/races/model']=raceModule('model');
 imports['../features/races/evidenceReferences']=raceModule('evidenceReferences');
 imports['../features/races/stopIntents']=raceModule('stopIntents');
+imports['../features/ranked/publicationModel']=rankedModule('publicationModel');
 function compile(path, dependencies={}) {
  const out={exports:{}};const source=readFileSync(new URL(path,import.meta.url),'utf8');
  const js=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
@@ -42,6 +44,17 @@ const socialOperation = (handle='rider_one') => ({operationId:'dddddddd-dddd-4dd
 const liveOperation = () => ({operationId:'dddddddd-dddd-4ddd-8ddd-dddddddddddd',request:{schema_version:1,action:'friend_link_create',link_id:'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',token_hash:'a'.repeat(64),ttl_seconds:3600},queuedAt:'2026-10-01T00:00:00Z',lastError:null});
 const evidenceRef=()=>({owner_id:uuid(1),attempt_id:uuid(4),race_id:uuid(3),ride_id:uuid(13),capture_id:uuid(5),sha256:'a'.repeat(64),byte_length:3000,first_sequence:4,last_sequence:7,sample_count:4});
 const stopIntent=()=>({attempt_id:uuid(4),race_id:uuid(3),capture_id:uuid(5),reason:'background'});
+const rankedOperation=()=>({owner_id:uuid(1),operation_id:uuid(90),request:{schema_version:1,action:'publication_set',metric:'sustained_speed',record_id:uuid(80),expected_revision:0,audience:'friends'},queued_at:'2026-10-01T00:00:00Z',last_error:null});
+
+test('ranked sharing intent survives restart, cannot cross owners and is removed only after confirmed account cleanup',async()=>{
+ const h=fixture();await h.store.hydrate(h.switch(uuid(1)));const account=h.scope,op=rankedOperation();assert.equal(h.store.update(account,{rankedOperations:[op]}),true);await h.store.flush();await h.store.hydrate(h.switch(uuid(1)));assert.deepEqual(JSON.parse(JSON.stringify(h.store.getSnapshot().owned.rankedOperations)),[op]);await h.store.hydrate(h.switch(uuid(2)));assert.equal(h.store.getSnapshot().owned.rankedOperations.length,0);assert.equal(h.store.update(h.scope,{rankedOperations:[op]}),false);await h.store.forgetAccount(account);assert.equal(h.values.has(`ride.local.v5.${uuid(1)}`),false);
+});
+test('foreign or corrupted ranked authority fails hydration and preserves exact local recovery bytes',async()=>{
+ const h=fixture(),raw=JSON.stringify({vehicles:[vehicle('preserved')],rankedOperations:[{...rankedOperation(),owner_id:uuid(2)}]});h.values.set(`ride.local.v5.${uuid(1)}`,raw);await h.store.hydrate(h.switch(uuid(1)));assert.equal(h.store.getSnapshot().error,'LOCAL_READ_FAILED');assert.equal(h.store.update(h.scope,{rankedOperations:[]}),false);assert.equal(h.values.get(`ride.local.v5.${uuid(1)}`),raw);
+});
+test('guest import never copies ranked publication authority even while genuine local vehicles remain importable',async()=>{
+ const h=fixture();h.values.set('ride.local.v5.guest',JSON.stringify({vehicles:[vehicle('guest')],rankedOperations:[rankedOperation()]}));await h.store.hydrate(h.switch(uuid(1)));await h.store.importGuest(h.scope);assert.equal(h.store.getSnapshot().owned.vehicles.length,1);assert.equal(h.store.getSnapshot().owned.rankedOperations.length,0);
+});
 
 test('a stop intent survives owner restart independently of the old failed CAS operation',async()=>{
  const h=fixture();await h.store.hydrate(h.switch(uuid(1)));const old=h.scope,stop=stopIntent();

@@ -81,6 +81,19 @@ test('an English translator cannot change another mounted Thai translator', () =
   assert.equal(th('common.close'), 'ปิด');
 });
 
+test('actual Ranked translators resolve colon-bearing flat classes and interpolate both languages',()=>{
+  const translate=callable(core,'createTranslator');
+  for(const language of ['th','en']){
+    const t=translate(language);
+    for(const category of ['scooter','motorcycle','car'])assert.equal(t(`m6.class.${category}:unknown`),resources.messages[language][`m6.class.${category}:unknown`]);
+    for(const [key,values] of [
+      ['m6.asOf',{time:'17:00'}],['m6.rank',{rank:4}],['m6.rankUp',{count:3}],['m6.rankDown',{count:2}],
+      ['m6.rowLabel',{rank:4,name:'Arnalxz',value:'60 km/h',class:'CLASS'}],
+      ['rankedPub.record',{id:'record123'}],['rankedPub.revision',{revision:7}],['rankedPub.reviewBody',{audience:'AUDIENCE'}],
+    ]){const rendered=t(key,values);assert.doesNotMatch(rendered,/\{[\s\S]*?\}/);for(const value of Object.values(values))assert.ok(rendered.includes(String(value)),`${language} ${key} ${value}`);}
+  }
+});
+
 test('auth and profile failures map stable codes without exposing arbitrary backend text', () => {
   const key = callable(errors, 'errorKey');
   assert.equal(key({ code: 'invalid_credentials', message: 'debug details' }, 'login'), 'errors.invalidCredentials');

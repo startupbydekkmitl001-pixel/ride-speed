@@ -75,6 +75,8 @@ The user has authorized native implementation and chosen MapLibre/OpenFreeMap + 
 
 ## M6 — ranked/anti-cheat
 
+- [x] M6 source/schema and signed-owner empty-read acceptance: genuine versioned boards, strict pagination/class/periods, separate owner candidate/settings pages, explicit visibility CAS, opaque fresh report review and pending-privacy quarantine. Backend230 tests/independent24 focused, owned32 publication/report cases, root28 board/provider/report cases and9 localization cases pass; see docs/design/m6-acceptance-v5.md.
+- [ ] M6 positive-record/two-account/device acceptance and managed realtime/moderation operations. Current adfd511 Android/iOS successful native builds predate M6; no fake qualifiers or ranks were inserted.
 - [ ] Versioned speed/route-time boards, Today/Week/Month Bangkok periods, category/cc/class/EV/friends/global filters, server immutable vehicle class and explicit verified metric labels.
 - [ ] Actual-row podium (0–3 rows only), sticky own rank, rank changes, refresh and coalesced realtime invalidation.
 - [ ] Server anti-cheat evidence/mock/accuracy/teleport/acceleration/class plausibility/gaps/too-few-points, reports/operator queue and revocation.

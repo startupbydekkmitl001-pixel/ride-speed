@@ -7,6 +7,8 @@ import { m4CompatibilityEn, m4CompatibilityTh } from "./m4Compatibility";
 import { m5aEn, m5aTh } from "./m5a";
 import { m5bEn, m5bTh } from "./m5b";
 import {m5cEn,m5cTh} from '../raceI18n';
+import {m6En,m6Th} from '../rankedI18n';
+import {m6pEn,m6pTh} from '../rankedPublicationI18n';
 
 const en = {
   ...m1En,
@@ -18,6 +20,8 @@ const en = {
   ...m5aEn,
   ...m5bEn,
   ...m5cEn,
+  ...m6En,
+  ...m6pEn,
   "common.close": "Close",
   "common.retry": "Try again",
   "common.wait": "Just a moment",
@@ -182,6 +186,8 @@ const th: Record<TranslationKey, string> = {
   ...m5aTh,
   ...m5bTh,
   ...m5cTh,
+  ...m6Th,
+  ...m6pTh,
   "common.close": "ปิด",
   "common.retry": "ลองอีกครั้ง",
   "common.wait": "รอสักครู่",

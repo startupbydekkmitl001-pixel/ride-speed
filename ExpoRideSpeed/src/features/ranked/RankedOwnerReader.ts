@@ -1,0 +1,35 @@
+import {rankedCanonical,validateRankedOwnPage,validateRankedPublication,validateRankedPublicationPage} from './publicationModel';
+import type {RankedMetric,RankedOwnCursor,RankedOwnPage,RankedOwnRecord,RankedPublication,RankedPublicationCursor,RankedPublicationPage} from './types';
+export type RankedOwnerRead=Readonly<{loaded:boolean;fresh:boolean;loading:boolean;hasMore:boolean;error:string|null}>;
+export interface RankedOwnerPort{ownerId:string;guard:()=>void;monotonicNow:()=>number;candidates:(cursor:RankedOwnCursor|null)=>Promise<RankedOwnPage>;publications:(cursor:RankedPublicationCursor|null)=>Promise<RankedPublicationPage>;publication:(metric:RankedMetric,id:string)=>Promise<RankedPublication>}
+const unread=():RankedOwnerRead=>({loaded:false,fresh:false,loading:false,hasMore:false,error:null});
+export type RankedOwnerSnapshot=Readonly<{candidates:readonly RankedOwnRecord[];settings:readonly RankedPublication[];candidatesRead:RankedOwnerRead;settingsRead:RankedOwnerRead;selection:Readonly<{metric:RankedMetric;record_id:string}>|null;publication:RankedPublication|null;publicationRead:RankedOwnerRead}>;
+/** Finite private reads. A candidate's embedded setting or a write receipt never
+ * becomes the current CAS getter. Every scope/lifecycle boundary retires I/O. */
+export class RankedOwnerReader{
+ private state:RankedOwnerSnapshot={candidates:[],settings:[],candidatesRead:unread(),settingsRead:unread(),selection:null,publication:null,publicationRead:unread()};private listeners=new Set<()=>void>();private version=0;private selectionVersion=0;private closed=false;private candidateCursor:RankedOwnCursor|null=null;private settingsCursor:RankedPublicationCursor|null=null;private pending=new Map<string,Promise<void>>();private publicationAt:number|null=null;private laneVersion={candidates:0,settings:0};private pendingMore=new Map<string,boolean>();
+ constructor(private port:RankedOwnerPort){}
+ getSnapshot=()=>this.state;subscribe=(fn:()=>void)=>{this.listeners.add(fn);return()=>{this.listeners.delete(fn);};};
+ private publish(patch:Partial<RankedOwnerSnapshot>){this.state={...this.state,...patch};for(const fn of this.listeners)fn();}
+ private guard(version=this.version){if(this.closed||version!==this.version)throw Error('RANKED_CHANGED');this.port.guard();}
+ private error(value:unknown){const code=value instanceof Error?value.message:String((value as {message?:string})?.message??'');return ['ACCOUNT_CHANGED','RANKED_CHANGED','RANKED_RATE_LIMITED','RANKED_RECORD_UNAVAILABLE','RANKED_INVALID_RESPONSE','RANKED_CAPACITY','RANKED_AUTH_REQUIRED','ACCOUNT_DELETION_PENDING','RANKED_MOVING'].includes(code)?code:'RANKED_UNAVAILABLE';}
+ suspend(){++this.version;++this.selectionVersion;this.pending.clear();this.pendingMore.clear();this.publicationAt=null;this.publish({candidatesRead:{...this.state.candidatesRead,fresh:false,loading:false},settingsRead:{...this.state.settingsRead,fresh:false,loading:false},publicationRead:{...this.state.publicationRead,fresh:false,loading:false}});}
+ close(){this.suspend();this.closed=true;this.listeners.clear();}
+ currentPublication(value:RankedPublication){try{this.guard();const now=this.port.monotonicNow();return this.state.publicationRead.fresh&&this.publicationAt!==null&&now>=this.publicationAt&&now-this.publicationAt<=15000&&rankedCanonical(value)===rankedCanonical(this.state.publication);}catch{return false;}}
+ async refresh(){this.guard();const version=this.version;await Promise.all([this.load('candidates',false),this.load('settings',false)]);if(this.closed||version!==this.version)return;const selected=this.state.selection;if(selected)await this.select(selected.metric,selected.record_id);}
+ loadMoreCandidates=()=>this.load('candidates',true);loadMoreSettings=()=>this.load('settings',true);
+ private load(lane:'candidates'|'settings',more:boolean):Promise<void>{
+  this.guard();const existing=this.pending.get(lane);if(existing&&(more||this.pendingMore.get(lane)===false))return existing;const read=lane==='candidates'?this.state.candidatesRead:this.state.settingsRead;if(more&&(!read.fresh||!read.hasMore))return Promise.resolve();const version=this.version,laneVersion=++this.laneVersion[lane],cursor=more?(lane==='candidates'?this.candidateCursor:this.settingsCursor):null;
+  this.publish({[`${lane}Read`]:{...read,loading:true,error:null,...(!more?{fresh:false}:{})}});
+  const run=async()=>{try{
+   this.guard(version);const raw=lane==='candidates'?await this.port.candidates(cursor as RankedOwnCursor|null):await this.port.publications(cursor as RankedPublicationCursor|null);this.guard(version);if(laneVersion!==this.laneVersion[lane])return;
+   const page=lane==='candidates'?validateRankedOwnPage(raw,this.port.ownerId,cursor as RankedOwnCursor|null):validateRankedPublicationPage(raw,this.port.ownerId,cursor as RankedPublicationCursor|null);
+   const old=more?(lane==='candidates'?this.state.candidates:this.state.settings):[],seen=new Set(old.map(v=>`${v.metric}:${v.record_id}`));if(page.items.some(v=>seen.has(`${v.metric}:${v.record_id}`)))throw Error('RANKED_CHANGED');const values=[...old,...page.items];if(values.length>1000)throw Error('RANKED_CAPACITY');
+   if(lane==='candidates'){this.candidateCursor=page.next_cursor as RankedOwnCursor|null;this.publish({candidates:values as RankedOwnRecord[],candidatesRead:{loaded:true,fresh:true,loading:false,error:null,hasMore:!!page.next_cursor}});}else{this.settingsCursor=page.next_cursor as RankedPublicationCursor|null;this.publish({settings:values as RankedPublication[],settingsRead:{loaded:true,fresh:true,loading:false,error:null,hasMore:!!page.next_cursor}});}
+  }catch(error){if(this.closed||version!==this.version||laneVersion!==this.laneVersion[lane])return;this.publish({[`${lane}Read`]:{...(lane==='candidates'?this.state.candidatesRead:this.state.settingsRead),fresh:false,loading:false,error:this.error(error)}});}finally{if(this.pending.get(lane)===promise){this.pending.delete(lane);this.pendingMore.delete(lane);}}};
+  const promise=Promise.resolve().then(run);this.pending.set(lane,promise);this.pendingMore.set(lane,more);return promise;
+ }
+ async select(metric:RankedMetric,recordId:string){this.guard();const version=this.version,selected=++this.selectionVersion,same=this.state.selection?.metric===metric&&this.state.selection.record_id===recordId;this.publicationAt=null;this.publish({selection:{metric,record_id:recordId},publication:same?this.state.publication:null,publicationRead:{...unread(),loading:true}});
+  try{const raw=await this.port.publication(metric,recordId);this.guard(version);if(selected!==this.selectionVersion)return;const publication=validateRankedPublication(raw,this.port.ownerId,metric,recordId);this.publicationAt=this.port.monotonicNow();this.publish({publication,publicationRead:{loaded:true,fresh:true,loading:false,error:null,hasMore:false}});}catch(error){if(this.closed||version!==this.version||selected!==this.selectionVersion)return;this.publish({publicationRead:{...unread(),error:this.error(error)}});}
+ }
+}

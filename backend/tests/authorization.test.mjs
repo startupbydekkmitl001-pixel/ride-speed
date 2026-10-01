@@ -61,7 +61,7 @@ test('browser roles cannot approve their own speed or directly mutate protected 
 });
 
 test('pending client submissions cannot create leaderboard entries', async () => {
-  const ranks = await as(A, `select * from public.rs_leaderboard('today','motorcycle','community',null)`);
+  const ranks = await legacyInternalAs(A, `select * from public.rs_leaderboard('today','motorcycle','community',null)`);
   assert.deepEqual(ranks.rows, []);
 });
 
@@ -94,7 +94,7 @@ test('posts require explicit audience, all supplied speeds remain self-reported,
   await as(A,`select public.rs_publish_post($1,'Hello','Ride note',88,null,null,'community',null)`,[postId]);
   const feed = await as(C,'select * from public.rs_feed(30,null)');
   assert.equal(feed.rows[0].speed_status,'self_reported');
-  assert.deepEqual((await as(C,`select * from public.rs_leaderboard('today','motorcycle','community',null)`)).rows,[]);
+  assert.deepEqual((await legacyInternalAs(C, `select * from public.rs_leaderboard('today','motorcycle','community',null)`)).rows,[]);
   await assert.rejects(as(C,'select public.rs_moderate_post($1,true)',[postId]),/permission denied/i);
   await as(C,`select public.rs_report_post($1,'privacy','Please review')`,[postId]);
   assert.equal((await as(B,'select * from public.rs_post_reports')).rows.length,0);
@@ -172,18 +172,19 @@ test('verification leases fence stale workers, server records alone rank, Bangko
   await admin(`update public.rs_submissions set verification_started_at=now()-interval '3 minutes' where id=$1`,[submission]);
   const second=(await admin('select public.rs_claim_submission($1,$2) as token',[submission,A])).rows[0].token;
   assert.notEqual(first,second);
-  await admin('select public.rs_release_submission($1,$2)',[submission,first]);
-  assert.equal((await admin("select public.rs_reject_submission($1,'STALE',$2) as rejected",[submission,first])).rows[0].rejected,false);
+  // Additive010 rejects stale owner-bound leases before the unchanged legacy body.
+  await assert.rejects(admin('select public.rs_release_submission($1,$2)',[submission,first]),error=>error.code==='42501');
+  await assert.rejects(admin("select public.rs_reject_submission($1,'STALE',$2) as rejected",[submission,first]),error=>error.code==='42501');
   assert.equal((await as(A,'select state from public.rs_submissions where id=$1',[submission])).rows[0].state,'verifying');
   const sha='a'.repeat(64);
-  await assert.rejects(admin(`select public.rs_finalize_submission($1,36,now()-interval '4 seconds',now()-interval '1 second',4,1,$2,$3)`, [submission,sha,first]), /claimed/i);
+  await assert.rejects(admin(`select public.rs_finalize_submission($1,36,now()-interval '4 seconds',now()-interval '1 second',4,1,$2,$3)`, [submission,sha,first]),error=>error.code==='42501');
   await admin(`select public.rs_finalize_submission($1,36,now()-interval '4 seconds',now()-interval '1 second',4,1,$2,$3)`, [submission,sha,second]);
-  assert.equal((await as(C, `select * from public.rs_leaderboard('today','motorcycle','community',null)`)).rows[0].sustained_kmh,'36.00');
-  assert.equal((await as(B, `select * from public.rs_leaderboard('today','motorcycle','community',null)`)).rows.length,0);
+  assert.equal((await legacyInternalAs(C, `select * from public.rs_leaderboard('today','motorcycle','community',null)`)).rows[0].sustained_kmh,'36.00');
+  assert.equal((await legacyInternalAs(B, `select * from public.rs_leaderboard('today','motorcycle','community',null)`)).rows.length,0);
   await admin(`update public.rs_verified_records set window_start=(date_trunc('day',now() at time zone 'Asia/Bangkok') at time zone 'Asia/Bangkok')-interval '4 seconds',window_end=(date_trunc('day',now() at time zone 'Asia/Bangkok') at time zone 'Asia/Bangkok')-interval '1 second' where submission_id=$1`,[submission]);
-  assert.equal((await as(C, `select * from public.rs_leaderboard('today','motorcycle','community',null)`)).rows.length,0);
+  assert.equal((await legacyInternalAs(C, `select * from public.rs_leaderboard('today','motorcycle','community',null)`)).rows.length,0);
   await admin(`update public.rs_verified_records set window_start=(date_trunc('day',now() at time zone 'Asia/Bangkok') at time zone 'Asia/Bangkok')-interval '3 seconds',window_end=(date_trunc('day',now() at time zone 'Asia/Bangkok') at time zone 'Asia/Bangkok') where submission_id=$1`,[submission]);
-  assert.equal((await as(C, `select * from public.rs_leaderboard('today','motorcycle','community',null)`)).rows.length,1);
+  assert.equal((await legacyInternalAs(C, `select * from public.rs_leaderboard('today','motorcycle','community',null)`)).rows.length,1);
   await admin("select public.rs_reject_submission($1,'Operator revoked')",[submission]);
-  assert.equal((await as(C, `select * from public.rs_leaderboard('today','motorcycle','community',null)`)).rows.length,0);
+  assert.equal((await legacyInternalAs(C, `select * from public.rs_leaderboard('today','motorcycle','community',null)`)).rows.length,0);
 });

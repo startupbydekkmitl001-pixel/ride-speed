@@ -18,6 +18,7 @@ import { RouteProvider } from "../state/RouteState";
 import { SocialProvider } from "../state/SocialState";
 import { LiveProvider,useLive } from "../state/LiveState";
 import {RaceProvider,useRace} from '../state/RaceState';
+import {RankedProvider} from '../state/RankedState';
 import { Button, T } from "../components/ui";
 import { errorKey, useI18n } from "../lib/i18n";
 
@@ -64,6 +65,8 @@ function Navigation() {
           <Stack.Screen name="convoy" />
           <Stack.Screen name="friend-links" />
           <Stack.Screen name="races" />
+          <Stack.Screen name="ranked-publication" />
+          <Stack.Screen name="ranked-report" options={{presentation:'modal'}} />
         </Stack>
         {(live.share.armed||live.share.pending)&&pathname!=="/convoy"&&<View style={{position:'absolute',left:16,right:16,top:48,backgroundColor:colors.bg,borderWidth:1,borderColor:colors.line,borderRadius:20,padding:12,gap:8}}>
           <T size={13}>{t(live.share.pending?'m5b.sharingPending':'m5b.sharingActive',{time:live.share.expiresAt?new Date(live.share.expiresAt).toLocaleTimeString():''})}</T>
@@ -87,7 +90,7 @@ export default function RootLayout() {
       <AuthProvider>
         <AppProvider>
             <RiderProfileProvider>
-              <GarageProvider><RideProvider><RouteProvider><SocialProvider><LiveProvider><RaceProvider><OnlineProvider><MotionProvider><Navigation /></MotionProvider></OnlineProvider></RaceProvider></LiveProvider></SocialProvider></RouteProvider></RideProvider></GarageProvider>
+              <GarageProvider><RideProvider><RouteProvider><SocialProvider><LiveProvider><RaceProvider><RankedProvider><OnlineProvider><MotionProvider><Navigation /></MotionProvider></OnlineProvider></RankedProvider></RaceProvider></LiveProvider></SocialProvider></RouteProvider></RideProvider></GarageProvider>
             </RiderProfileProvider>
         </AppProvider>
       </AuthProvider>

@@ -179,7 +179,7 @@ test('deletion quarantines the caller and fences in-flight verifier work while p
   assert.equal(objects.some(item=>item.path===`${B}/${other}/samples.bin`),false);
   assert.equal((await admin('select state,verification_token from public.rs_submissions where id=$1',[submission])).rows[0].state,'rejected');
   assert.equal(result(await service('select public.rs_claim_submission($1,$2) as value',[submission,B])),null);
-  await assert.rejects(service("select public.rs_finalize_submission($1,36,now()-interval '4 seconds',now()-interval '1 second',4,1,repeat('a',64),$2)",[submission,staleToken]),/Claimed submission required/);
+  await assert.rejects(service("select public.rs_finalize_submission($1,36,now()-interval '4 seconds',now()-interval '1 second',4,1,repeat('a',64),$2)",[submission,staleToken]),error=>error.code==='42501');
   assert.equal((await admin('select * from public.rs_verified_records where submission_id=$1',[verified])).rows.length,0);
   await assert.rejects(service('select public.rs_purge_account_data($1,$2,$3)',[A,R,job.token]),/DELETION_ASSETS_REMAIN/);
   await service("select public.rs_release_account_deletion($1,$2,$3,'DELETION_STORAGE_FAILED')",[A,R,job.token]);

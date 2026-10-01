@@ -38,6 +38,7 @@ export function createTranslator(language: Language): Translate {
     supportedLngs: ["th", "en"],
     resources: { en: { translation: messages.en }, th: { translation: messages.th } },
     keySeparator: false,
+    nsSeparator: false,
     initAsync: false,
     interpolation: { escapeValue: false, skipOnVariables: true },
   });

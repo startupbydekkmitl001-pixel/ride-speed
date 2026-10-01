@@ -1,0 +1,63 @@
+export const m6En={
+ 'm6.title':'Ranked','m6.body':'Records with a source. Comparisons within your vehicle class.',
+ 'm6.today':'Today','m6.week':'This week','m6.month':'This month','m6.sustained_speed':'Top speed','m6.route_time':'Course time',
+ 'm6.scooter':'Scooter','m6.motorcycle':'Big bike','m6.car':'Car','m6.global':'Global','m6.friends':'Friends',
+ 'm6.filters':'Refine the board','m6.close':'Close','m6.back':'Back','m6.refresh':'Refresh records','m6.more':'Load more records','m6.moreCourses':'Load more approved boards',
+ 'm6.loading':'Loading records…','m6.loadingCourses':'Loading approved boards…','m6.signIn':'Sign in to see Ranked','m6.signInBody':'Your account determines friend visibility and your own rank.',
+ 'm6.offline':'Offline · showing the last loaded records. Ranks may have changed.','m6.stale':'These records need a fresh server check.','m6.moving':'Park safely before browsing or changing filters.',
+ 'm6.emptyTitle':'No qualifying records yet','m6.emptyBody':'Only eligible, server-checked closed-course results shared with this audience appear here. Posts and ordinary ride maxima do not count.',
+ 'm6.unsupported':'This verified metric is not available on this board yet.','m6.chooseCourse':'Choose an approved course board','m6.courseBody':'Each board uses one approved configuration and one timing mode. Public discovery requires separate operator approval.',
+ 'm6.noCourses':'No approved public course boards are available yet. Private race titles and course geometry stay private.',
+ 'm6.async':'Separate time trials','m6.live':'Common-start races','m6.periodBody':'Thailand time · midnight reset · weeks start Monday.','m6.asOf':'Server snapshot · {{time}}',
+ 'm6.speedMethod':'Minimum sustained speed over 3 continuous seconds','m6.timeMethod':'Verified course-time interval','m6.speedQuality':'Submitted evidence was checked on the server. Sensor authenticity is not attested.',
+ 'm6.timeQuality':'Native evidence consistency was checked on the server. This is not hardware-level sensor attestation.','m6.provenanceUnknown':'Some source information is unknown.',
+ 'm6.metadata':'Vehicle category and displacement are owner-reported start metadata. Later Garage edits do not change this record.',
+ 'm6.legacy':'Older sustained-speed records have no saved vehicle-class metadata and remain unclassified.','m6.allClasses':'All classes','m6.allBody':'This comparison combines vehicle classes. Choose a class for a closer comparison.',
+ 'm6.vehicleClass':'Vehicle class','m6.class.scooter:le125':'Up to 125 cc','m6.class.scooter:gt125_le160':'Over 125–160 cc','m6.class.scooter:gt160':'Over 160 cc',
+ 'm6.class.motorcycle:le500':'Up to 500 cc','m6.class.motorcycle:gt500_le900':'Over 500–900 cc','m6.class.motorcycle:gt900':'Over 900 cc',
+ 'm6.class.scooter:ev':'Electric scooters','m6.class.motorcycle:ev':'Electric motorcycles','m6.class.car:ev':'Electric cars',
+ 'm6.class.scooter:unknown':'Unclassified scooters','m6.class.motorcycle:unknown':'Unclassified motorcycles','m6.class.car:unknown':'Unclassified cars',
+ 'm6.yourRank':'Your rank','m6.self.private':'Your qualifying result is private. Review sharing to enter this audience’s board.','m6.self.unclassified':'No qualifying result in the selected class. Check Unclassified or All.',
+ 'm6.self.no_record':'No qualifying shared record for this board yet.','m6.managePublication':'Review result sharing','m6.publicationBody':'Results start private. Sharing a result never enables live location or friend presence.',
+ 'm6.tied':'Shared rank','m6.rank':'Rank {{rank}}','m6.rankUp':'Up {{count}} places','m6.rankDown':'Down {{count}} places','m6.seconds':'s','m6.report':'Report this record',
+ 'm6.rowLabel':'Rank {{rank}}. {{name}}. {{value}}. {{class}}.','m6.podiumTitle':'Leading records','m6.listTitle':'All qualifying records',
+ 'm6.errors.unavailable':'The board could not be checked. Retry without losing your selected filters.','m6.errors.changed':'The board changed. Refresh the first page before continuing.',
+ 'm6.errors.auth':'Sign in again to check your records.','m6.errors.course':'This approved course board is no longer available. Choose another approved board.',
+ 'm6.errors.rate':'The read limit was reached. Wait briefly before refreshing.','m6.errors.moving':'Park safely before changing Ranked.',
+ 'm6.errors.account':'The account changed. Open Ranked again for the current account.','m6.errors.invalid':'The server response could not be verified. Refresh the board.',
+} as const;
+export const m6Th:Record<keyof typeof m6En,string>={
+ 'm6.title':'อันดับ','m6.body':'สถิติที่มีที่มา เปรียบเทียบในคลาสรถของคุณ',
+ 'm6.today':'วันนี้','m6.week':'สัปดาห์นี้','m6.month':'เดือนนี้','m6.sustained_speed':'ความเร็วสูงสุด','m6.route_time':'เวลาในสนาม',
+ 'm6.scooter':'สกู๊ตเตอร์','m6.motorcycle':'บิ๊กไบค์','m6.car':'รถยนต์','m6.global':'ทั้งหมด','m6.friends':'เพื่อน',
+ 'm6.filters':'เลือกเงื่อนไขอันดับ','m6.close':'ปิด','m6.back':'กลับ','m6.refresh':'โหลดสถิติล่าสุด','m6.more':'โหลดสถิติเพิ่ม','m6.moreCourses':'โหลดสนามที่อนุมัติเพิ่ม',
+ 'm6.loading':'กำลังโหลดสถิติ…','m6.loadingCourses':'กำลังโหลดสนามที่อนุมัติ…','m6.signIn':'เข้าสู่ระบบเพื่อดูอันดับ','m6.signInBody':'บัญชีของคุณใช้ตรวจสิทธิ์การดูสถิติของเพื่อนและอันดับของคุณ',
+ 'm6.offline':'ออฟไลน์ · แสดงสถิติที่โหลดไว้ อันดับอาจเปลี่ยนไปแล้ว','m6.stale':'สถิติชุดนี้ต้องตรวจบนเซิร์ฟเวอร์อีกครั้ง','m6.moving':'จอดในที่ปลอดภัยก่อนดูรายการหรือเปลี่ยนเงื่อนไข',
+ 'm6.emptyTitle':'ยังไม่มีสถิติที่เข้าเงื่อนไข','m6.emptyBody':'แสดงเฉพาะผลในสนามปิดที่เซิร์ฟเวอร์ตรวจแล้วและเจ้าของแชร์ให้ผู้ชมกลุ่มนี้ ค่าที่โพสต์เองหรือความเร็วสูงสุดจากทริปทั่วไปไม่นับเป็นอันดับ',
+ 'm6.unsupported':'ยังไม่มีผลที่ผ่านการตรวจสอบสำหรับรูปแบบนี้','m6.chooseCourse':'เลือกอันดับของสนามที่อนุมัติ','m6.courseBody':'แต่ละอันดับใช้รูปแบบสนามและวิธีจับเวลาเดียวกัน การเปิดให้ค้นพบสนามต้องได้รับอนุมัติจากผู้ดูแลแยกต่างหาก',
+ 'm6.noCourses':'ยังไม่มีสนามที่อนุมัติให้ค้นพบในอันดับ ชื่อเส้นทางและรูปแบบสนามส่วนตัวจะไม่เปิดเผย',
+ 'm6.async':'แข่งแยกเวลา','m6.live':'ใช้เวลาเริ่มร่วมกัน','m6.periodBody':'ใช้เวลาไทย · เริ่มวันใหม่ 00:00 น. · สัปดาห์เริ่มวันจันทร์','m6.asOf':'ข้อมูลจากเซิร์ฟเวอร์ · {{time}}',
+ 'm6.speedMethod':'ความเร็วต่ำสุดที่รักษาได้ต่อเนื่อง 3 วินาที','m6.timeMethod':'ช่วงเวลาในสนามที่ตรวจสอบแล้ว','m6.speedQuality':'เซิร์ฟเวอร์ตรวจข้อมูลหลักฐานที่ส่งมา ยังไม่ได้รับรองความแท้ของเซนเซอร์',
+ 'm6.timeQuality':'เซิร์ฟเวอร์ตรวจความสอดคล้องของหลักฐานต้นฉบับจากแอป ไม่ใช่การรับรองเซนเซอร์ระดับฮาร์ดแวร์','m6.provenanceUnknown':'ข้อมูลแหล่งที่มาบางส่วนยังระบุเป็นไม่ทราบ',
+ 'm6.metadata':'ประเภทรถและความจุเครื่องยนต์เป็นข้อมูลที่เจ้าของระบุไว้ตอนเริ่ม การแก้รถในโรงรถภายหลังไม่เปลี่ยนสถิตินี้',
+ 'm6.legacy':'สถิติความเร็วต่อเนื่องรุ่นเดิมไม่ได้เก็บข้อมูลคลาสรถ จึงยังแสดงในกลุ่มไม่ระบุคลาส','m6.allClasses':'ทุกคลาส','m6.allBody':'อันดับนี้รวมหลายคลาสรถ เลือกคลาสเพื่อเปรียบเทียบรถที่ใกล้เคียงกัน',
+ 'm6.vehicleClass':'คลาสรถ','m6.class.scooter:le125':'ไม่เกิน 125 ซีซี','m6.class.scooter:gt125_le160':'เกิน 125–160 ซีซี','m6.class.scooter:gt160':'เกิน 160 ซีซี',
+ 'm6.class.motorcycle:le500':'ไม่เกิน 500 ซีซี','m6.class.motorcycle:gt500_le900':'เกิน 500–900 ซีซี','m6.class.motorcycle:gt900':'เกิน 900 ซีซี',
+ 'm6.class.scooter:ev':'สกู๊ตเตอร์ไฟฟ้า','m6.class.motorcycle:ev':'มอเตอร์ไซค์ไฟฟ้า','m6.class.car:ev':'รถยนต์ไฟฟ้า',
+ 'm6.class.scooter:unknown':'สกู๊ตเตอร์ไม่ระบุคลาส','m6.class.motorcycle:unknown':'มอเตอร์ไซค์ไม่ระบุคลาส','m6.class.car:unknown':'รถยนต์ไม่ระบุคลาส',
+ 'm6.yourRank':'อันดับของคุณ','m6.self.private':'สถิติที่เข้าเงื่อนไขยังเป็นส่วนตัว ตรวจการแชร์ก่อนเข้าร่วมอันดับกลุ่มนี้','m6.self.unclassified':'ไม่มีสถิติในคลาสที่เลือก ลองดูไม่ระบุคลาสหรือทุกคลาส',
+ 'm6.self.no_record':'ยังไม่มีสถิติที่แชร์และเข้าเงื่อนไขอันดับนี้','m6.managePublication':'ตรวจการแชร์ผล','m6.publicationBody':'ผลเริ่มต้นเป็นส่วนตัว การแชร์ผลไม่เปิดตำแหน่งสดหรือสถานะออนไลน์ให้เพื่อน',
+ 'm6.tied':'อันดับร่วม','m6.rank':'อันดับ {{rank}}','m6.rankUp':'ขึ้น {{count}} อันดับ','m6.rankDown':'ลง {{count}} อันดับ','m6.seconds':'วินาที','m6.report':'รายงานสถิตินี้',
+ 'm6.rowLabel':'อันดับ {{rank}} {{name}} {{value}} {{class}}','m6.podiumTitle':'สถิตินำ','m6.listTitle':'สถิติที่เข้าเงื่อนไขทั้งหมด',
+ 'm6.errors.unavailable':'ยังตรวจอันดับไม่ได้ ลองโหลดใหม่โดยใช้เงื่อนไขเดิม','m6.errors.changed':'อันดับเปลี่ยนไปแล้ว โหลดหน้าแรกใหม่ก่อนดูต่อ',
+ 'm6.errors.auth':'เข้าสู่ระบบอีกครั้งเพื่อตรวจสถิติ','m6.errors.course':'สนามที่อนุมัตินี้ใช้ไม่ได้แล้ว เลือกสนามที่อนุมัติใหม่',
+ 'm6.errors.rate':'ถึงขีดจำกัดการอ่านข้อมูลแล้ว รอสักครู่ก่อนโหลดใหม่','m6.errors.moving':'จอดในที่ปลอดภัยก่อนเปลี่ยนอันดับ',
+ 'm6.errors.account':'บัญชีเปลี่ยนไปแล้ว เปิดอันดับใหม่สำหรับบัญชีปัจจุบัน','m6.errors.invalid':'ยังยืนยันข้อมูลที่เซิร์ฟเวอร์ตอบกลับมาไม่ได้ ลองโหลดอันดับใหม่',
+};
+export function rankedErrorKey(value:unknown):keyof typeof m6En{
+ const code=typeof value==='string'?value:value instanceof Error?value.message:'';
+ if(code==='ACCOUNT_CHANGED')return 'm6.errors.account';if(code==='RANKED_MOVING')return 'm6.errors.moving';
+ if(code==='RANKED_CHANGED')return 'm6.errors.changed';if(code==='RANKED_AUTH_REQUIRED'||code==='AUTH_REQUIRED')return 'm6.errors.auth';
+ if(code==='RANKED_COURSE_UNAVAILABLE')return 'm6.errors.course';if(code==='RANKED_RATE_LIMITED')return 'm6.errors.rate';
+ if(code==='RANKED_INVALID'||code==='RANKED_INVALID_RESPONSE')return 'm6.errors.invalid';return 'm6.errors.unavailable';
+}

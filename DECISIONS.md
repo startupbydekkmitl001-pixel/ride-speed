@@ -74,6 +74,15 @@
 - Hosted evidence retention is measured from immutable upload reservation, due within seven days, rather than seven days after finalization. This bounds abandoned data as well as completed attempts. Both languages disclose the same rule and provider-backup limitation. Dedicated256MiB reserved+actual capacity protects free-tier headroom; it does not certify total organization billing usage.
 - One detail poll contains two read RPCs. Six-second foreground polling costs20read RPCs/minute and coalesces slow requests. Host lobby heartbeat uses its separate budget and does not add redundant detail reads, create readiness or grant GPS sharing. Missing managed/native acceptance keeps the pilot disabled.
 
+## M6 — qualification, visibility and reports
+
+- Rank only the existing server-qualified sustained-speed method and independently verified native course-time intervals. Owner-reported start vehicle metadata is immutable per record and is not sensor attestation. Ordinary ride maxima, posts and later Garage edits cannot create or reclassify a qualified result.
+- Separate the current qualified-result selector from retained own visibility settings. A record whose qualification expires remains discoverable for Private revocation; sharing again requires current server qualification and, for course time, separate operator-approved public discovery. A mutation receipt is never current getter authority.
+- Keep reports bound to an opaque owner-memory token and an exact fresh genuine board page. Pending private/block/remove requests quarantine rows and report authority immediately; privacy acknowledgements require a new canonical read. A received report is not a claim that moderation acted.
+- Persist immutable CAS operations before status-first egress. Unknown outcomes retain the same operation, disk-read failures do not become empty queues, and confirmed deletion closes the initiating owner before local cleanup. Account and foreground generations fence both transport and retained local form callbacks.
+- The bilingual registry is flat, so disable i18next namespace and key separators for class keys containing colons. Use `{{value}}` interpolation and test the real translators, not a key-returning screen fixture alone.
+- M6 source and hosted owner empty-read acceptance are separate from genuine positive-result/two-account and native performance acceptance. Native artifacts at adfd511 predate M6, and the route-time pilot remains disabled pending its existing operational/device gates.
+
 ## M8 — original loop family and integration
 
 - Render one Remotion project for all14roles×2themes. The user permits either motion renderer; the HyperFrames creative/motion guidance informed direction, with Remotion supplying the verified production pipeline. Every loop is original, frame-derived and silent; native content supplies actual identity and state.
