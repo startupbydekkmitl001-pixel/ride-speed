@@ -26,7 +26,7 @@ export async function clearRideAccount(scope:AuthScope){if(scope.userId){const r
 type RideState=ReturnType<typeof useRideSession>&{
  ready:boolean;busy:boolean;error:string|null;ride:JournalRide|null;history:JournalRide[];
  metrics:{distanceMeters:number;durationSeconds:number;averageMps:number|null};userFix:MapFix|null;locating:boolean;
- pause:()=>Promise<void>;resume:()=>Promise<string|null>;finish:()=>Promise<void>;retrySave:()=>Promise<void>;refreshHistory:()=>Promise<void>;locate:()=>Promise<void>;
+ pause:()=>Promise<void>;resume:()=>Promise<string|null>;finish:()=>Promise<void>;retrySave:()=>Promise<void>;refreshHistory:()=>Promise<void>;locate:(signal?:AbortSignal)=>Promise<void>;
  movingLocked:boolean;setPassengerOverride:()=>void;
  liveCapture:LiveCapturePort;
  cloudHistory:RideHistoryItem[];cloudMore:boolean;cloudError:boolean;syncing:boolean;retrySync:()=>void;loadMoreCloud:()=>Promise<void>;
@@ -148,19 +148,23 @@ export function RideProvider({children}:{children:React.ReactNode}){
   }if(!canceled&&isAccountCurrent(scope)){await refreshHistory();await fetchCloud();}}).catch(()=>{}).finally(()=>{if(syncRunning.current===scope)syncRunning.current=null;if(isAccountCurrent(scope))setSyncing(false);});
   return()=>{canceled=true;};
  },[authReady,session,scope,ownedHistory,pendingSignature,syncTick,publish,refreshHistory,fetchCloud]);
- const locate=useCallback(async()=>{
-  if(!isAccountCurrent(scope)||queue.isClosed(scope.userId??'guest')||idle.current||captureRef.current.active)return;const requested=scope;setLocating(true);
-  const work=(async()=>{const permission=await Location.getForegroundPermissionsAsync();if(!permission.granted||!isAccountCurrent(requested)||queue.isClosed(requested.userId??'guest'))return;
+ const locate=useCallback(async(signal?:AbortSignal)=>{
+  if(signal?.aborted||AppState.currentState!=='active'||!isAccountCurrent(scope)||queue.isClosed(scope.userId??'guest')||idle.current||captureRef.current.active)return;const requested=scope;setLocating(true);
+  let suspended=false,cancel:(()=>void)|null=null;
+  const wanted=()=>!suspended&&!signal?.aborted&&AppState.currentState==='active'&&isAccountCurrent(requested)&&!queue.isClosed(requested.userId??'guest')&&!captureRef.current.active;
+  const abort=()=>{cancel?.();},appSubscription=AppState.addEventListener('change',state=>{if(state!=='active'){suspended=true;cancel?.();}});signal?.addEventListener('abort',abort);
+  const work=(async()=>{try{const permission=await Location.getForegroundPermissionsAsync();if(!permission.granted||!wanted())return;
    if(Platform.OS==='ios'&&permission.ios?.accuracy==='reduced')return;
    let sub:Location.LocationSubscription|null=null;let timeout:ReturnType<typeof setTimeout>|null=null;let found!:()=>void;
    const firstFix=new Promise<void>(resolve=>{found=resolve;});const owner=Symbol('idle-location');
-   try{const started=await locationCapture.start(owner,()=>isAccountCurrent(requested)&&!queue.isClosed(requested.userId??'guest')&&!captureRef.current.active,{
+   cancel=()=>{found();void locationCapture.stop(owner).catch(()=>{});};
+   try{const started=await locationCapture.start(owner,wanted,{
     start:async()=>{sub=await Location.watchPositionAsync({accuracy:Location.Accuracy.High,distanceInterval:0,timeInterval:1000},location=>{const s=location.coords,age=Date.now()-location.timestamp;
-     if(isAccountCurrent(requested)&&!queue.isClosed(requested.userId??'guest')&&locationCapture.owns(owner)&&!captureRef.current.active&&Number.isFinite(s.latitude)&&Math.abs(s.latitude)<=90&&Number.isFinite(s.longitude)&&Math.abs(s.longitude)<=180&&s.accuracy!==null&&s.accuracy>=0&&s.accuracy<=20&&!location.mocked&&age>=-500&&age<3000){setFix({scope:requested,value:{coordinate:{latitude:s.latitude,longitude:s.longitude},accuracyMeters:s.accuracy,timestampMs:location.timestamp,headingDegrees:s.heading!==null&&s.heading>=0?s.heading:null}});found();}
+     if(wanted()&&locationCapture.owns(owner)&&Number.isFinite(s.latitude)&&Math.abs(s.latitude)<=90&&Number.isFinite(s.longitude)&&Math.abs(s.longitude)<=180&&s.accuracy!==null&&s.accuracy>=0&&s.accuracy<=20&&!location.mocked&&age>=-500&&age<3000){setFix({scope:requested,value:{coordinate:{latitude:s.latitude,longitude:s.longitude},accuracyMeters:s.accuracy,timestampMs:location.timestamp,headingDegrees:s.heading!==null&&s.heading>=0?s.heading:null}});found();}
     });},stop:async()=>{sub?.remove();sub=null;},
    });if(started){timeout=setTimeout(found,10000);await firstFix;}}
-   finally{if(timeout)clearTimeout(timeout);await locationCapture.stop(owner);}
-  })();idle.current=work;try{await work;}catch{}finally{if(idle.current===work)idle.current=null;if(isAccountCurrent(requested))setLocating(false);}
+   finally{cancel=null;if(timeout)clearTimeout(timeout);await locationCapture.stop(owner);}
+  }finally{appSubscription.remove();signal?.removeEventListener('abort',abort);}})();idle.current=work;try{await work;}catch{}finally{if(idle.current===work)idle.current=null;if(isAccountCurrent(requested))setLocating(false);}
  },[scope]);
  const own=owned?.scope===scope&&!queue.isClosed(scope.userId??'guest')?owned:null,ride=own?.ride??null;
  const duration=own?.durationMs??0;

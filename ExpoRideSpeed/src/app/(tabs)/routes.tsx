@@ -14,6 +14,7 @@ import type {RouteProjection} from '../../features/routes/syncTypes';
 import {toRideSummary} from '../../features/rides/syncModel';
 import {routeErrorKey} from '../../lib/i18n/m4';
 import {useI18n} from '../../lib/i18n';
+import {useScreenActivity} from '../../lib/useScreenActivity';
 import {useApp} from '../../state/AppState';
 import {isAccountCurrent,useAuth} from '../../state/AuthState';
 import {useRide} from '../../state/RideState';
@@ -23,6 +24,7 @@ type Mode='build'|'saved'|'detail'|'shared';
 const single=(value:string|string[]|undefined)=>typeof value==='string'?value:undefined;
 function RouteEditor(){
  const app=useApp(),routes=useRoutes(),ride=useRide(),{scope,session}=useAuth(),{t,language}=useI18n();
+ const {active,generation:activityGeneration,capture,accepts,current:screenCurrent}=useScreenActivity();
  const params=useLocalSearchParams<{routeId?:string;view?:string}>(),sharedId=single(params.routeId);
  const category=app.vehicle?.category==='bigbike'?'motorcycle':app.vehicle?.category??'scooter';
  const {projection:loadProjection,ready:routeReady}=routes;
@@ -38,6 +40,11 @@ function RouteEditor(){
  const [online,setOnline]=useState(()=>Platform.OS!=='web'||typeof navigator==='undefined'||navigator.onLine);
  useEffect(()=>{if(Platform.OS!=='web')return;const update=()=>setOnline(navigator.onLine);window.addEventListener('online',update);window.addEventListener('offline',update);return()=>{window.removeEventListener('online',update);window.removeEventListener('offline',update);};},[]);
  useEffect(()=>()=>{pendingConsent.current?.(false);pendingConsent.current=null;},[]);
+ useEffect(()=>{previewGate.current.invalidate();pendingConsent.current?.(false);pendingConsent.current=null;previewLife.current.pending=false;
+  // Navigation/OS suspension revokes transient previews and pending disclosures.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  setLoading(false);setShowConsent(false);
+ },[active,activityGeneration]);
  useEffect(()=>{
   if(!ride.movingLocked)return;
   previewGate.current.invalidate();
@@ -51,16 +58,19 @@ function RouteEditor(){
   setShowConsent(false);setImporting(false);setDiscarding(false);
  },[ride.movingLocked]);
  useEffect(()=>{
-  if(!sharedId||!session||!routeReady)return;
-  let alive=true;
-  void loadProjection(sharedId).then(value=>{if(alive&&isAccountCurrent(scope)){setShared(value);if(!value)setMessage('ROUTE_UNAVAILABLE');}}).catch(error=>{if(alive&&isAccountCurrent(scope))setMessage(error instanceof Error?error.message:'ROUTE_UNAVAILABLE');}).finally(()=>{if(alive&&isAccountCurrent(scope))setLoading(false);});
+  if(!active||!sharedId||!session||!routeReady)return;
+  let alive=true;const activityTicket=capture(),current=()=>alive&&accepts(activityTicket)&&isAccountCurrent(scope);
+  // This explicit read starts a new visible loading state after navigation resume.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  setLoading(true);
+  void loadProjection(sharedId).then(value=>{if(current()){setShared(value);if(!value)setMessage('ROUTE_UNAVAILABLE');}}).catch(error=>{if(current())setMessage(error instanceof Error?error.message:'ROUTE_UNAVAILABLE');}).finally(()=>{if(current())setLoading(false);});
   return()=>{alive=false;};
- },[sharedId,session,scope,routeReady,loadProjection]);
+ },[sharedId,session,scope,routeReady,loadProjection,active,activityGeneration,capture,accepts]);
  const requestConsent=useCallback(()=>{
-  if(!isAccountCurrent(scope)||ride.movingLocked)return Promise.resolve(false);
+  if(!screenCurrent()||!isAccountCurrent(scope)||ride.movingLocked)return Promise.resolve(false);
   if(routes.consent)return Promise.resolve(true);
   return new Promise<boolean>(resolve=>{pendingConsent.current?.(false);pendingConsent.current=resolve;setShowConsent(true);});
- },[scope,ride.movingLocked,routes.consent]);
+ },[scope,ride.movingLocked,routes.consent,screenCurrent]);
  const decide=async(allowed:boolean)=>{
   const resolve=pendingConsent.current;pendingConsent.current=null;setShowConsent(false);if(!resolve)return;
   try{if(allowed){if(!isAccountCurrent(scope))throw Error('ACCOUNT_CHANGED');await routes.allowPlanning();}resolve(allowed&&isAccountCurrent(scope));}
@@ -91,10 +101,10 @@ function RouteEditor(){
  const visible=routes.records.filter(record=>!record.sync.deleted||!!routes.conflicts[record.localId]),record=routes.records.find(row=>row.localId===selected&&!row.sync.deleted);
  const clean=(row:RouteLocalRecord)=>!!row.sync.cloudId&&!row.sync.pending&&row.sync.cleanFingerprint===fingerprintRoute(row.document)&&!row.sync.blocked;
  const preview=async()=>{
-  if(!previewLife.current.alive||previewLife.current.moving||!isAccountCurrent(scope))return;
+  const activityTicket=capture();if(!accepts(activityTicket)||!previewLife.current.alive||previewLife.current.moving||!isAccountCurrent(scope))return;
   if(!record?.sync.cloudId||!clean(record)||record.document.visibility==='private'){setMessage('ROUTE_SHARE_PRIVATE');return;}
   const key=`${record.localId}:${record.sync.cloudId}`,ticket=previewGate.current.begin(key,scope.generation);
-  const current=()=>previewLife.current.alive&&!previewLife.current.moving&&isAccountCurrent(scope)&&previewGate.current.accepts(ticket,key,scope.generation);
+  const current=()=>accepts(activityTicket)&&previewLife.current.alive&&!previewLife.current.moving&&isAccountCurrent(scope)&&previewGate.current.accepts(ticket,key,scope.generation);
   previewLife.current.pending=true;setLoading(true);setMessage(null);
   try{const value=await routes.projection(record.sync.cloudId);if(!current())return;if(!value)throw Error('ROUTE_UNAVAILABLE');setShared(value);setMode('shared');}
   catch(error){if(current())setMessage(error instanceof Error?error.message:'ROUTE_UNAVAILABLE');}
@@ -119,7 +129,7 @@ function RouteEditor(){
  const conflict=conflictId?routes.conflicts[conflictId]:null;
  const resolve=async(choice:'cloud'|'local')=>{if(!conflictId||ride.movingLocked)return;try{const okay=await routes.resolveConflict(conflictId,choice);if(okay&&isAccountCurrent(scope))setConflictId(null);}catch(error){if(isAccountCurrent(scope))setMessage(error instanceof Error?error.message:'ROUTE_UNAVAILABLE');}};
  return <View style={{flex:1,backgroundColor:app.colors.bg}}>
-  {mode==='build'?<RouteBuilder value={draft.value} onChange={onChange} onSave={save} onClose={close} onOpenSaved={()=>setMode('saved')} search={routes.search} calculate={routes.calculate} locked={ride.movingLocked} consent={routes.consent} onRequestConsent={requestConsent} ownerGeneration={scope.generation} ready={routes.ready} error={error} online={online} onLocate={()=>{void ride.locate();}} onSignIn={()=>router.push('/auth')}/>:
+  {mode==='build'?<RouteBuilder value={draft.value} onChange={onChange} onSave={save} onClose={close} onOpenSaved={()=>setMode('saved')} search={routes.search} calculate={routes.calculate} locked={ride.movingLocked} consent={routes.consent} onRequestConsent={requestConsent} ownerGeneration={scope.generation} ready={routes.ready} error={error} online={online} onLocate={signal=>{void ride.locate(signal);}} onSignIn={()=>router.push('/auth')}/>:
    mode==='detail'&&record?<RouteDetail item={{kind:'owner',document:record.document,geometry:record.geometry,synced:clean(record)}} onClose={()=>setMode('saved')} onEdit={()=>edit(record)} onDelete={async()=>{const okay=await routes.remove(record.localId);if(okay){setSelected(null);setMode('saved');}return okay;}} onPreviewShare={()=>{void preview();}} busy={loading} error={error} online={online}/>:
    mode==='shared'&&shared?<RouteDetail item={{kind:'shared',route:shared}} onClose={()=>setMode(sharedId?'saved':'detail')} online={online}/>:
    <Screen scroll={false} style={{flex:1}}><Heading eyebrow="" title={t('m4.library')}/><Row><Button small label={t(routes.draft?'m4.continueDraft':'m4.newRoute')} icon="add-outline" onPress={start} disabled={ride.movingLocked}/><Button small secondary label={t('m4.refresh')} icon="refresh-outline" busy={routes.status==='loading'||loading} onPress={retry}/></Row>

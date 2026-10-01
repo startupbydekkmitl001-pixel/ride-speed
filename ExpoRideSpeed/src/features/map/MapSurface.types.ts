@@ -36,4 +36,6 @@ export interface MapSurfaceProps {
   onMovePin?(id: string, coordinate: MapCoordinate): void;
   onSelectPeer?(id: string): void;
   onUserGesture?(): void;
+  /** Settled camera event only; used to restore a disposed offscreen renderer. */
+  onCameraChanged?(camera: MapCamera): void;
 }

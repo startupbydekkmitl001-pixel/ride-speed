@@ -187,6 +187,7 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
       map.on('click', onClick);
       map.on('contextmenu', event => { event.preventDefault(); if (Date.now() >= suppressClickUntil) fireLongPress(event.point); });
       map.on('movestart', event => { cancelLongPress(); if (event.originalEvent) latest.current.onUserGesture?.(); });
+      map.on('moveend', () => { if(alive.current&&styleReady.current&&mapRef.current===map){const value=cameraOf(map);if(value)latest.current.onCameraChanged?.(value);} });
       map.on('style.load', () => {
         if (!alive.current || mapRef.current !== map) return;
         ++epoch.current;

@@ -15,7 +15,8 @@ function find(node,type){if(!node||typeof node!=='object')return null;if(node.ty
 
 function fixture(){
  const hold=deferred(),cells=[],effects=[];let index=0,dirty=false,mounted=true,lateWrites=0,tree;
- let auth={scope:{userId:'owner',generation:1},session:{user:{id:'owner'}},ready:true},ride={movingLocked:false,history:[]};
+ let auth={scope:{userId:'owner',generation:1},session:{user:{id:'owner'}},ready:true},ride={movingLocked:false,history:[]},active=true,activityGeneration=1;
+ const current=()=>active,activityCapture=()=>active?activityGeneration:null,accepts=ticket=>active&&ticket===activityGeneration;
  const document={schema_version:1,title:'Public test route',category:'scooter',visibility:'public',stops:[{lat:13,lng:100,label:'Start'},{lat:14,lng:101,label:'Finish'}],source:{kind:'draft'}};
  const record=local.routeRecord({localId:'local',document});
  record.sync={...record.sync,cloudId:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',revision:1,cleanFingerprint:local.fingerprintRoute(document)};
@@ -36,6 +37,7 @@ function fixture(){
   '../../features/routes/RouteSheet':{RouteSheet:'RouteSheet'},'../../features/routes/builderModel':builder,'../../features/routes/localModel':local,
   '../../features/routes/presentationModel':{builderFromRecord:()=>builder.blankBuilder('scooter').value,builderFromRide(){}},'../../features/rides/syncModel':{toRideSummary(){}},
   '../../lib/i18n/m4':{routeErrorKey:()=> 'm4.error.provider'},'../../lib/i18n':{useI18n:()=>({t:key=>key,language:'en'})},
+  '../../lib/useScreenActivity':{useScreenActivity:()=>({active,generation:activityGeneration,current,capture:activityCapture,accepts})},
   '../../state/AppState':{useApp:()=>({colors:{bg:'#000',accent:'#FF5A1F',surface:'#111',line:'#222',muted:'#999'},vehicle:null})},
   '../../state/AuthState':{useAuth:()=>auth,isAccountCurrent:scope=>scope===auth.scope},'../../state/RideState':{useRide:()=>ride},'../../state/RouteState':{useRoutes:()=>routes,builderGeometry:()=>null},
  };
@@ -44,7 +46,7 @@ function fixture(){
  vm.runInNewContext(js,{require:name=>{if(name in imports)return imports[name];throw Error(`Unmocked ${name}`);},module,exports:module.exports,Promise,Error,Date,JSON,navigator:{onLine:true},window:{addEventListener(){},removeEventListener(){}}});
  const render=()=>{for(let pass=0;pass<12;pass++){dirty=false;index=0;tree=module.exports.testRouteEditor();while(effects.length)effects.shift()();if(!dirty)return tree;}throw Error('Render loop');};
  const open=()=>{const list=find(render(),'FlatList'),row=list.props.renderItem({item:record});find(row,'Pressable').props.onPress();return find(render(),'RouteDetail');};
- return {render,open,resolve:()=>hold.resolve(projection),move:()=>{ride={...ride,movingLocked:true};render();},switchOwner:()=>{auth={...auth,scope:{userId:'other',generation:2}};},unmount:()=>{mounted=false;for(const cell of cells)cell?.cleanup?.();},get lateWrites(){return lateWrites;}};
+ return {render,open,resolve:()=>hold.resolve(projection),move:()=>{ride={...ride,movingLocked:true};render();},suspend:()=>{active=false;++activityGeneration;render();},resume:()=>{active=true;++activityGeneration;render();},switchOwner:()=>{auth={...auth,scope:{userId:'other',generation:2}};},unmount:()=>{mounted=false;for(const cell of cells)cell?.cleanup?.();},get lateWrites(){return lateWrites;}};
 }
 
 test('actual route adapter does not reopen share preview after Back changes navigation intent',async()=>{
@@ -59,4 +61,7 @@ test('actual route adapter discards pending preview when movement locks the edit
 test('actual route adapter makes no late preview state writes after unmount or owner change',async()=>{
  const h=fixture();h.open().props.onPreviewShare();h.unmount();h.resolve();await settle();assert.equal(h.lateWrites,0);
  const other=fixture();other.open().props.onPreviewShare();other.switchOwner();other.unmount();other.resolve();await settle();assert.equal(other.lateWrites,0);
+});
+test('actual route adapter discards held share projection across navigation or OS suspension and clears its pending UI',async()=>{
+ const h=fixture();h.open().props.onPreviewShare();assert.equal(find(h.render(),'RouteDetail').props.busy,true);h.suspend();h.resume();h.resolve();await settle();const detail=find(h.render(),'RouteDetail');assert.equal(detail.props.item.kind,'owner');assert.equal(detail.props.busy,false);
 });

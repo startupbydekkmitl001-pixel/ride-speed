@@ -166,7 +166,7 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
   const onRegionChange = useCallback<NonNullable<MapProps['onRegionDidChange']>>(event => {
     if (!alive.current) return;
     const value = event.nativeEvent, center = fromLngLat(value.center);
-    if (center) viewport.current = safeCamera({ center, zoom: value.zoom, bearing: value.bearing, pitch: value.pitch });
+    if (center) { viewport.current = safeCamera({ center, zoom: value.zoom, bearing: value.bearing, pitch: value.pitch }); if(viewport.current)latest.current.onCameraChanged?.(viewport.current); }
     if (value.userInteraction) latest.current.onUserGesture?.();
   }, []);
   const onStyleLoaded = useCallback(() => {

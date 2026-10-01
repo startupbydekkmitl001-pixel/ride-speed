@@ -363,6 +363,15 @@ test('deletion cancels an in-flight permission request for idle map location bef
   permission.resolve({ granted: true }); h.behavior.pendingLocatePermission = null; await locating;
   const result = await h.settle(); assert.equal(h.behavior.idleStarts, 0); assert.equal(result.userFix, null); assert.equal(result.ready, false);
 });
+test('screen disposal cancels a held idle permission request without starting GPS or touching an active ride',async()=>{
+ const h=harness({signedIn:true}),state=await h.settle(),permission=deferred(),controller=new AbortController();h.behavior.pendingLocatePermission=permission;
+ const locating=state.locate(controller.signal);await tick();controller.abort();permission.resolve({granted:true});h.behavior.pendingLocatePermission=null;await locating;
+ assert.equal(h.behavior.idleStarts,0);assert.equal(h.render().userFix,null);await h.render().start();const stops=h.behavior.stops;await state.locate(controller.signal);assert.equal(h.behavior.stops,stops);assert.equal(h.behavior.active,true);await h.render().pause();
+});
+test('backgrounding before idle permission resolves prevents GPS acquisition even if the OS resumed first',async()=>{
+ const h=harness({signedIn:true}),state=await h.settle(),permission=deferred();h.behavior.pendingLocatePermission=permission;
+ const locating=state.locate();await tick();h.foreground('background');h.foreground('active');permission.resolve({granted:true});h.behavior.pendingLocatePermission=null;await locating;assert.equal(h.behavior.idleStarts,0);assert.equal(h.render().userFix,null);
+});
 
 test('a cloud response obtained before confirmed deletion cannot republish private history after closure', async () => {
   const stored = pendingSummary('A'), h = harness({ stored: [stored], signedIn: true }), held = deferred();

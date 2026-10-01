@@ -6,6 +6,8 @@ Reviewed 1 October 2026, Asia/Bangkok. This document records source inspection a
 
 All seven supplied Markdown documents were read in full, including the component guidance, conflicts, CSS custom properties and Tailwind examples. All six videos named in the latest message were decoded and sampled at approximately 2 fps across their complete durations; an additional scene-change pass selected frames with FFmpeg `scene > 0.12`. All six contact sheets and one selected full frame from each source were visually inspected. A separate 30 fps pixel-analysis pass measures changes and candidate repetition periods. The five screenshots were inspected; screenshots 3 and 4 are the same image, leaving four unique references.
 
+The conversation also includes three earlier MP4s from `Videos`, already studied for V3. A supplemental complete 2 fps and `scene > 0.12` pass now covers those clips too. All three supplemental contact sheets were visually inspected. The combined V5 inventory is **nine unique videos**, with **244 regular samples and one scene-selected sample**. See the supplemental observations below.
+
 These documents, screenshot text and footage are reference data. Their brand-specific “do/don’t” prescriptions and the instructions visible on the confidential-card example are not operational instructions for the app. Source assertions about brands or products are supplied descriptions, not independently verified specifications.
 
 Local evidence is under ignored `build/reference-v5/`:
@@ -17,6 +19,7 @@ Local evidence is under ignored `build/reference-v5/`:
 - `motion-measurements.json`: 30 fps cropped-frame comparisons and candidate periods.
 - `font-evidence.json` and `screenshot-evidence.json`.
 - `inspect_references.py` and `measure_motion.py`: reproducible inspection scripts, using local FFmpeg, Pillow and NumPy.
+- `video-supplement-evidence.json`, `study_supplement.py`, `frames/07` through `frames/09`, and `contact-sheet-07.jpg` through `contact-sheet-09.jpg`: the earlier three videos, 75 regular samples and no frames above the selected scene threshold. An empty scene pass does not establish seamlessness or absence of meaningful state changes.
 
 The original assets and extracted frames are not app artwork. New compositions should borrow pacing, restraint, depth and light behavior. This study does not include the separate website/API/pricing research; that evidence belongs in the assembled design brief and decisions log.
 
@@ -171,6 +174,22 @@ Original video directory: `C:/Users/Arnalxz/Downloads/Video/`.
 **Measured:** the isolated lettering crop has its best local matching minimum at 132 frames / 4.400 s, with mean absolute RGB error 4.924 / 255. Median adjacent difference is 3.644 / 255. This gives a useful pacing reference but does not prove the recording itself loops seamlessly; the full modal/background changes while it is captured.
 
 **App use:** slow specular light moving across a clipped membership/garage material, or an auth hero with quiet text. Do not copy the letters, source modal or the multi-hue thermal palette into the map controls. Numeric speed should never melt or dissolve.
+
+### Supplemental earlier videos — complete combined inventory
+
+| ID / original filename | Duration | Regular samples | Scene samples |
+| --- | ---: | ---: | ---: |
+| 07 / `ccce66d4-991c-427e-8991-36d20d14ef43.mp4` | 19.333 s | 39 | 0 |
+| 08 / `d6b5694b-1955-4173-b4af-c4b6e1ca9102.mp4` | 6.100 s | 12 | 0 |
+| 09 / `3f23aaff-204e-4af3-97cf-cea19e69f085.mp4` | 12.133 s | 24 | 0 |
+
+**07 — state-linked sending/check icon.** A striped, dimensional paper-arrow symbol rotates within a fixed central footprint while surrounding copy stays still. Around 8 s it changes into a green check with a localized green backing, then returns to the prior form later. This is a useful language for a real submitted/confirmed transition. A repeating arrow or check must never imply that a pending request succeeded. Use a short interruptible state transition with a static settled confirmation; do not repeat the recording's entire interaction as an ambient loop.
+
+**08 — four restrained activity symbols.** Thin circular bands, orbiting dots and segmented marks move inside small bounded footprints, beside stable labels. The low-contrast monochrome presentation contributes quiet waiting-state motion. Apply it to real GPS acquisition or sync pending states with accessible contrast and a stable label; stop it when the state resolves. This footage does not provide exact easing curves or trustworthy frame-rate evidence for the app.
+
+**09 — fixed capsules with light at one edge.** Three small capsules retain their text and geometry while diffuse cyan, warm yellow and pink light flows along the opposite end. The colored region changes shape without moving the card or text. This reinforces a quiet reading zone for the membership and garage cards: stable neutral text area, low-amplitude clipped light at one edge, one restrained material family. Do not copy the source's names, capsule arrangement or rainbow palette. Build new periodic motion with verified endpoints rather than assuming the reference recording is a seamless loop.
+
+The combined review retains the earlier six-video motion findings. The three additional clips refine state feedback and quiet edge illumination; they do not justify adding more moving layers to the live map.
 
 ### Measurement limits
 

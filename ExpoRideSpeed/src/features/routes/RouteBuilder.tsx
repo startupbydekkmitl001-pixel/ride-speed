@@ -3,12 +3,13 @@ import { ActivityIndicator, Keyboard, Pressable, StyleSheet, View } from 'react-
 import { randomUUID } from 'expo-crypto';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Field, Glass, Icon, Row, Segments, T } from '../../components/ui';
-import MapSurface from '../map/MapSurface';
+import MapSurface from '../map/ActiveMapSurface';
 import type { MapCamera, MapCoordinate, MapHandle, MapPin, MapStatus } from '../map/MapSurface.types';
 import { mapCopy } from '../map/mapCopy';
 import { useApp } from '../../state/AppState';
 import { useRide } from '../../state/RideState';
 import { useI18n } from '../../lib/i18n';
+import {useScreenActivity} from '../../lib/useScreenActivity';
 import { routeErrorKey } from '../../lib/i18n/m4';
 import { addBuilderStop, applyRoadResult, builderDocument, builderHasSaveSource, needsRoadCalculation, moveBuilderPin, removeBuilderStop, reorderBuilderStop, RequestGate, reverseBuilderStops, roundTripBuilder, routeInputKey, routingProfile, undoBuilder, type BuilderHistory } from './builderModel';
 import { RouteSheet } from './RouteSheet';
@@ -20,13 +21,14 @@ export type RouteBuilderProps={
  search:(query:string,language:'th'|'en',signal?:AbortSignal)=>Promise<SearchResult>;
  calculate:(stops:readonly MapCoordinate[],profile:RoutingProfile,signal?:AbortSignal)=>Promise<RoadResult>;
  locked:boolean;consent:boolean;onRequestConsent:()=>Promise<boolean>;ownerGeneration:number;
- ready?:boolean;busy?:boolean;error?:string|null;online?:boolean;onLocate?:()=>void;bottomOffset?:number;
+ ready?:boolean;busy?:boolean;error?:string|null;online?:boolean;onLocate?:(signal?:AbortSignal)=>void;bottomOffset?:number;
  onOpenSaved?:()=>void;
  onSignIn?:()=>void;
 };
 const noPeers=[] as const;
 export default function RouteBuilder(props:RouteBuilderProps){
  const {colors,dark,motion}=useApp(),{t,language}=useI18n(),ride=useRide(),insets=useSafeAreaInsets();
+ const activity=useScreenActivity(),{active,generation:activityGeneration,capture,accepts,current:screenCurrent}=activity;
  const locked=props.locked||ride.movingLocked, latest=useRef({...props,locked});useLayoutEffect(()=>{latest.current={...props,locked};});
  const map=useRef<MapHandle>(null),history=useRef<BuilderHistory>({value:props.value,history:[]});
  const searchGate=useRef(new RequestGate()),roadGate=useRef(new RequestGate());
@@ -35,7 +37,8 @@ export default function RouteBuilder(props:RouteBuilderProps){
  const [historyDepth,setHistoryDepth]=useState(0);
  const [road,setRoad]=useState<{key:string;loading:boolean;error:string|null}>({key:'',loading:false,error:null}),[retry,setRetry]=useState(0),[mapRetry,setMapRetry]=useState(0);
  const [status,setStatus]=useState<MapStatus>({state:'loading'}),[saving,setSaving]=useState(false),[saveError,setSaveError]=useState<string|null>(null),[saved,setSaved]=useState(false);
- const recenterIntent=useRef(false);
+ const recenterIntent=useRef(false),recenterController=useRef<AbortController|null>(null);
+ useEffect(()=>()=>{recenterController.current?.abort();recenterController.current=null;recenterIntent.current=false;},[active,activityGeneration]);
  const [panelHeight,setPanelHeight]=useState(240);
  const [initialCamera]=useState<MapCamera>(()=>({center:props.value.stops[0]?.coordinate??ride.userFix?.coordinate??{latitude:15.6,longitude:101.1},zoom:props.value.stops.length||ride.userFix?13:4.5,bearing:0,pitch:0}));
  const bottom=insets.bottom+(props.bottomOffset??88),mapInsets=useMemo(()=>({top:insets.top+130,left:24,right:68,bottom:bottom+panelHeight+24}),[insets.top,bottom,panelHeight]);
@@ -48,11 +51,11 @@ export default function RouteBuilder(props:RouteBuilderProps){
  const selectedStop=props.value.stops.find(stop=>stop.id===selected);
  useEffect(()=>()=>{searchGate.current.invalidate();roadGate.current.invalidate();},[]);
  const publish=useCallback((operation:(state:BuilderHistory)=>BuilderHistory)=>{
-  const current=latest.current;if(current.locked||current.busy||current.ready===false)return;
+  const current=latest.current;if(!screenCurrent()||current.locked||current.busy||current.ready===false)return;
   const state=operation({value:current.value,history:history.current.history});
   if(state.value===current.value)return;
   history.current=state;setHistoryDepth(state.history.length);searchGate.current.invalidate();roadGate.current.invalidate();setSaved(false);setSaveError(null);current.onChange(state.value);
- },[]);
+ },[screenCurrent]);
  const add=useCallback((coordinate:MapCoordinate,label?:string,placeId?:string)=>{
   const current=latest.current;if(current.locked)return;
   const index=current.value.stops.length;if(index>=12)return;
@@ -61,33 +64,33 @@ export default function RouteBuilder(props:RouteBuilderProps){
   setSelected(id);
  },[publish,t]);
  const move=useCallback((id:string,coordinate:MapCoordinate)=>publish(state=>moveBuilderPin(state,id,coordinate)),[publish]);
- const selectPin=useCallback((id:string)=>{if(!latest.current.locked)setSelected(id);},[]);
+ const selectPin=useCallback((id:string)=>{if(screenCurrent()&&!latest.current.locked)setSelected(id);},[screenCurrent]);
  const focus=(coordinate:MapCoordinate)=>map.current?.setCamera({center:coordinate,zoom:15,durationMs:motion?300:0});
- const recenter=()=>{recenterIntent.current=true;props.onLocate?.();if(ride.userFix&&Date.now()-ride.userFix.timestampMs>=0&&Date.now()-ride.userFix.timestampMs<15000){focus(ride.userFix.coordinate);recenterIntent.current=false;}};
+ const recenter=()=>{if(!screenCurrent()||locked)return;recenterController.current?.abort();recenterController.current=new AbortController();recenterIntent.current=true;props.onLocate?.(recenterController.current.signal);if(ride.userFix&&Date.now()-ride.userFix.timestampMs>=0&&Date.now()-ride.userFix.timestampMs<15000){focus(ride.userFix.coordinate);recenterIntent.current=false;}};
  useEffect(()=>{if(recenterIntent.current&&ride.userFix&&Date.now()-ride.userFix.timestampMs>=0&&Date.now()-ride.userFix.timestampMs<15000){map.current?.setCamera({center:ride.userFix.coordinate,zoom:15,durationMs:motion?300:0});recenterIntent.current=false;}},[ride.userFix,motion]);
  useEffect(()=>{
   const gate=searchGate.current;gate.invalidate();
-  if(sheet!=='search'||locked||!props.consent||props.online===false)return;
+  if(!active||sheet!=='search'||locked||!props.consent||props.online===false)return;
   const normalized=query.normalize('NFC').trim().replace(/\s+/gu,' ');
   if(Array.from(normalized).length<3)return;
-  const controller=new AbortController(),ticket=gate.begin(normalized,props.ownerGeneration);
-  const timer=setTimeout(()=>{if(!gate.accepts(ticket,searchIdentity.current,latest.current.ownerGeneration)||latest.current.locked||!latest.current.consent||latest.current.online===false)return;setSearch({key:normalized,loading:true,value:null,error:null});void latest.current.search(normalized,language,controller.signal).then(value=>{
-   if(gate.accepts(ticket,latest.current.locked?'':normalized,latest.current.ownerGeneration))setSearch({key:normalized,loading:false,value,error:null});
-  }).catch(error=>{if(!controller.signal.aborted&&gate.accepts(ticket,normalized,latest.current.ownerGeneration)&&!latest.current.locked)setSearch({key:normalized,loading:false,value:null,error:routeErrorKey(error)});});},400);
+  const controller=new AbortController(),ticket=gate.begin(normalized,props.ownerGeneration),activityTicket=capture();
+  const timer=setTimeout(()=>{if(!accepts(activityTicket)||!gate.accepts(ticket,searchIdentity.current,latest.current.ownerGeneration)||latest.current.locked||!latest.current.consent||latest.current.online===false)return;setSearch({key:normalized,loading:true,value:null,error:null});void latest.current.search(normalized,language,controller.signal).then(value=>{
+   if(!controller.signal.aborted&&accepts(activityTicket)&&latest.current.consent&&latest.current.online!==false&&gate.accepts(ticket,latest.current.locked?'':normalized,latest.current.ownerGeneration))setSearch({key:normalized,loading:false,value,error:null});
+  }).catch(error=>{if(!controller.signal.aborted&&accepts(activityTicket)&&gate.accepts(ticket,normalized,latest.current.ownerGeneration)&&!latest.current.locked)setSearch({key:normalized,loading:false,value:null,error:routeErrorKey(error)});});},400);
   return()=>{clearTimeout(timer);controller.abort();gate.invalidate();};
- },[query,sheet,props.consent,props.online,props.ownerGeneration,locked,language]);
+ },[query,sheet,props.consent,props.online,props.ownerGeneration,locked,language,active,activityGeneration,capture,accepts]);
  useEffect(()=>{
   const gate=roadGate.current;gate.invalidate();
-  if(locked||!props.consent||props.online===false||!needsRoad)return;
-  const ticket=gate.begin(key,props.ownerGeneration),controller=new AbortController();
-  const timer=setTimeout(()=>{const current=latest.current;if(!gate.accepts(ticket,routeInputKey(current.value),current.ownerGeneration)||current.locked||!current.consent||current.online===false)return;setRoad({key,loading:true,error:null});void current.calculate(current.value.stops.map(stop=>stop.coordinate),routingProfile(current.value.category),controller.signal).then(result=>{
-   const now=latest.current;if(now.locked||!gate.accepts(ticket,routeInputKey(now.value),now.ownerGeneration))return;
+  if(!active||locked||!props.consent||props.online===false||!needsRoad)return;
+  const ticket=gate.begin(key,props.ownerGeneration),controller=new AbortController(),activityTicket=capture();
+  const timer=setTimeout(()=>{const current=latest.current;if(!accepts(activityTicket)||!gate.accepts(ticket,routeInputKey(current.value),current.ownerGeneration)||current.locked||!current.consent||current.online===false)return;setRoad({key,loading:true,error:null});void current.calculate(current.value.stops.map(stop=>stop.coordinate),routingProfile(current.value.category),controller.signal).then(result=>{
+   const now=latest.current;if(controller.signal.aborted||!accepts(activityTicket)||now.locked||!now.consent||now.online===false||!gate.accepts(ticket,routeInputKey(now.value),now.ownerGeneration))return;
    const state=applyRoadResult({value:now.value,history:history.current.history},key,result);history.current=state;now.onChange(state.value);setRoad({key,loading:false,error:null});
-  }).catch(error=>{const now=latest.current;if(!controller.signal.aborted&&!now.locked&&gate.accepts(ticket,routeInputKey(now.value),now.ownerGeneration))setRoad({key,loading:false,error:routeErrorKey(error)});});},400);
+  }).catch(error=>{const now=latest.current;if(!controller.signal.aborted&&accepts(activityTicket)&&!now.locked&&gate.accepts(ticket,routeInputKey(now.value),now.ownerGeneration))setRoad({key,loading:false,error:routeErrorKey(error)});});},400);
   return()=>{clearTimeout(timer);controller.abort();gate.invalidate();};
   // Pin identity plus proof eligibility avoids requesting again when a result supplies fresh proof.
- },[key,needsRoad,props.consent,props.online,props.ownerGeneration,locked,retry]);
- const ask=async()=>{const current=latest.current;if(current.locked)return false;try{const allowed=current.consent||await current.onRequestConsent();return allowed&&latest.current.ownerGeneration===current.ownerGeneration&&!latest.current.locked;}catch(error){if(latest.current.ownerGeneration===current.ownerGeneration)setRoad({key:routeInputKey(latest.current.value),loading:false,error:routeErrorKey(error)});return false;}};
+ },[key,needsRoad,props.consent,props.online,props.ownerGeneration,locked,retry,active,activityGeneration,capture,accepts]);
+ const ask=async()=>{const current=latest.current,activityTicket=capture();if(!accepts(activityTicket)||current.locked)return false;try{const allowed=current.consent||await current.onRequestConsent();return allowed&&accepts(activityTicket)&&latest.current.ownerGeneration===current.ownerGeneration&&!latest.current.locked;}catch(error){if(accepts(activityTicket)&&latest.current.ownerGeneration===current.ownerGeneration)setRoad({key:routeInputKey(latest.current.value),loading:false,error:routeErrorKey(error)});return false;}};
  const openSearch=async()=>{if(locked)return;setSheet('search');await ask();};
  const snap=async()=>{if(await ask())setRetry(value=>value+1);};
  const signIn=()=>{const current=latest.current;if(current.locked||!current.onSignIn)return;setSheet(null);Keyboard.dismiss();current.onSignIn();};

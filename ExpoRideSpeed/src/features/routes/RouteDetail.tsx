@@ -6,7 +6,7 @@ import { useI18n } from '../../lib/i18n';
 import { routeErrorKey } from '../../lib/i18n/m4';
 import { useApp } from '../../state/AppState';
 import { useRide } from '../../state/RideState';
-import MapSurface from '../map/MapSurface';
+import MapSurface from '../map/ActiveMapSurface';
 import type { MapCamera, MapHandle, MapPin, MapStatus } from '../map/MapSurface.types';
 import type { RouteLocalGeometry } from './localModel';
 import type { RouteDocumentV1, RouteProjection } from './syncTypes';
@@ -26,7 +26,8 @@ export default function RouteDetail({item,onClose,onEdit,onDelete,onPreviewShare
  const mapInsets=useMemo(()=>({top:insets.top+88,left:24,right:24,bottom:insets.bottom+bottomOffset+panelHeight+24}),[insets.top,insets.bottom,bottomOffset,panelHeight]);
  const [initial]=useState<MapCamera>(()=>({center:segments[0]?.[0]??pins[0]?.coordinate??{latitude:15.6,longitude:101.1},zoom:segments.length||pins.length?12:4.5,bearing:0,pitch:0}));
  const track=useMemo(()=>provider==='draft'?null:{kind:provider==='geoapify'?'road' as const:'recorded' as const,segments},[provider,segments]);
- useEffect(()=>{if(status.state==='ready')map.current?.fitCoordinates(segments.flat().length?segments.flat():pins.map(pin=>pin.coordinate),{padding:mapInsets,maxZoom:15,durationMs:0});},[status.state,segments,pins,mapInsets]);
+ const fitted=useRef<{segments:typeof segments;pins:typeof pins}|null>(null);
+ useEffect(()=>{const handle=map.current;if(handle&&status.state==='ready'&&(fitted.current?.segments!==segments||fitted.current?.pins!==pins)){handle.fitCoordinates(segments.flat().length?segments.flat():pins.map(pin=>pin.coordinate),{padding:mapInsets,maxZoom:15,durationMs:0});fitted.current={segments,pins};}},[status.state,segments,pins,mapInsets]);
  const locked=ride.movingLocked,metrics=owner&&item.geometry?item.geometry:null;
  const remove=async()=>{if(locked||deleting||!onDelete)return;setDeleting(true);try{if(await onDelete())setConfirm(false);}finally{setDeleting(false);}};
  return <View style={[styles.full,{backgroundColor:colors.bg}]}>

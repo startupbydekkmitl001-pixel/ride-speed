@@ -4,7 +4,7 @@ import {Button,Note,Row,T} from '../../components/ui';
 import {useApp} from '../../state/AppState';
 import {useRide} from '../../state/RideState';
 import {useI18n} from '../../lib/i18n';
-import MapSurface from '../map/MapSurface';
+import MapSurface from '../map/ActiveMapSurface';
 import type {MapCamera,MapHandle,MapStatus} from '../map/MapSurface.types';
 import {parseShareSnapshot} from './compatibilityModel';
 const none=[] as const;
@@ -17,7 +17,8 @@ export default function SharedRouteSnapshot({value,invitation=false,map:showMap=
  const [expanded,setExpanded]=useState(false),[retry,setRetry]=useState(0);
  const segments=geometry?.segments??none;
  const camera=useMemo<MapCamera>(()=>({center:segments[0]?.[0]??{latitude:15.6,longitude:101.1},zoom:12,bearing:0,pitch:0}),[segments]);
- useEffect(()=>{if(status.state==='ready'&&segments.length)map.current?.fitCoordinates(segments.flat(),{padding:insets,maxZoom:15,durationMs:0});},[status.state,segments]);
+ const fitted=useRef<typeof segments|null>(null);
+ useEffect(()=>{const handle=map.current;if(handle&&status.state==='ready'&&segments.length&&fitted.current!==segments){handle.fitCoordinates(segments.flat(),{padding:insets,maxZoom:15,durationMs:0});fitted.current=segments;}},[status.state,segments]);
  if(!snapshot)return <Note error>{t('m4.compatibility.invalid')}</Note>;
  return <View style={{gap:12}}><Row style={{justifyContent:'space-between',flexWrap:'wrap'}}><T size={18} weight="semibold">{snapshot.title}</T><T size={12} muted>{t('m4.compatibility.revision',{revision:snapshot.revision,category:t(`m4.compatibility.category.${snapshot.category}`)})}</T></Row>
   {!geometry?<Note>{t('m4.compatibility.unavailable')}</Note>:geometry.geometryStatus==='hidden'?<Note>{t('m4.compatibility.hidden')}</Note>:<>
