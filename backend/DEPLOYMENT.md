@@ -201,3 +201,26 @@ Operational gates remain: execute aggregate-only `ops/m7-community-readiness.sql
 At08:08UTC aggregate pg_stat_activity showed13/60 connections, no blocked sessions or held transactions, and a separate old PostgREST listener. At08:10UTC all exposed schemas existed, authenticator login was enabled with unlimited role connection limit, and no allowlisted pool/schema override existed. PostgREST logs independently showedPGRST003 acquisition timeouts for version/config/role/schema queries. Root used the documented General Settings full project restart at approximately08:15UTC. The dashboard returnedHealthy and the real signed owner then loaded Map, the existing Arnalxz/@arnalxz profile, genuine empty Community and owner-metadata settings pages. This resolves the earlier observed API outage without replaying migrations or changing auth/RLS/schema exposure. No positive photo/post/two-account acceptance is implied. Ignored recovery proofs are build/review-v5/m7/project-recovered-healthy.png, api-pool-{health,config}.json and community-owner-{empty,settings-empty}.png. Official recovery references: https://supabase.com/docs/guides/troubleshooting/http-api-issues and https://supabase.com/docs/guides/troubleshooting/project-status-reports-unhealthy-services .
 
 At `2026-10-01T08:33:17.563Z`, read-only saved-editor clipboard comparisons after recovery matched all three deployed Community bundles byte-for-byte after LF normalization, with the exact SHA256 values listed above. This inspected saved source rather than repasting or redeploying it. The aggregate-only evidence is `build/review-v5/m7/worker-saved-code-provenance.json`.
+
+### Protected M7 cleanup — source prepared, not installed
+
+The protected operator tools are frozen and independently reviewed. From `backend/`, `node --test tests/m7-community-ops.test.mjs tests/m7-community-bootstrap.test.mjs` passes **18/18, zero skips**; root independently reran those cases. Real PostgreSQL-engine statements test guards, ACLs, identity, rollback and queue/response timing with local Cron/Vault/net facades. No HTTP is sent; these tests do not certify managed extensions, credentials or hosted Storage. See [the cleanup runbook](ops/M7_COMMUNITY_CLEANUP.md).
+
+Reviewed source identities (SHA256 of the LF-normalized bytes committed to Git):
+
+| Source | SHA256 |
+| --- | --- |
+| `ops/m7-community-cron-preflight.sql` | `BC8F07CD4F10512186EC822834A944C99345630BB2EFEAB2DA0D19B082C6268B` |
+| `ops/m7-community-vault-preflight.sql` | `54D370F0335CD733DCECDB4323E4FCB20B03C52827882C1CDA63D96E242586DD` |
+| `ops/m7-community-extension-bootstrap.sql` | `D2C2EEDD0745D77B7B3F5261EA5FBAE2DFF0B7021466502FE9275F92C708587D` |
+| `ops/m7-community-cron.sql` | `A9365A9ACEDBFC971D0BB7C2985856C27413F01A7D25FB989BAAE897418549E2` |
+| `ops/m7-community-cron-status.sql` | `6E7D3B4A2C8BF56AAB1C5182C9246CC4EF53EB180B98B737412D637CBEF92AD0` |
+| `ops/M7_COMMUNITY_CLEANUP.md` | `2C8488E9E2A20AE3D4F65A3FFF78C5B80530849E0EB918BF31ED62417AB463D8` |
+| `tests/m7-community-ops.test.mjs` | `FD05049EB3ED70C76B83F3C79B443E7BC13D7F49B2677D01F4AC0F3A06C95D71` |
+| `tests/m7-community-bootstrap.test.mjs` | `F18D95BA71A7D8959724A406D353ECD2139B0B1F1657EBF2F0323FFD9CAC6C7E` |
+
+Hosted read-only preflight at `2026-10-01T09:27:02.948043Z` found Cron/net extension APIs absent and Vault 0.3.1 present, with unsafe effective `service_role` schema/metadata/decrypted-view access; browser roles were denied. A visible preloaded worker does not establish the SQL API. The names-only query at `09:31:17.573352Z` found both required Vault names absent (`project_url` and `service_role_key`: zero each). No values or raw queue rows were read. Aggregate proofs: `build/review-v5/m8/community-cleanup-preflight.json` and `community-vault-metadata.json`.
+
+Bootstrap is fresh-only, preserves explicit trusted grants and creates no request/job. Installer guards require private healthy extensions and user-entered Vault values, the fixed reviewed project endpoint, exact own-job identity and default-deny operator-invoker objects; unknown collisions fail closed. Pending queues block dispatch, and unknown responses wait 180s from first observed queue absence. Status separates SQL enqueue, HTTP response and canonical Storage→ACK counts. Empty worker completion does not prove binary deletion.
+
+Neither bootstrap nor installer has been executed on the project. No protected job or scheduler credential is installed, no permanent cleanup was invoked, and live/race policy remains disabled. Completed approval for the three Community gateway settings does not authorize extension/ACL preparation, user Vault entry, scheduled expired-binary cleanup or bounded own-history deletion. Those steps await separate explicit operator approval.

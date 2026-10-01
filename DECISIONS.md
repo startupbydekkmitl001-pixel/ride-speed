@@ -102,3 +102,10 @@
 - Centralize Thai/Latin families and numeric weights while preserving readable Thai leading; blank heading eyebrows occupy no line or gap. Font baseline, largest text and device screen-reader acceptance remain physical checks.
 - Group neighboring floating native glass controls with pointer passthrough between buttons. Countdown vibration consumes only the controller's original current observation, exact scope/consent/foreground gates and a bounded duplicate ledger; late cues are dropped, never replayed or treated as race-start authority.
 - A central theme-source hash change required the full28-loop rerender. All media/proofs remain byte-identical; update only the manifest provenance after complete render/verify/poster tests, never weaken the source-snapshot gate.
+
+## Protected Community cleanup preparation
+
+- Gateway-off approval covers the three deployed canonical handlers only. Prepare the separate minute cleanup as reviewed source; do not install it or enter Vault credentials until its distinct permanent-cleanup/extension-access approval and human credential handoff are complete.
+- Fresh hosted catalog/ACL-only checks found Cron/net APIs absent, unsafe service_role Vault access and neither required Vault name. Use the guarded fresh-only extension/bootstrap and a private operator-invoker job; preserve unrelated integrations and fail closed on unknown identities.
+- Bound one request/minute,1440/rolling day,≤20 eligible binaries/call and only its own seven-day metadata/history. Pending queues block, unknown completion waits180s from observed queue absence; transport success never substitutes for canonical Storage→ACK. The eighteen local PostgreSQL facade tests prove source guards, not hosted service execution. See backend/ops/M7_COMMUNITY_CLEANUP.md.
+- Publish exact7bb3665 compiled preview packages with public checksums and separate install instructions. Subsequent web-only/operator-source commits are not silently attributed to those packages. Unsigned iOS and public-template-signed Android require physical acceptance; no store or performance claim follows from compilation.
