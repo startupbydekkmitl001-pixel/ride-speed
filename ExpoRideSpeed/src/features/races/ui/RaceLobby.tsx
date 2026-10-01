@@ -10,8 +10,10 @@ import type {RaceAttemptBinding,RaceScreenProps} from '../uiTypes';
 import {assertAttempt,assertMember,assertRace,attemptBinding,memberBinding,raceBinding} from './presentationModel';
 import {ConsentChecks,RaceFrame,RaceHeader,RaceOutcome,RaceReadState} from './RaceSurface';
 import {useRaceUI} from './useRaceUI';
+import {useRaceCountdownHaptics} from './useRaceCountdownHaptics';
 
 export default function RaceLobby({port,t}:RaceScreenProps){
+ useRaceCountdownHaptics(port);
  const ui=useRaceUI(port),{dark}=useApp(),[armReview,setArmReview]=useState<RaceAttemptBinding|null>(null),[reviewKind,setReviewKind]=useState<'arm'|'ready'>('arm'),[safety,setSafety]=useState(false),[evidence,setEvidence]=useState(false);
  // Consent is presentation of a current capture, and must be cleared on inactivity.
  // eslint-disable-next-line react-hooks/set-state-in-effect

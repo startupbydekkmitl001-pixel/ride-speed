@@ -39,7 +39,7 @@ function DraggablePin({pin,mode,onStart,onEnd,onSelect}:{pin:MapSurfaceProps['pi
     onDragStart={()=>{ticket.current=onStart(pin.id);}}
     onDragEnd={event=>{const coordinate=fromLngLat(event.nativeEvent.lngLat),current=ticket.current;ticket.current=null;if(coordinate)onEnd(current,coordinate);}}>
     <View collapsable={false} accessible accessibilityLabel={pin.label} style={{width:theme.material.minTarget,height:theme.material.minTarget,alignItems:'center',justifyContent:'center'}}>
-      <View style={{width:36,height:36,borderRadius:18,backgroundColor:theme[mode].ink,borderColor:theme[mode].accent,borderWidth:3,alignItems:'center',justifyContent:'center'}}><Text style={{fontFamily:'Manrope-600',fontSize:14,color:theme[mode].bg}}>{pin.order}</Text></View>
+      <View style={{width:36,height:36,borderRadius:18,backgroundColor:theme[mode].ink,borderColor:theme[mode].accent,borderWidth:3,alignItems:'center',justifyContent:'center'}}><Text style={{fontFamily:theme.typography.numbers,fontSize:14,fontVariant:['tabular-nums'],color:theme[mode].bg}}>{pin.order}</Text></View>
     </View>
   </ViewAnnotation>;
 }
@@ -202,6 +202,6 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
     onLayout={event => { const height = event.nativeEvent.layout.height; if (Number.isFinite(height)) attributionHeight.current = Math.max(theme.material.minTarget, height); }}
     onPress={() => { void nativeMap.current?.showAttribution().catch(() => {}); }}
     style={{ position: 'absolute', bottom: insets.bottom + theme.space.sm, left: insets.left + theme.space.sm, right: insets.right + theme.space.sm, minHeight: theme.material.minTarget, justifyContent: 'center', alignItems: 'flex-start' }}>
-    <Text style={{ fontSize: 10, lineHeight: 15, color: theme.map[props.theme].label, backgroundColor: theme[props.theme].glassScrim, borderRadius: theme.radius.small, paddingHorizontal: theme.space.sm, paddingVertical: theme.space.xs }}>OpenFreeMap · OpenMapTiles · © OpenStreetMap</Text>
+    <Text style={{ fontFamily: theme.typography.body, fontSize: 10, lineHeight: 10 * theme.typography.thaiLeading, color: theme.map[props.theme].label, backgroundColor: theme[props.theme].glassScrim, borderRadius: theme.radius.small, paddingHorizontal: theme.space.sm, paddingVertical: theme.space.xs }}>OpenFreeMap · OpenMapTiles · © OpenStreetMap</Text>
   </Pressable></View>;
 });

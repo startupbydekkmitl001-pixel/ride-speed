@@ -1,6 +1,6 @@
 # Field tests and performance evidence
 
-**Historical Phase 1 baseline — 30 September 2026:** no new IPA had been built or installed, and no device/battery/accuracy measurements had been made in that phase. The Expo Go prototype was not evidence that native recording works while locked. For the published native build and remaining device checks, see [Current native pilot](#current-native-pilot-1-october-2026) and the results log below.
+**Historical Phase 1 baseline — 30 September 2026:** no new IPA had been built or installed, and no device/battery/accuracy measurements had been made in that phase. The Expo Go prototype was not evidence that native recording works while locked. For current source and remaining installed-device checks, see [Current V5 native acceptance](#current-v5-native-acceptance); the older published package is recorded under [Historical build9 native pilot](#historical-build9-native-pilot-1-october-2026).
 
 ## Measurement rules
 
@@ -14,7 +14,7 @@ Confirmed by the user on 30 September 2026. These are planned validation profile
 
 | Device or vehicle | Role | Specific validation |
 |---|---|---|
-| iPhone 14 Plus, iOS 26 | Initial phone baseline | Actual Core Location/motion/barometer cadence and uncertainty; permission behavior; at least 30 minutes locked recording; battery/thermal use; 60 Hz rendering target |
+| iPhone 14 Plus, iOS 26 | Initial phone baseline | Actual Core Location cadence and uncertainty; permission behavior; 30-minute foreground recording and expected pause when locked/backgrounded; battery/thermal use; 60 Hz rendering target. Additional sensors and locked-screen continuity remain separate roadmap checks. |
 | Honda PCX160 | Saved motorcycle profile, scooter | Low-speed stop/start and creeping; lean/steering effects; vibration and mount movement; reliable-fix coverage in the chosen phone position |
 | BMW S1000RR | Separate saved motorcycle profile | Account for Apple's high-powered-motorcycle mounting warning before field work; assess recording quality in a protected carrying position; later closed-course timing only with suitable reference equipment |
 | Honda Civic RS | Saved car profile; proposed first driving baseline | Fixed cabin mount; windshield/roof obstruction; ordinary acceleration/deceleration; cabin pressure/HVAC effects on barometric altitude; locked and screen-on battery runs |
@@ -57,7 +57,7 @@ CADisplayLink measures callback cadence, not a perfect GPU or visual hitch trace
 
 ## Phase 2: build and speedometer
 
-**Pipeline first:** make one minimal Release IPA and one development-client IPA on the selected free cloud Mac. Inspect `Payload/App.app`, arm64 device platform, deployment target 17.0, bundle ID, build number and JS bundle. Re-sign/install with a free Apple ID. Test native module discovery, permission prompts, at least 30 minutes of locked recording, offline Release launch, Windows Metro reload, and a second build installing over seeded data. Repeat expiry/refresh testing after seven days before calling the friends' install path proven.
+**Pipeline first:** make one minimal Release IPA and one development-client IPA on the selected free cloud Mac. Inspect `Payload/App.app`, arm64 device platform, deployment target 17.0, bundle ID, build number and JS bundle. Re-sign/install with a free Apple ID. Test native module discovery, permission prompts, a 30-minute foreground recording baseline, expected pause when locked/backgrounded, offline Release launch, Windows Metro reload, and a second build installing over retained test data. Locked-screen continuity remains a separate roadmap gate. Repeat expiry/refresh testing after seven days before calling the friends' install path proven.
 
 **Design before screens:** approve Thai light/dark screenshots including large text, denied permission, no fix and weak fix. A screenshot is a layout review, not a device measurement.
 
@@ -91,15 +91,33 @@ Submit real, replayed, truncated, duplicated, reordered, forged, oversized and c
 
 Check global/country/friends filters, separate vehicle and receiver classes, UTC weekly/monthly boundaries, course versions, rollout policy, and uncertainty ties. Check that hidden start/end points cannot be recovered from public polylines, event markers, chart endpoints, download URLs or metadata. Test quota rejection while recording continues locally; no automatic paid-plan upgrade.
 
-## Current native pilot: 1 October 2026
+## Current V5 native acceptance
 
-The owner authorized native implementation. This pilot uses foreground-only Core Location capture, Apple Maps pin editing and Google/Supabase accounts. Original locked-screen recording, durable SQLite journals/export/replay, English settings, driving navigation, later sensor tools and worldwide/country rankings remain roadmap work. The broader phase exit criteria above are not all met.
+Current V5 source uses MapLibre + OpenFreeMap with consented server-side Geoapify search/routing, bilingual controls, owner-scoped durable rides and garage/routes, and the current Ranked/Community flows. Recording remains foreground-only. Published build9 uses Apple Maps and predates this source. Successful Android/iOS compilation at `adfd511333793e79220a2e6fd77f81a18c06985e` also predates M6/M7 and the accepted M8 motion correction. Expo exports, browser checks and source tests do not prove that those newer features are compiled into an installed native app.
+
+Start with a fresh custom development/Release build from the exact reviewed V5 commit; record its source SHA, package hash and installed build number. Expo Go and an older IPA/APK cannot verify the current native modules. No current M7/M8 native compilation, installation, frame-rate or battery result is claimed here.
+
+| Area | Existing source/browser evidence | Next installed-device acceptance |
+|---|---|---|
+| Packages and lifecycle | Earlier native artifacts and current all-platform exports are recorded separately in the milestone acceptance documents. | Build the reviewed source for iOS and Android, validate package/source hashes, launch without Metro, update over retained owner data, and test restart/signing expiry. |
+| Accounts and privacy | Genuine Google sign-in, Map/Profile `@arnalxz`, empty Community and owner post-settings reads work after API recovery. Empty reads do not prove publication or photo handling. | Complete onboarding, restart the session, switch accounts without exposing another owner's data, and exercise error/offline recovery with consenting accounts. |
+| Map, HUD and rides | Real MapLibre maps/provider routes and durable segmented ride/storage behavior have source/browser checks. | Test long-press/drag, safe areas, landscape, recenter, denied/approximate/services-off GPS, start/pause/resume/stop, crash recovery and expected lock/background pause. Measure cold start and pan/zoom with 50 markers. |
+| Garage and profile | Catalog, owner sync, immutable photo reservations and account-isolation/retry behavior have source checks. | Add PCX160/S1000RR/Civic RS as genuine user choices; test native photo preparation, retry/restart, selection and owner-isolated update recovery. |
+| Community and Ranked | Genuine empty boards/feed/settings and strict source authorization, attachment/media and publication recovery are checked. | With consenting accounts, test six-photo preparation, genuine ride/route attachments, sharing/revocation, comments/report/block and restart. A positive rank needs a genuine qualifying, explicitly shared result; do not seed fake records. |
+| Friends and competition | Scoped link/invitation, consent, cancellation and evidence state machines have source tests. Convoy/race pilots remain disabled pending their operational gates. | Establish real friend acceptance and private managed sockets first; only then run approved-course paired-device consent, countdown, original evidence and finish-interval checks. A checkbox never grants operator approval. |
+| Motion and accessibility | Actual-provider regressions cover batched resume, stale held-render denial, retained-player recovery, unknown/low power, Reduce Motion and the two-player budget. | Test rapid background/foreground and power changes, off-screen pause, Reduce Transparency, Thai/English large text, VoiceOver/TalkBack focus and 44-point controls. Measure 60 Hz on iPhone 14 Plus and a mid-range Android; 120 Hz requires another supported device. |
+
+Record observed values for cold start, 50-marker interaction, a 30-minute foreground ride, memory growth, battery/thermal behavior and frame pacing. Preserve original logs and metadata; no synthetic fixture or desktop benchmark supplies these measurements. The milestone [M2](design/m2-acceptance-v5.md), [M4](design/m4-acceptance-v5.md), [M6](design/m6-acceptance-v5.md) and [M7](design/m7-acceptance-v5.md) records distinguish source, hosted and device gates.
+
+## Historical build9 native pilot: 1 October 2026
+
+The owner authorized native implementation. This older pilot uses foreground-only Core Location capture, Apple Maps pin editing and Google/Supabase accounts. Its original locked-screen recording, durable SQLite journals/export/replay, English settings, driving navigation, later sensor tools and worldwide/country rankings were roadmap work. This paragraph records build9 limitations; current V5 durable storage and bilingual settings are described above. The broader phase exit criteria above are not all met.
 
 Build **0.1.0 (9.1.0)** is from `df1e7db` in [run #9](https://github.com/startupbydekkmitl001-pixel/ride-speed/actions/runs/36750133009). Verification, Release and development jobs passed. Both unsigned IPAs and their metadata/checksum files are published in the [native preview release](https://github.com/startupbydekkmitl001-pixel/ride-speed/releases/tag/preview-0.1.0-build9). Both downloaded archives and IPAs passed SHA-256, structure and exact version/build/source checks. The Release IPA contains its JavaScript bundle, both card videos and bundled fonts. This establishes packaging, not installation or device performance.
 
 Browser acceptance completed: real Google consent/callback; cloud profile save and reload; private account gates opening; friend controls and approved-course empty state; live empty rankings; two synthetic local route stops saved/reordered and retained after reload. The synthetic route is explicitly labelled a test and was not synced or published. Rider-card looping pauses for reduced motion and navigation. Preview checks do not verify native FPS, Apple Maps gestures or GPS.
 
-Next device sequence: sign the release IPA; open without Metro; sign in with the same Google account; add a vehicle; test Apple Maps pins; change rider-card picture; toggle Reduce Motion; then test foreground location start/stop, denied/approximate permission and background stop while stationary. Two consenting accounts are needed to finish real friend acceptance, media visibility and private presence checks. Do not seed fake ranked records to make an empty screen appear populated.
+Historical build9 device sequence: sign that release IPA; open without Metro; sign in with the same Google account; add a vehicle; test its Apple Maps pins; change rider-card picture; toggle Reduce Motion; then test foreground location start/stop, denied/approximate permission and background stop while stationary. This sequence does not verify current V5 MapLibre, media or Ranked. Use the fresh-build matrix above for those features. Two consenting accounts are needed to finish real friend acceptance, media visibility and private presence checks. Do not seed fake ranked records to make an empty screen appear populated.
 
 ## Results log
 

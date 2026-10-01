@@ -5,6 +5,7 @@ import * as Location from 'expo-location';
 import * as Orientation from 'expo-screen-orientation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Glass,Icon,Button,Note,Row,T,type IconName } from '../../components/ui';
+import { GlassGroup } from '../../components/glass';
 import MapSurface from '../../features/map/ActiveMapSurface';
 import type { MapHandle,MapStatus,MapCamera,MapTrack,MapPin } from '../../features/map/MapSurface.types';
 import { SpeedometerHUD } from '../../features/speedometer';
@@ -48,12 +49,12 @@ function MapHome(){
     <Glass style={{borderRadius:28}}><Pressable accessibilityRole="button" accessibilityLabel={t('m2.map.planRoute')} disabled={moving} onPress={()=>router.push('/routes')} style={{minHeight:56,paddingHorizontal:18,flexDirection:'row',alignItems:'center',gap:12}}><Icon name="search-outline"/><T muted style={{flex:1}}>{t('m2.map.planRoute')}</T><Icon name="arrow-forward" size={18}/></Pressable></Glass>
     {status.state==='loading'&&<Row><ActivityIndicator color={app.colors.accent}/><T size={12} muted>{t('m2.map.loading')}</T></Row>}
    </View>
-   <View pointerEvents="box-none" style={{position:'absolute',top:insets.top+96,left:20,gap:12}}><View><MapControl label={onlineCount?t('m5a.mapLoadedOnline',{count:onlineCount}):t('m2.map.friendsOnline')} icon="people-outline" disabled={moving} onPress={()=>router.push('/friends')}/>{!!onlineCount&&<View style={{position:'absolute',top:-3,right:-3,borderRadius:10,backgroundColor:app.colors.good,paddingHorizontal:5}}><T numeric size={11} style={{color:app.colors.bg}}>{onlineCount}</T></View>}</View><MapControl label={t('m5b.convoy')} icon="navigate-outline" disabled={moving} onPress={()=>router.push('/convoy')}/>{live.incomingFriendIntent&&<MapControl label={t('m5b.reviewLink')} icon="qr-code-outline" disabled={moving} onPress={()=>router.push('/friend-links')}/>}</View>
-   <View pointerEvents="box-none" style={{position:'absolute',top:insets.top+96,right:20,gap:12}}>
+   <View pointerEvents="box-none" style={{position:'absolute',top:insets.top+96,left:20}}><GlassGroup style={{gap:12}}><View><MapControl label={onlineCount?t('m5a.mapLoadedOnline',{count:onlineCount}):t('m2.map.friendsOnline')} icon="people-outline" disabled={moving} onPress={()=>router.push('/friends')}/>{!!onlineCount&&<View style={{position:'absolute',top:-3,right:-3,borderRadius:10,backgroundColor:app.colors.good,paddingHorizontal:5}}><T numeric size={11} style={{color:app.colors.bg}}>{onlineCount}</T></View>}</View><MapControl label={t('m5b.convoy')} icon="navigate-outline" disabled={moving} onPress={()=>router.push('/convoy')}/>{live.incomingFriendIntent&&<MapControl label={t('m5b.reviewLink')} icon="qr-code-outline" disabled={moving} onPress={()=>router.push('/friend-links')}/>}</GlassGroup></View>
+   <View pointerEvents="box-none" style={{position:'absolute',top:insets.top+96,right:20}}><GlassGroup style={{gap:12}}>
     <MapControl label={t('m2.map.recenter')} icon="locate-outline" disabled={moving||ride.locating} onPress={()=>{void locate();}}/>
     <MapControl label={t('m2.map.layers')} icon="layers-outline" disabled={moving} onPress={()=>setLayers(!layers)}/>
     <MapControl label={t('m2.ride.history')} icon="time-outline" disabled={moving} onPress={()=>router.push('/ride-history')}/>
-   </View>
+   </GlassGroup></View>
   </>}
   {expanded&&<View pointerEvents="none" style={[StyleSheet.absoluteFill,{backgroundColor:app.colors.bg}]}/>}
   <View pointerEvents="box-none" style={{position:'absolute',left:20,right:20,bottom:bottom,gap:12,...(expanded?{top:insets.top+12,justifyContent:'center' as const}:{})}}>

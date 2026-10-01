@@ -21,7 +21,7 @@ export const theme = {
   } satisfies ThemeColors,
   space: { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, hero: 48 },
   radius: { small: 12, control: 20, card: 24, sheet: 28, pill: 999 },
-  typography: { body: 'Anuphan-400', medium: 'Anuphan-500', semibold: 'Anuphan-600', numbers: 'Manrope-600', thaiLeading: 1.55 },
+  typography: { body: 'Anuphan-400', medium: 'Anuphan-500', semibold: 'Anuphan-600', numbersBody: 'Manrope-400', numbersMedium: 'Manrope-500', numbers: 'Manrope-600', thaiLeading: 1.55 },
   motion: { pressMs: 100, stateMs: 260, staggerMs: 40, spring: { damping: 20, stiffness: 220 } },
   material: { blur: 24, minTarget: 44, maxVideos: 2 },
   speedHeat: ['#35D6E8', '#B8ED55', '#FFB444', '#FF3B5C'],

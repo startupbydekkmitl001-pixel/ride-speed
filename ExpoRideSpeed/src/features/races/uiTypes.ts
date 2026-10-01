@@ -10,7 +10,7 @@ export type RaceConsent={acknowledgement_version:1;evidence_consent_version:1};
 export type RaceBinding={race_id:string;expected_revision:number;lobby_epoch:string};
 export type RaceMemberBinding=RaceBinding&{expected_member_generation:number;expected_friendship_generation:number|null};
 export type RaceAttemptBinding={attempt_id:string;expected_revision:number;race_id:string;member_generation:number;capture_id:string};
-export type RaceCountdownPresentation={phase:'idle'|'preparing'|'waiting'|'countdown'|'running'|'invalid';secondsRemaining:number|null;uncertaintyMs:number|null;error:string|null};
+export type RaceCountdownPresentation={phase:'idle'|'preparing'|'waiting'|'countdown'|'running'|'invalid';secondsRemaining:number|null;uncertaintyMs:number|null;error:string|null;observedMonotonicMs:number|null};
 export type RaceScreenGate={signedIn:boolean;profileReady:boolean;native:boolean;foreground:boolean;focused:boolean;moving:boolean;online:boolean};
 
 /** UI only. Parent repeats current AuthScope/CAS/lifecycle guards before and after I/O.

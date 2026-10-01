@@ -1,4 +1,4 @@
-# M7 Community — approved product policies, proposed additive 011 wire
+# M7 Community — approved product policies and deployed additive 011/012 wire
 
 Root approved the audience, scoring, immutable attachment and image-validation policies on 2026-10-01. The named RPCs/envelopes below remain a proposal until root/backend review freezes `types.ts`. This document does not claim that these functions are deployed.
 
@@ -59,6 +59,6 @@ Stateless components receive a typed owner-generation parent port. They repeat c
 
 Composer has a visible 150-codepoint counter, read-only attached summary, vehicle/source labels, six ordered/removable photo tiles, audience review and clearly separate local/upload/pending/published states. Held pick/review requests invalidate on input, close, background, movement or owner changes. Published or ambiguous pending attempts are not silently discarded. Detail offers canonical likes/comments/save, safe share, report, block and owner-only audience/delete confirmations. Route/post preview never introduces fake people, counts, ranking or geometry.
 
-Deep link is an allowlisted active app scheme and opaque post UUID (`ridespeed://post/<UUID>` or development scheme). Root must add the exact native Router bridge/route. It carries no signed media URL/token, never changes audience and always reads through the current viewer's backend permission. Missing/private/moderated posts show unavailable, not a synthetic post.
+Deep link uses the allowlisted active app scheme and opaque post UUID (`ridespeed://community-post?postId=<UUID>` or the matching development scheme). The native Router bridge validates that exact host and query before navigation. It carries no signed media URL/token, never changes audience and always reads through the current viewer's backend permission. Missing/private/moderated posts show unavailable, not a synthetic post.
 
 Required acceptance: scoped service decoder tests against real SDK requests; caption/Thai/emoji boundaries; six-photo ordering and ambiguous upload reconciliation; immutable attachments and route-gap/200 m privacy; child visibility/count/signature/block/deletion tests; durable optimistic rollback; stable keysets and Top week boundaries; actual rendered first-read failure, stale callbacks, movement, interrupted async sheets and raw native View-child regressions. Root performs hosted signed-account acceptance without fake public content, plus real-device image/performance/offline restart checks.

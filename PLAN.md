@@ -65,23 +65,23 @@ The user has authorized native implementation and chosen MapLibre/OpenFreeMap + 
 - [x] M5B source: private expiring friend QR/links, exact code/host approval flow, independent receive/send consent, foreground capture leases, scoped durable recovery and privacy-fenced map peers. Migration008 deployed once; twelve private tables/RLS/ACLs and disabled policy verified in the hosted project. See `docs/design/m5b-acceptance-v5.md`.
 - [ ] M5B operational acceptance: install/observe the reviewed minute cleanup job after browser approval, verify private Realtime setting/organization quotas, then paired native QR/code/GPS/15-second removal checks before enabling rooms. Friend-link flow is available independently; no fake hosted rooms or GPS points were created.
 - [x] M5C source/schema: original native capture, immutable private evidence, exact durable recovery, approved private course map and distinct route-time verifier; migration009 deployed once with policyfalse. Independent206 backend tests and59 focused client map/race cases pass; source acceptance in docs/design/m5c-acceptance-v5.md.
-- [ ] M5C operational/device acceptance: authenticated worker deployment/configuration, managed state/binary retention and hosted CPU/quota checks, independent operator course approval and consenting paired installed devices. Source/schema acceptance does not enable races.
-- [ ] Friend username/QR/invite links/search and requests/block; server private presence riding/online/offline/ghost, explicit opt-in map sharing, expiry/revocation; notification token/preferences/outbox and credential gates.
-- [ ] Convoy host/join-code/session membership, rate-bound hashed expiring codes, private live positions 1–2 Hz; map markers actual authorized peers only.
-- [ ] Async route-time trials first; then approved closed-course live lobby/ready/countdown/running/finish/results/rematch state machine with server schedule/clock uncertainty. No user checkbox grants course approval.
-- [ ] Server private channels and ordered directed gates/checkpoints/corridor evidence; geofence alone cannot verify shortcut-free completion. Preserve existing sustained-speed verifier and lease fencing.
-- [ ] Test relationship generation/outsider/block/expired code/stale positions/reconnect, race transitions/duplicate starts/clock budget/finish gaps. Two consenting devices/course and push provider required for corresponding real acceptance.
-- [ ] Commit M5; report five lines.
+- [ ] M5C operational/device acceptance: the two authenticated workers are deployed/configured with anonymous401 checks; managed state/binary retention, hosted CPU/quota checks, independent operator course approval and consenting paired installed devices remain. Source/schema acceptance does not enable races.
+- [x] Source: friend username/QR/invite links/search and requests/block, private presence and explicit map-sharing consent/expiry/revocation. Hosted empty owner reads are distinct from paired-device acceptance.
+- [x] Source: convoy host/join-code/session membership, rate-bound hashed expiring codes, private live positions1–2Hz and authorized-only map peers. The operational pilot stays disabled.
+- [x] Source: async trials and approved closed-course live lobby/ready/countdown/running/finish/results/rematch with server schedule/clock uncertainty and directed evidence. No user checkbox grants course approval.
+- [x] Source tests cover outsider/block/expiry/stale/reconnect, race transitions/duplicate starts/clock budget/finish gaps and verifier lease fencing. Physical acceptance remains above.
+- [ ] Push delivery on installed devices: provider credentials, token registration, request/invite delivery and preference/revocation checks.
+- [x] Commit M5 source slices and report; operational/device gates remain open.
 
 ## M6 — ranked/anti-cheat
 
 - [x] M6 source/schema and signed-owner empty-read acceptance: genuine versioned boards, strict pagination/class/periods, separate owner candidate/settings pages, explicit visibility CAS, opaque fresh report review and pending-privacy quarantine. Backend230 tests/independent24 focused, owned32 publication/report cases, root28 board/provider/report cases and9 localization cases pass; see docs/design/m6-acceptance-v5.md.
 - [ ] M6 positive-record/two-account/device acceptance and managed realtime/moderation operations. Current adfd511 Android/iOS successful native builds predate M6; no fake qualifiers or ranks were inserted.
-- [ ] Versioned speed/route-time boards, Today/Week/Month Bangkok periods, category/cc/class/EV/friends/global filters, server immutable vehicle class and explicit verified metric labels.
-- [ ] Actual-row podium (0–3 rows only), sticky own rank, rank changes, refresh and coalesced realtime invalidation.
-- [ ] Server anti-cheat evidence/mock/accuracy/teleport/acceleration/class plausibility/gaps/too-few-points, reports/operator queue and revocation.
-- [ ] Test Bangkok Monday/month/leap/year boundaries, ties, forged class/route, edited vehicle, scope/block/deleted/revoked results, uncertainty and stale-worker leases. No fake ranks to demonstrate UI.
-- [ ] Commit M6; report five lines.
+- [x] Source: versioned speed/route-time boards, Bangkok periods, category/cc/class/EV/friends/global filters, immutable vehicle class and explicit qualified metric labels.
+- [x] Source: actual-row podium (0–3 only), sticky own rank, rank changes, refresh and coalesced realtime invalidation. Positive real records remain a separate acceptance gate.
+- [x] Source: server evidence checks, reports/operator queue and revocation; validation of submitted evidence is not device sensor attestation.
+- [x] Test Bangkok calendar boundaries, ties, forged class/route, edited vehicle, scope/block/deleted/revoked results, uncertainty and stale-worker leases. No fake ranks were inserted.
+- [x] Commit M6 source and report; positive/operator/device gates remain open.
 
 ## M7 — community
 
@@ -89,14 +89,16 @@ The user has authorized native implementation and chosen MapLibre/OpenFreeMap + 
 - [x] Durable composer: genuine ride/saved-route attachment review, actual summary/vehicle/200m endpoint-trimmed route, six ≤1600 px metadata-stripped JPEG photos with server blurhash; caption≤150 and explicit visibility.
 - [x] Versioned reservations/publish/interactions/feed cursor RPCs and private RLS/Storage, parent-ACL-fenced signer and bounded cleanup handlers.011/012 and three workers deployed once; approved legacy gateway settings off, each handler rejects anonymous requests401.
 - [x] Source checks:961 app and277 backend tests, zero skips; whole typecheck/lint and web/iOS/Android exports pass. Media ownership/caps/recovery, cursor/privacy/child visibility, retained confirmations, recycling and strict decoders verified. See docs/design/m7-acceptance-v5.md.
-- [ ] Hosted positive posting/photo/two-account acceptance: Google sign-in succeeds, existing account/profile API currently fails with PGRST002503 despite successful cache notification. Protected binary-cleanup schedule/observed execution and native codec/performance remain separate gates; no synthetic hosted posts added.
+- [ ] Hosted positive posting/photo/two-account acceptance: Google sign-in/profile and genuine empty feed/owner-settings reads work after documented managed pool recovery. Protected binary-cleanup schedule/observed execution and native codec/performance remain separate gates; no synthetic hosted posts added.
 - [x] Commit M7 source; report five lines. Operational/device gates above remain open.
 
 ## M8 — motion, performance, accessibility/store prep
 
 - [x] Render periodic garage×3, podium×3, period headers, auth/onboard, empty, lobby, HUD and profile loop family in both themes;28outputs/1,552,874bytes with manifest/hash/source+encoded seam/poster proofs. Integration/hardware gates remain below; see motion/DELIVERY.md.
-- [ ] Native route/presence/needle/digits/rank/glass touch polish; no layout/blur/per-frame React updates, offscreen videos stop and ≤2 budget globally.
+- [x] Reviewed source polish: centralized Thai/Latin typography and empty headings, grouped native map glass controls, Ranked method disclosure, synchronous motion lease lifecycle fencing and current-state native countdown haptics.988 app/277 backend tests, typecheck/lint, all-platform export,6 motion tests and9 native-policy/21 packaging checks pass; exact evidence in docs/design/m8-acceptance-v5.md.
+- [ ] Remaining native motion work: route flow/presence interpolation, shared-element transitions, touch/audio cues and bounded next-loop preload; measured costs before adopting. Existing needle/digits/rank response and ≤2 video budget are source-verified, not physical frame-rate measurements.
 - [ ] Dynamic Type/screens readers/44 pt/Thai tones/Reduce Motion/Transparency, safe-area/landscape and all offline/error states; measured native iPhone/Android performance matrix.
-- [ ] Android artifact pipeline alongside verified unsigned iOS builds; provider/entitlement/legal/account deletion/UGC moderation/background rationale readiness. Publish only truthful build/source acceptance and explicit remaining hardware/store gates.
+- [x] Source pipelines produce standalone Android preview and unsigned iOS Release/development packages, with dependency/native-module/signature/identity checks. Fresh M8 compilation/download validation follows the frozen source commit.
+- [ ] Provider/entitlement/legal/account deletion/UGC moderation/background rationale readiness. Publish only truthful build/source acceptance and explicit remaining hardware/store gates.
 - [ ] Smoke auth→vehicle→ride→post→eligible rank on a real approved course; lint/typecheck/core/backend/build tests, release hashes and source provenance. Physical cold start/50 markers/30 min memory/battery/countdown recorded, never inferred from code.
-- [ ] Commit M8; report five lines and final artifacts.
+- [ ] Commit verified M8 source polish and validate its actual native artifacts; report five lines. Physical/store and remaining source gates above remain open.

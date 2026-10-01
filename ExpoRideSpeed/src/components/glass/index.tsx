@@ -13,8 +13,8 @@ function nativeGlassEnabled(enabled: boolean) {
 
 export function GlassGroup({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
   const { glass } = useApp();
-  if (nativeGlassEnabled(glass)) return <GlassContainer spacing={10} style={style}>{children}</GlassContainer>;
-  return <View style={style}>{children}</View>;
+  if (nativeGlassEnabled(glass)) return <GlassContainer pointerEvents="box-none" spacing={10} style={style}>{children}</GlassContainer>;
+  return <View pointerEvents="box-none" style={style}>{children}</View>;
 }
 
 /** One material per floating control group. A nested request adds structure only. */

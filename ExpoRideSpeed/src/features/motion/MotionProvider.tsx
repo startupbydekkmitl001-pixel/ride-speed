@@ -8,6 +8,7 @@ import React, {
   useId,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from "react";
@@ -21,6 +22,8 @@ type MotionContext = {
   active: boolean;
   motion: boolean;
   lowPower: boolean | null;
+  generation: number;
+  isCurrentPolicy: (generation: number) => boolean;
 };
 
 const Context = createContext<MotionContext | null>(null);
@@ -33,8 +36,20 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
     NativeAppState.currentState === "active",
   );
   const [lowPower, setLowPower] = useState<boolean | null>(null);
+  const [generation, setGeneration] = useState(0);
+  const currentGeneration = useRef(0);
+  const isCurrentPolicy = useCallback(
+    (candidate: number) =>
+      candidate === currentGeneration.current &&
+      NativeAppState.currentState === "active",
+    [],
+  );
 
   useEffect(() => {
+    const invalidatePolicy = () => ++currentGeneration.current;
+    const advancePolicy = () => {
+      setGeneration(invalidatePolicy());
+    };
     const power = observePowerMode(
       Platform.OS === "web" ? "web" : "native",
       {
@@ -46,6 +61,7 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
       },
       (value) => {
         if (value !== false) budget.setEnabled(false);
+        advancePolicy();
         setLowPower(value);
       },
     );
@@ -53,10 +69,14 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
       const foreground = state === "active";
       // Pause before React's next commit, including the iOS inactive state.
       if (!foreground) budget.setEnabled(false);
+      // A complete suspend/resume may be batched into equal final values.
+      // The synchronous generation also invalidates an older held render.
+      advancePolicy();
       setActive(foreground);
       if (foreground) power.refresh();
     });
     return () => {
+      invalidatePolicy();
       budget.setEnabled(false);
       power.remove();
       app.remove();
@@ -64,12 +84,14 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
   }, [budget]);
 
   useLayoutEffect(() => {
-    budget.setEnabled(motion && active && lowPower === false);
-  }, [active, budget, lowPower, motion]);
+    budget.setEnabled(
+      isCurrentPolicy(generation) && motion && active && lowPower === false,
+    );
+  }, [active, budget, lowPower, motion, generation, isCurrentPolicy]);
 
   const value = useMemo(
-    () => ({ budget, active, motion, lowPower }),
-    [active, budget, lowPower, motion],
+    () => ({ budget, active, motion, lowPower, generation, isCurrentPolicy }),
+    [active, budget, lowPower, motion, generation, isCurrentPolicy],
   );
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
@@ -83,7 +105,7 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
 export function useMotionPlaybackLease(visible = true) {
   const context = useContext(Context);
   if (!context) throw new Error("MotionProvider is required");
-  const { budget, active, motion, lowPower } = context;
+  const { budget, active, motion, lowPower, generation, isCurrentPolicy } = context;
   const id = useId();
   const [focused, setFocused] = useState(false);
   useFocusEffect(
@@ -105,15 +127,21 @@ export function useMotionPlaybackLease(visible = true) {
   }, [budget, eligible, id]);
 
   const registerStop = useCallback(
-    (pause: () => void) => budget.attachStop(id, pause),
-    [budget, id],
+    (pause: () => void) => {
+      if (!isCurrentPolicy(generation)) {
+        pause();
+        return () => {};
+      }
+      return budget.attachStop(id, pause);
+    },
+    [budget, id, generation, isCurrentPolicy],
   );
   const playIfAllowed = useCallback(
     (play: () => void) => {
       // A concurrent policy event can revoke the lease before the player mounts.
-      if (eligible && budget.isGranted(id)) play();
+      if (isCurrentPolicy(generation) && eligible && budget.isGranted(id)) play();
     },
-    [budget, eligible, id],
+    [budget, eligible, id, generation, isCurrentPolicy],
   );
   return {
     canPlay: eligible && budget.isGranted(id),

@@ -50,14 +50,17 @@ export function T({
   numeric?: boolean;
 }) {
   const { colors } = useApp();
-  const w = weight === "semibold" ? 600 : weight === "medium" ? 500 : 400;
+  const typography = theme.typography;
+  const fontFamily = numeric
+    ? weight === "semibold" ? typography.numbers : weight === "medium" ? typography.numbersMedium : typography.numbersBody
+    : weight === "semibold" ? typography.semibold : weight === "medium" ? typography.medium : typography.body;
   return (
     <Text
       {...props}
       style={[
         {
           color: muted ? colors.muted : colors.ink,
-          fontFamily: `${numeric ? "Manrope" : "Anuphan"}-${w}`,
+          fontFamily,
           fontSize: size,
           lineHeight: size * (numeric ? 1.2 : theme.typography.thaiLeading),
           fontVariant: numeric ? ["tabular-nums"] : undefined,
@@ -141,13 +144,14 @@ export function Heading({
   title: string;
   right?: React.ReactNode;
 }) {
+  const hasEyebrow = eyebrow.trim().length > 0;
   return (
     <Row style={{ justifyContent: "space-between", alignItems: "center" }}>
       <View style={{ flex: 1 }}>
-        <T size={11} muted weight="medium">
+        {hasEyebrow && <T size={11} muted weight="medium">
           {eyebrow}
-        </T>
-        <T size={30} weight="semibold" style={{ marginTop: 4 }}>
+        </T>}
+        <T accessibilityRole="header" size={30} weight="semibold" style={{ marginTop: hasEyebrow ? theme.space.xs : 0 }}>
           {title}
         </T>
       </View>
@@ -299,7 +303,7 @@ export function Field({ label, ...props }: TextInputProps & { label: string }) {
             paddingHorizontal: 16,
             paddingVertical: 14,
             minHeight: 52,
-            fontFamily: "Anuphan-400",
+            fontFamily: theme.typography.body,
             fontSize: 16,
             lineHeight: 16 * theme.typography.thaiLeading,
           },

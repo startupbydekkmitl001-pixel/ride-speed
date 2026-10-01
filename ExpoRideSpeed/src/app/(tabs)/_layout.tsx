@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Glass, Icon, type IconName } from "../../components/ui";
 import { useApp } from "../../state/AppState";
 import { useI18n } from "../../lib/i18n";
+import { theme } from "../../lib/theme";
 export default function TabLayout() {
   const { colors, data } = useApp(),
     inset = useSafeAreaInsets();
@@ -47,7 +48,7 @@ export default function TabLayout() {
         tabBarActiveTintColor: colors.accentText,
         tabBarInactiveTintColor: colors.muted,
         tabBarHideOnKeyboard: true,
-        tabBarLabelStyle: { fontFamily: "Anuphan-500", fontSize: 11, lineHeight: 17 },
+        tabBarLabelStyle: { fontFamily: theme.typography.medium, fontSize: 11, lineHeight: 11 * theme.typography.thaiLeading },
         tabBarStyle: {
           display: data.welcomeDone ? "flex" : "none",
           position: "absolute",

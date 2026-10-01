@@ -8,7 +8,7 @@ export type AttemptLifecycle=Readonly<{kind:'armed'|'finish_observed';received_m
 export type RaceAttemptContext={race:RaceSnapshot;attempt:AttemptSnapshot;course:RaceCourseSnapshot;binding:OriginalCaptureBinding;foreground:boolean;fresh:boolean};
 export type FrozenRaceCandidate=Readonly<{binding:OriginalCaptureBinding;firstSequence:number;lastSequence:number;sampleCount:number;clockGeneration:string;armClockProbeIds:readonly string[];clockProbes:readonly AttemptClockReference[];lifecycle:readonly AttemptLifecycle[];race:RaceSnapshot;attempt:AttemptSnapshot}>;
 export type RaceAttemptPhase='idle'|'preparing'|'pending'|'armed'|'ready'|'countdown'|'running'|'candidate'|'invalid';
-export type RaceAttemptPresentation=Readonly<{phase:RaceAttemptPhase;error:string|null;pendingOperationId:string|null;firstSequence:number|null;lastSequence:number|null;sampleCount:number;nextGate:number;stageReady:boolean;clockReady:boolean;probeCount:number;secondsRemaining:number|null;uncertaintyMs:number|null;retryAfterMs:number|null}>;
+export type RaceAttemptPresentation=Readonly<{phase:RaceAttemptPhase;error:string|null;pendingOperationId:string|null;firstSequence:number|null;lastSequence:number|null;sampleCount:number;nextGate:number;stageReady:boolean;clockReady:boolean;probeCount:number;secondsRemaining:number|null;uncertaintyMs:number|null;retryAfterMs:number|null;observedMonotonicMs:number|null}>;
 export interface RaceAttemptPort{
  ownerId:string;current:(binding:OriginalCaptureBinding)=>boolean;getCurrent:()=>RaceAttemptContext|null;originalCapture:OriginalCapturePort;
  monotonicNow:()=>number;wallNow:()=>number;uuid:()=>string;
@@ -19,7 +19,7 @@ export interface RaceAttemptPort{
  cancelActivation:(operationId:string)=>Promise<boolean>;abort:(reason:AttemptAbort['reason'],binding:OriginalCaptureBinding)=>Promise<void>;
  onFrozenCandidate:(candidate:FrozenRaceCandidate)=>Promise<void>;
 }
-const initial=():RaceAttemptPresentation=>({phase:'idle',error:null,pendingOperationId:null,firstSequence:null,lastSequence:null,sampleCount:0,nextGate:0,stageReady:false,clockReady:false,probeCount:0,secondsRemaining:null,uncertaintyMs:null,retryAfterMs:null});
+const initial=():RaceAttemptPresentation=>({phase:'idle',error:null,pendingOperationId:null,firstSequence:null,lastSequence:null,sampleCount:0,nextGate:0,stageReady:false,clockReady:false,probeCount:0,secondsRemaining:null,uncertaintyMs:null,retryAfterMs:null,observedMonotonicMs:null});
 type Pending={request:RaceRequest;id:string|null;generation:number};
 const frozenCopy=<T>(value:T):T=>{const copy=JSON.parse(JSON.stringify(value));const freeze=(v:unknown)=>{if(v&&typeof v==='object'){for(const child of Object.values(v))freeze(child);Object.freeze(v);}};freeze(copy);return copy;};
 /** A passive original-receipt consumer. No watcher, private GPS store, verification
@@ -33,7 +33,16 @@ export class RaceAttemptCoordinator{
  constructor(private port:RaceAttemptPort){this.unsubscribe=port.originalCapture.subscribe(event=>this.accept(event));}
  getSnapshot=()=>this.state;
  subscribe=(listener:()=>void)=>{this.listeners.add(listener);return()=>{this.listeners.delete(listener);};};
- private publish(patch:Partial<RaceAttemptPresentation>){if(this.closed||Object.entries(patch).every(([key,value])=>Object.is(this.state[key as keyof RaceAttemptPresentation],value)))return;this.state=Object.freeze({...this.state,...patch});for(const listener of this.listeners){try{listener();}catch{/* Rendering cannot restore attempt authority. */}}}
+ private publish(patch:Partial<RaceAttemptPresentation>){
+  if(this.closed||Object.entries(patch).every(([key,value])=>Object.is(this.state[key as keyof RaceAttemptPresentation],value)))return;
+  const phase=patch.phase??this.state.phase;
+  const changed=phase!==this.state.phase||patch.secondsRemaining!==undefined&&patch.secondsRemaining!==this.state.secondsRemaining;
+  let observedMonotonicMs=this.state.observedMonotonicMs;
+  if(changed){const now=this.port.monotonicNow();observedMonotonicMs=['countdown','running'].includes(phase)&&Number.isFinite(now)&&now>=0?now:null;}
+  // The source bin's age must survive held renders; unrelated/no-op ticks cannot refresh it.
+  this.state=Object.freeze({...this.state,...patch,observedMonotonicMs});
+  for(const listener of this.listeners){try{listener();}catch{/* Rendering cannot restore attempt authority. */}}
+ }
  private times(){const mono=this.port.monotonicNow(),wall=this.port.wallNow();if(!Number.isFinite(mono)||mono<0||mono<this.lastMono||!Number.isFinite(wall)||wall<0)throw Error('RACE_CLOCK_UNAVAILABLE');this.lastMono=mono;return{mono,wall};}
  private valid(binding:OriginalCaptureBinding){return !this.closed&&binding.scope.userId===this.port.ownerId&&binding.platform!=='web'&&this.port.current(binding);}
  private same(a:OriginalCaptureBinding,b:OriginalCaptureBinding){return a.scope===b.scope&&a.generation===b.generation&&a.captureId===b.captureId&&a.rideId===b.rideId&&a.segmentId===b.segmentId&&a.startedMonotonicMs===b.startedMonotonicMs;}

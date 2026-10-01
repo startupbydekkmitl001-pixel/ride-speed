@@ -1,4 +1,5 @@
 export const m6En={
+ 'm6.aboutRanking':'How ranking works',
  'm6.title':'Ranked','m6.body':'Records with a source. Comparisons within your vehicle class.',
  'm6.today':'Today','m6.week':'This week','m6.month':'This month','m6.sustained_speed':'Top speed','m6.route_time':'Course time',
  'm6.scooter':'Scooter','m6.motorcycle':'Big bike','m6.car':'Car','m6.global':'Global','m6.friends':'Friends',
@@ -27,6 +28,7 @@ export const m6En={
  'm6.errors.account':'The account changed. Open Ranked again for the current account.','m6.errors.invalid':'The server response could not be verified. Refresh the board.',
 } as const;
 export const m6Th:Record<keyof typeof m6En,string>={
+ 'm6.aboutRanking':'วิธีจัดอันดับ',
  'm6.title':'อันดับ','m6.body':'สถิติที่มีที่มา เปรียบเทียบในคลาสรถของคุณ',
  'm6.today':'วันนี้','m6.week':'สัปดาห์นี้','m6.month':'เดือนนี้','m6.sustained_speed':'ความเร็วสูงสุด','m6.route_time':'เวลาในสนาม',
  'm6.scooter':'สกู๊ตเตอร์','m6.motorcycle':'บิ๊กไบค์','m6.car':'รถยนต์','m6.global':'ทั้งหมด','m6.friends':'เพื่อน',
