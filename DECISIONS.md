@@ -65,3 +65,17 @@
 - Broadcast only GPS-free invalidation hints. Authoritative scalar reads recheck membership, blocks, consent and expiry; latest positions have a 15-second maximum TTL. Map layers hide before pending worker updates and cannot be revealed by older responses.
 - Persist immutable control operations before egress. Stop during an unknown grant obtains an exact server cancellation fence or its applied receipt before retiring the operation, then revokes the current canonical lease. Concurrent terminal replies share one durable settlement; failed storage preserves recovery.
 - Migration008 is deployed at SHA256 `228141005DC4FE61392C92377B7618D96C573B06B9254C3C3071CD24DF00C5F8`. Rooms remain disabled until minute cleanup, private managed Realtime, actual quotas and paired installed-device checks pass. Real source/SQL tests are not native GPS or performance measurements. Unrelated milestones continue while these gates remain pending.
+
+## M5C — original capture and evidence recovery
+
+- Race attempts passively tap the existing native recorder. Exact original receipt clocks/flags and contiguous raw sequence ranges stay private; display interpolation and road snapping never become evidence. No second watcher or invented sample is introduced.
+- A background or source interruption retains durable owner stop intent. Unknown arm outcomes settle by exact receipt first, followed by a new terminal operation only at the fresh server revision. Failed disk writes stay retryable. New activations require current detail, course/member/capture and separately reviewed closed-course/evidence consent.
+- Private upload files are immutable. Reservation/ref capacity is checked before exporting or writing a new file; uploaded bytes cannot be overwritten. Canonical terminal acknowledgment with no unresolved attempt action releases only that local upload copy. Original private ride journals are separate.
+- Hosted evidence retention is measured from immutable upload reservation, due within seven days, rather than seven days after finalization. This bounds abandoned data as well as completed attempts. Both languages disclose the same rule and provider-backup limitation. Dedicated256MiB reserved+actual capacity protects free-tier headroom; it does not certify total organization billing usage.
+- One detail poll contains two read RPCs. Six-second foreground polling costs20read RPCs/minute and coalesces slow requests. Host lobby heartbeat uses its separate budget and does not add redundant detail reads, create readiness or grant GPS sharing. Missing managed/native acceptance keeps the pilot disabled.
+
+## M8 — original loop family and integration
+
+- Render one Remotion project for all14roles×2themes. The user permits either motion renderer; the HyperFrames creative/motion guidance informed direction, with Remotion supplying the verified production pipeline. Every loop is original, frame-derived and silent; native content supplies actual identity and state.
+- Bundle the complete1.55MB family locally instead of adding a CDN/key or network dependency. Native text overlays remain still; first-frame posters hide startup/decode interruption. Legacy profile playback is replaced by the shared two-player budget and theme-aware license role.
+- Expanded stationary speedometer may play one subtle background loop. Compact/moving HUD shows a poster while the existing Reanimated instrument remains driven by measurements. Native performance and accessibility claims require installed-device evidence.

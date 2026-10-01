@@ -3,7 +3,7 @@ import type { RideEvidenceSample } from '../../../modules/ride-location/src/sess
 import type { RideSummaryV1 } from './syncTypes';
 
 export type Coordinate = { latitude:number;longitude:number };
-export type Capture = { id:string;segmentId:string;provider:'ios_core_location'|'expo_location';count:number;truncated:boolean;startedAtMs:number;endedAtMs:number|null };
+export type Capture = { id:string;segmentId:string;provider:'ios_core_location'|'expo_location';count:number;truncated:boolean;startedAtMs:number;endedAtMs:number|null;startedMonotonicMs?:number|null;endedMonotonicMs?:number|null };
 export type Fragment = { segmentId:string;captureId:string;partIndex:number;points:Coordinate[] };
 export type JournalRide = {
  id:string;ownerId:string;startedAtMs:number;endedAtMs:number|null;status:'recording'|'paused'|'complete'|'interrupted';
@@ -12,22 +12,23 @@ export type JournalRide = {
  fragments:Fragment[];revision:number;sync:'local'|'pending'|'synced';operationId:string|null;
  summary?:RideSummaryV1;syncError?:string;
 };
-export type JournalReceipt = { seq:number;captureId:string;segmentId:string;sample:RideEvidenceSample;accepted:boolean;receivedAtMs:number;partIndex?:number };
+export type JournalReceipt = { seq:number;captureId:string;segmentId:string;sample:RideEvidenceSample;accepted:boolean;receivedAtMs:number;receivedMonotonicMs?:number|null;partIndex?:number };
 type PrivateProgress = { monotonicStart:number;previous:RideEvidenceSample|null;breakPath:boolean;lastTimestamp:number|null;waiting:boolean };
 const progress=new WeakMap<JournalRide,PrivateProgress>();
+const originalMonotonic=(value:number|undefined)=>value!==undefined&&Number.isFinite(value)&&value>=0?value:null;
 export const createRide=(id:string,ownerId:string,startedAtMs:number,vehicle:GarageVehicle|null):JournalRide=>({id,ownerId,startedAtMs,endedAtMs:null,status:'paused',activeDurationMs:0,clockAnomaly:false,vehicle:vehicle?{...vehicle}:null,captures:[],rawCount:0,acceptedCount:0,rejectedCount:0,distanceMeters:0,maxMps:null,fragments:[],revision:0,sync:'local',operationId:null});
 export function beginCapture(ride:JournalRide,id:string,segmentId:string,monotonicMs:number,provider:Capture['provider'],waiting=false) {
  if(ride.status==='complete'||ride.status==='recording')throw Error('RIDE_STATE');
- ride.status='recording';ride.captures.push({id,segmentId,provider,count:0,truncated:false,startedAtMs:Date.now(),endedAtMs:null});
+ ride.status='recording';ride.captures.push({id,segmentId,provider,count:0,truncated:false,startedAtMs:Date.now(),endedAtMs:null,startedMonotonicMs:waiting?null:originalMonotonic(monotonicMs),endedMonotonicMs:null});
  progress.set(ride,{monotonicStart:monotonicMs,previous:null,breakPath:true,lastTimestamp:null,waiting});
 }
-export function activateCapture(ride:JournalRide,monotonicMs:number,wallMs:number){const p=progress.get(ride),c=ride.captures.at(-1);if(!p||!c)return;p.waiting=false;p.monotonicStart=monotonicMs;c.startedAtMs=wallMs;if(ride.captures.length===1&&ride.rawCount===0)ride.startedAtMs=wallMs;}
+export function activateCapture(ride:JournalRide,monotonicMs:number,wallMs:number){const p=progress.get(ride),c=ride.captures.at(-1);if(!p||!c)return;p.waiting=false;p.monotonicStart=monotonicMs;c.startedAtMs=wallMs;c.startedMonotonicMs=originalMonotonic(monotonicMs);if(ride.captures.length===1&&ride.rawCount===0)ride.startedAtMs=wallMs;}
 export function haversine(a:Coordinate,b:Coordinate):number {
  const rad=Math.PI/180,dlat=(b.latitude-a.latitude)*rad,dlon=(b.longitude-a.longitude)*rad;
  const h=Math.sin(dlat/2)**2+Math.cos(a.latitude*rad)*Math.cos(b.latitude*rad)*Math.sin(dlon/2)**2;
  return 6371008.8*2*Math.atan2(Math.sqrt(Math.min(1,h)),Math.sqrt(Math.max(0,1-h)));
 }
-export function acceptSample(ride:JournalRide,sample:RideEvidenceSample,receivedAtMs:number):JournalReceipt {
+export function acceptSample(ride:JournalRide,sample:RideEvidenceSample,receivedAtMs:number,receivedMonotonicMs?:number):JournalReceipt {
  const p=progress.get(ride),c=ride.captures.at(-1);if(!p||!c||ride.status!=='recording')throw Error('RIDE_STATE');
  const age=receivedAtMs-sample.timestampMs;
  let accepted=Number.isFinite(sample.latitude)&&Math.abs(sample.latitude)<=90&&Number.isFinite(sample.longitude)&&Math.abs(sample.longitude)<=180
@@ -41,7 +42,7 @@ export function acceptSample(ride:JournalRide,sample:RideEvidenceSample,received
   if(gap>3000){p.breakPath=true;distance=0;}
   else if(distance>Math.max(40,(gap/1000)*100)){accepted=false;distance=0;}
  }
- const receipt:JournalReceipt={seq:ride.rawCount,captureId:c.id,segmentId:c.segmentId,sample:{...sample},accepted,receivedAtMs};
+ const receipt:JournalReceipt={seq:ride.rawCount,captureId:c.id,segmentId:c.segmentId,sample:{...sample},accepted,receivedAtMs,receivedMonotonicMs:originalMonotonic(receivedMonotonicMs)};
  ride.rawCount++;c.count++;if(c.count>8000)c.truncated=true;
  if(!accepted){ride.rejectedCount++;p.previous=null;p.breakPath=true;return receipt;}
  ride.acceptedCount++;
@@ -55,7 +56,7 @@ export function currentDuration(ride:JournalRide,monotonicMs:number):number {
 }
 export function endCapture(ride:JournalRide,monotonicMs:number,wallMs:number) {
  if(ride.status!=='recording')return;
- ride.activeDurationMs=currentDuration(ride,monotonicMs);ride.status='paused';const c=ride.captures.at(-1)!;c.endedAtMs=wallMs;
+ ride.activeDurationMs=currentDuration(ride,monotonicMs);ride.status='paused';const c=ride.captures.at(-1)!;c.endedAtMs=wallMs;c.endedMonotonicMs=originalMonotonic(monotonicMs);
  if(wallMs<ride.startedAtMs||!Number.isFinite(monotonicMs))ride.clockAnomaly=true;progress.delete(ride);
 }
 export function finishRide(ride:JournalRide,wallMs:number) {

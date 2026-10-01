@@ -17,6 +17,7 @@ import { GarageProvider } from "../state/GarageState";
 import { RouteProvider } from "../state/RouteState";
 import { SocialProvider } from "../state/SocialState";
 import { LiveProvider,useLive } from "../state/LiveState";
+import {RaceProvider,useRace} from '../state/RaceState';
 import { Button, T } from "../components/ui";
 import { errorKey, useI18n } from "../lib/i18n";
 
@@ -24,7 +25,7 @@ void SplashScreen.preventAutoHideAsync();
 function Navigation() {
   const { ready, dark, colors, motion, storageError, retryStorage } = useApp();
   const { t } = useI18n();
-  const ride=useRide(),live=useLive(),pathname=usePathname();
+  const ride=useRide(),live=useLive(),race=useRace(),pathname=usePathname();
   const [fonts, fontError] = useFonts({
     "Anuphan-400": require("../../assets/fonts/Anuphan-400.ttf"),
     "Anuphan-500": require("../../assets/fonts/Anuphan-500.ttf"),
@@ -62,15 +63,18 @@ function Navigation() {
           <Stack.Screen name="compose" options={{ presentation: "modal" }} />
           <Stack.Screen name="convoy" />
           <Stack.Screen name="friend-links" />
+          <Stack.Screen name="races" />
         </Stack>
         {(live.share.armed||live.share.pending)&&pathname!=="/convoy"&&<View style={{position:'absolute',left:16,right:16,top:48,backgroundColor:colors.bg,borderWidth:1,borderColor:colors.line,borderRadius:20,padding:12,gap:8}}>
           <T size={13}>{t(live.share.pending?'m5b.sharingPending':'m5b.sharingActive',{time:live.share.expiresAt?new Date(live.share.expiresAt).toLocaleTimeString():''})}</T>
           <Button small secondary label={t('m5b.stopSharing')} onPress={()=>{void live.stopSharing().catch(()=>{});}} />
         </View>}
-        {ride.movingLocked&&pathname!=="/"&&<View style={{position:'absolute',top:0,bottom:0,left:0,right:0,backgroundColor:colors.bg,justifyContent:'center',padding:24,gap:20}} accessibilityViewIsModal>
+        {race.port.attempt?.state==='armed'&&pathname!=='/races'&&<View style={{position:'absolute',left:16,right:16,bottom:100,backgroundColor:colors.bg,borderWidth:1,borderColor:colors.line,borderRadius:20,padding:12,gap:8}}><T size={13}>{t('m5c.attemptStates.armed')}</T><Button small secondary label={t('m5c.stopAttempt')} onPress={()=>{void race.stopCompetitiveAttempt().catch(()=>{});}}/></View>}
+        {ride.movingLocked&&pathname!=="/"&&pathname!=='/races'&&<View style={{position:'absolute',top:0,bottom:0,left:0,right:0,backgroundColor:colors.bg,justifyContent:'center',padding:24,gap:20}} accessibilityViewIsModal>
           <T size={24} weight="semibold">{t('m2.ride.movingLock')}</T>
           <Button label={t('nav.map')} onPress={()=>router.replace('/')}/>
           <Button secondary label={t('m2.ride.passengerOverride')} onPress={ride.setPassengerOverride}/>
+          {race.port.attempt?.state==='armed'&&<Button secondary label={t('m5c.stopAttempt')} onPress={()=>{void race.stopCompetitiveAttempt().catch(()=>{});}}/>}
         </View>}
       </View>
     </View>
@@ -83,7 +87,7 @@ export default function RootLayout() {
       <AuthProvider>
         <AppProvider>
             <RiderProfileProvider>
-              <GarageProvider><RideProvider><RouteProvider><SocialProvider><LiveProvider><OnlineProvider><MotionProvider><Navigation /></MotionProvider></OnlineProvider></LiveProvider></SocialProvider></RouteProvider></RideProvider></GarageProvider>
+              <GarageProvider><RideProvider><RouteProvider><SocialProvider><LiveProvider><RaceProvider><OnlineProvider><MotionProvider><Navigation /></MotionProvider></OnlineProvider></RaceProvider></LiveProvider></SocialProvider></RouteProvider></RideProvider></GarageProvider>
             </RiderProfileProvider>
         </AppProvider>
       </AuthProvider>

@@ -13,6 +13,7 @@ export const journalPort:JournalPort={
   if(receipt)await txn.runAsync('INSERT INTO receipts(ride,seq,capture,body) VALUES(?,?,?,?) ON CONFLICT(ride,seq) DO NOTHING',ride.id,receipt.seq,receipt.captureId,JSON.stringify(receipt));
  });},
  async list(owner){const db=await open();const rides:JournalRide[]=(await db.getAllAsync<{body:string}>('SELECT body FROM rides WHERE owner=? ORDER BY started DESC LIMIT 500',owner)).map(row=>JSON.parse(row.body));for(const ride of rides)if(ride.status==='recording'){const rows=await db.getAllAsync<{body:string}>('SELECT body FROM receipts WHERE ride=? ORDER BY seq',ride.id);restoreFragments(ride,rows.map(row=>JSON.parse(row.body) as JournalReceipt));}return rides;},
+ async get(owner,id){const rows=await (await open()).getAllAsync<{body:string}>('SELECT body FROM rides WHERE owner=? AND id=? LIMIT 1',owner,id);return rows[0]?JSON.parse(rows[0].body):null;},
  async receipts(owner,id,capture){return (await (await open()).getAllAsync<{body:string}>('SELECT receipts.body FROM receipts JOIN rides ON rides.id=receipts.ride WHERE rides.owner=? AND rides.id=? AND receipts.capture=? ORDER BY seq LIMIT 8001',owner,id,capture)).map(row=>JSON.parse(row.body));},
  async removeOwner(owner){await (await open()).withExclusiveTransactionAsync(async txn=>{await txn.runAsync('DELETE FROM rides WHERE owner=?',owner);});},
 };

@@ -2,8 +2,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import {raceModule,stored,uuid} from './helpers/races.mjs';
 const require = createRequire(import.meta.url), ts = require('typescript');
 const imports = { './preferences': await import('../src/lib/preferences.ts'), '../features/garage/localModel': await import('../src/features/garage/localModel.ts') };
+imports['../features/races/model']=raceModule('model');
+imports['../features/races/evidenceReferences']=raceModule('evidenceReferences');
+imports['../features/races/stopIntents']=raceModule('stopIntents');
 function compile(path, dependencies={}) {
  const out={exports:{}};const source=readFileSync(new URL(path,import.meta.url),'utf8');
  const js=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
@@ -36,6 +40,46 @@ const vehicle = id => ({ id, catalogId: null, category: 'scooter', brand: 'Honda
 const flush = () => new Promise(r => setImmediate(r));
 const socialOperation = (handle='rider_one') => ({operationId:'dddddddd-dddd-4ddd-8ddd-dddddddddddd',request:{schema_version:1,action:'request_friend',handle},queuedAt:'2026-10-01T00:00:00.000Z',lastError:null});
 const liveOperation = () => ({operationId:'dddddddd-dddd-4ddd-8ddd-dddddddddddd',request:{schema_version:1,action:'friend_link_create',link_id:'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',token_hash:'a'.repeat(64),ttl_seconds:3600},queuedAt:'2026-10-01T00:00:00Z',lastError:null});
+const evidenceRef=()=>({owner_id:uuid(1),attempt_id:uuid(4),race_id:uuid(3),ride_id:uuid(13),capture_id:uuid(5),sha256:'a'.repeat(64),byte_length:3000,first_sequence:4,last_sequence:7,sample_count:4});
+const stopIntent=()=>({attempt_id:uuid(4),race_id:uuid(3),capture_id:uuid(5),reason:'background'});
+
+test('a stop intent survives owner restart independently of the old failed CAS operation',async()=>{
+ const h=fixture();await h.store.hydrate(h.switch(uuid(1)));const old=h.scope,stop=stopIntent();
+ assert.equal(h.store.update(old,{raceStopIntents:[stop]}),true);await h.store.flush();
+ await h.store.hydrate(h.switch(uuid(2)));assert.deepEqual(h.store.getSnapshot().owned.raceStopIntents,[]);
+ await h.store.hydrate(h.switch(uuid(1)));assert.deepEqual(h.store.getSnapshot().owned.raceStopIntents,[stop]);assert.deepEqual(h.store.getSnapshot().owned.raceOperations,[]);
+ assert.equal(h.store.update(old,{raceStopIntents:[]}),false);
+ await h.store.forgetAccount(h.scope);assert.equal(h.values.has(`ride.local.v5.${uuid(1)}`),false);
+});
+
+test('unknown or duplicate stop intents preserve unread recovery bytes instead of discarding the requested stop',async()=>{
+ for(const intents of [[{...stopIntent(),revision:99}],[stopIntent(),stopIntent()]]){
+  const h=fixture(),key=`ride.local.v5.${uuid(1)}`,bytes=JSON.stringify({raceStopIntents:intents});h.values.set(key,bytes);
+  await h.store.hydrate(h.switch(uuid(1)));assert.equal(h.store.getSnapshot().error,'LOCAL_READ_FAILED');assert.equal(h.store.update(h.scope,{raceStopIntents:[]}),false);await h.store.flush();assert.equal(h.values.get(key),bytes);
+ }
+});
+
+test('guest import preserves the vehicle but cannot import stop authority for an account attempt',async()=>{
+ const h=fixture();await h.store.hydrate(h.switch(null));assert.equal(h.store.update(h.scope,{raceStopIntents:[stopIntent()]}),false);h.store.update(h.scope,{vehicles:[vehicle('guest')]});await h.store.flush();
+ const raw=JSON.parse(h.values.get('ride.local.v5.guest'));raw.raceStopIntents=[stopIntent()];h.values.set('ride.local.v5.guest',JSON.stringify(raw));
+ await h.store.hydrate(h.switch(uuid(1)));await h.store.importGuest(h.scope);assert.equal(h.store.getSnapshot().owned.vehicles.length,1);assert.deepEqual(h.store.getSnapshot().owned.raceStopIntents,[]);
+});
+
+test('race control intent and evidence references survive restart without replaying capture authority or raw positions',async()=>{
+ const h=fixture();await h.store.hydrate(h.switch(uuid(1)));const prior=h.scope,op=stored(),ref=evidenceRef();assert.equal(h.store.update(prior,{raceOperations:[op],raceEvidence:[ref]}),true);await h.store.flush();
+ await h.store.hydrate(h.switch(uuid(2)));assert.deepEqual(h.store.getSnapshot().owned.raceOperations,[]);assert.deepEqual(h.store.getSnapshot().owned.raceEvidence,[]);
+ await h.store.hydrate(h.switch(uuid(1)));assert.deepEqual(h.store.getSnapshot().owned.raceOperations,[op]);assert.deepEqual(h.store.getSnapshot().owned.raceEvidence,[ref]);assert.equal(h.store.update(prior,{raceOperations:[]}),false);
+ const bytes=h.values.get(`ride.local.v5.${uuid(1)}`);for(const forbidden of ['latitude','longitude','request_started_monotonic_ms','reviewedAt'])assert.equal(bytes.includes(forbidden),false);
+});
+test('unknown race or evidence metadata preserves the unread recovery record',async()=>{
+ for(const field of ['raceOperations','raceEvidence']){const h=fixture();await h.store.hydrate(h.switch(uuid(1)));h.store.update(h.scope,{vehicles:[vehicle('retained')]});await h.store.flush();const key=`ride.local.v5.${uuid(1)}`,data=JSON.parse(h.values.get(key));data[field]=field==='raceOperations'?[{...stored(),authority:true}]:[{...evidenceRef(),latitude:13}];const bytes=JSON.stringify(data);h.values.set(key,bytes);await h.store.hydrate(h.switch(uuid(1)));assert.equal(h.store.getSnapshot().error,'LOCAL_READ_FAILED');assert.equal(h.store.update(h.scope,{raceOperations:[],raceEvidence:[]}),false);await h.store.flush();assert.equal(h.values.get(key),bytes);}
+});
+test('guest migration cannot import race intent or another owner evidence references',async()=>{
+ const h=fixture();await h.store.hydrate(h.switch(null));h.store.update(h.scope,{vehicles:[vehicle('guest')]});await h.store.flush();const data=JSON.parse(h.values.get('ride.local.v5.guest'));data.raceOperations=[stored()];data.raceEvidence=[evidenceRef()];h.values.set('ride.local.v5.guest',JSON.stringify(data));await h.store.hydrate(h.switch(uuid(1)));await h.store.importGuest(h.scope);assert.deepEqual(h.store.getSnapshot().owned.raceOperations,[]);assert.deepEqual(h.store.getSnapshot().owned.raceEvidence,[]);
+});
+test('foreign owner evidence cannot enter local state or overwrite an unread record',async()=>{
+ const h=fixture();await h.store.hydrate(h.switch(uuid(2)));assert.equal(h.store.update(h.scope,{raceEvidence:[evidenceRef()]}),false);await h.store.flush();const key=`ride.local.v5.${uuid(2)}`,bytes=JSON.stringify({...h.store.getSnapshot().owned,raceEvidence:[evidenceRef()]});h.values.set(key,bytes);await h.store.hydrate(h.switch(uuid(2)));assert.equal(h.store.getSnapshot().error,'LOCAL_READ_FAILED');assert.equal(h.store.update(h.scope,{raceEvidence:[]}),false);await h.store.flush();assert.equal(h.values.get(key),bytes);
+});
 
 test('live control outbox retains only hash and immutable intent across owner restart',async()=>{
  const h=fixture();await h.store.hydrate(h.scope);const old=h.scope,op=liveOperation();assert.equal(h.store.update(old,{liveOperations:[op]}),true);await h.store.flush();

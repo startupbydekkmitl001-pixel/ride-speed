@@ -16,6 +16,7 @@ import { clearRouteAccount } from "../../state/RouteState";
 import { clearSocialAccount } from "../../state/SocialState";
 import { clearLiveAccount } from "../../state/LiveState";
 import { liveSecrets } from "../../features/live/secretStorage";
+import {clearRaceAccount} from '../../state/RaceState';
 
 export default function DeleteAccountScreen() {
   const { scope } = useAuth();
@@ -59,6 +60,7 @@ function AccountDeletion() {
         }, async () => {
           clearLiveAccount(scope); ensure();
           clearSocialAccount(scope); ensure();
+          await clearRaceAccount(scope); ensure();
           await ride.stopAsync(); ensure();
           await rider.clearAccount(); ensure();
           await clearOnboardingAccount(scope); ensure();

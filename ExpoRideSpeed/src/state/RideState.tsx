@@ -17,6 +17,7 @@ import type { RideHistoryItem,RideHistoryCursor } from '../features/rides/syncTy
 import { errorKey } from '../lib/i18n';
 import { LiveCaptureBus } from '../features/live/LiveCaptureBus';
 import type { LiveCapturePort } from '../features/live/captureTypes';
+import {OriginalCaptureBus,type OriginalCaptureBinding,type OriginalCapturePort,type OriginalCaptureRead} from '../features/races/OriginalCaptureBus';
 
 const queue=new DurableRideQueue();
 const closedListeners=new Set<(owner:string)=>void>();
@@ -29,6 +30,7 @@ type RideState=ReturnType<typeof useRideSession>&{
  pause:()=>Promise<void>;resume:()=>Promise<string|null>;finish:()=>Promise<void>;retrySave:()=>Promise<void>;refreshHistory:()=>Promise<void>;locate:(signal?:AbortSignal)=>Promise<void>;
  movingLocked:boolean;setPassengerOverride:()=>void;
  liveCapture:LiveCapturePort;
+ originalCapture:OriginalCapturePort;readOriginalCapture:(binding:OriginalCaptureBinding,firstSequence:number,lastSequence:number)=>Promise<OriginalCaptureRead>;
  cloudHistory:RideHistoryItem[];cloudMore:boolean;cloudError:boolean;syncing:boolean;retrySync:()=>void;loadMoreCloud:()=>Promise<void>;
 };
 const Context=createContext<RideState|null>(null);
@@ -50,6 +52,10 @@ export function RideProvider({children}:{children:React.ReactNode}){
  // Construction only stores the guard. Refs are read by subsequent capture events.
  // eslint-disable-next-line react-hooks/refs
  const [liveCapture]=useState(()=>new LiveCaptureBus(binding=>{const r=current.current,c=r?.ride.captures.at(-1);return alive.current&&liveReady.current&&liveForeground.current&&!!binding.scope.userId&&isAccountCurrent(binding.scope)&&!queue.isClosed(binding.scope.userId)&&r?.scope===binding.scope&&r.ride.status==='recording'&&boundCapture.current?.scope===binding.scope&&boundCapture.current.rideId===r.ride.id&&c?.id===binding.captureId&&c.segmentId===binding.segmentId;}));
+ // This raw tap preserves failed observations under the recorder's owner/lifecycle guard.
+ // eslint-disable-next-line react-hooks/refs
+ const [originalCapture]=useState(()=>new OriginalCaptureBus(binding=>{const r=current.current,c=r?.ride.captures.at(-1);return alive.current&&liveReady.current&&liveForeground.current&&!!binding.scope.userId&&isAccountCurrent(binding.scope)&&!queue.isClosed(binding.scope.userId)&&r?.scope===binding.scope&&r.ride.status==='recording'&&boundCapture.current?.scope===binding.scope&&boundCapture.current.rideId===r.ride.id&&c?.id===binding.captureId&&c.segmentId===binding.segmentId&&c.provider===binding.provider&&!c.truncated;}));
+ useLayoutEffect(()=>liveCapture.subscribe(event=>{if(event.kind==='invalidated')originalCapture.invalidate(event.reason);}),[liveCapture,originalCapture]);
  useLayoutEffect(()=>{if(liveScope.current!==scope){liveCapture.invalidate('account_changed');liveScope.current=scope;}liveReady.current=authReady&&!!session&&owned?.scope===scope&&owned.ready&&!owned.error;},[authReady,session,scope,owned,liveCapture]);
  useEffect(()=>{const changed=(value:string)=>{liveForeground.current=value==='active'&&(Platform.OS!=='web'||typeof document==='undefined'||document.visibilityState!=='hidden');if(!liveForeground.current)liveCapture.invalidate('background');};const listener=AppState.addEventListener('change',changed);const visible=()=>changed(AppState.currentState);if(Platform.OS==='web'&&typeof document!=='undefined')document.addEventListener('visibilitychange',visible);return()=>{listener.remove();if(Platform.OS==='web'&&typeof document!=='undefined')document.removeEventListener('visibilitychange',visible);};},[liveCapture]);
  useEffect(()=>{const closed=(owner:string)=>{if(owner!==scope.userId||!isAccountCurrent(scope))return;liveCapture.invalidate('account_deleted');setOwned({scope,ride:null,history:[],ready:false,error:null,durationMs:0});setCloud(null);setFix(null);setMoving(false);setSyncing(false);void captureRef.current.stopAsync().catch(()=>{});};closedListeners.add(closed);return()=>{closedListeners.delete(closed);};},[scope,liveCapture]);
@@ -62,8 +68,9 @@ export function RideProvider({children}:{children:React.ReactNode}){
   onAcquired(native){const r=current.current;if(r&&isAccountCurrent(r.scope)&&!queue.isClosed(r.ride.ownerId)&&r.ride.status==='recording'){activateCapture(r.ride,mono(),Date.now());r.ride.captures.at(-1)!.provider=native?'ios_core_location':'expo_location';persist(r.ride);publish();}},
   onSample(sample){const r=current.current;if(!r||!isAccountCurrent(r.scope)||queue.isClosed(r.ride.ownerId)||r.ride.status!=='recording')return;
    if(queue.pending>=128||r.ride.rawCount>=100000){liveCapture.invalidate('capture_limit');r.ride.captures.at(-1)!.truncated=true;captureRef.current.stop();setOwned(old=>old?{...old,error:'m2.ride.captureLimit'}:old);return;}
-   const receipt=acceptSample(r.ride,sample,Date.now());persist(r.ride,receipt);
-   if(boundCapture.current?.scope===r.scope&&boundCapture.current.rideId===r.ride.id){liveCapture.bind({scope:r.scope,rideId:r.ride.id,captureId:receipt.captureId,segmentId:receipt.segmentId,platform:Platform.OS==='ios'?'ios':Platform.OS==='android'?'android':'web'});liveCapture.accept(receipt,mono(),receipt.receivedAtMs);}
+   const receivedMonotonicMs=mono(),receivedWallMs=Date.now();
+   const receipt=acceptSample(r.ride,sample,receivedWallMs,receivedMonotonicMs);persist(r.ride,receipt);
+   if(boundCapture.current?.scope===r.scope&&boundCapture.current.rideId===r.ride.id){const c=r.ride.captures.at(-1)!,platform=Platform.OS==='ios'?'ios':Platform.OS==='android'?'android':'web';liveCapture.bind({scope:r.scope,rideId:r.ride.id,captureId:receipt.captureId,segmentId:receipt.segmentId,platform});liveCapture.accept(receipt,receivedMonotonicMs,receivedWallMs);if(c.truncated)originalCapture.invalidate('capture_limit');else{originalCapture.bind({scope:r.scope,rideId:r.ride.id,captureId:c.id,segmentId:c.segmentId,platform,provider:c.provider,startedWallMs:c.startedAtMs,startedMonotonicMs:c.startedMonotonicMs??null});originalCapture.accept(receipt);}}
    if(receipt.accepted)setFix({scope:r.scope,value:{coordinate:{latitude:sample.latitude,longitude:sample.longitude},accuracyMeters:sample.horizontalAccuracyM!,timestampMs:sample.timestampMs,headingDegrees:null}});
    publish();
   },
@@ -94,7 +101,7 @@ export function RideProvider({children}:{children:React.ReactNode}){
   })().catch(()=>{if(valid&&isAccountCurrent(scope))setOwned({scope,ride:null,history:[],ready:false,error:'m2.ride.storageError',durationMs:0});});
   return()=>{valid=false;};
  },[authReady,scope,persist]);
- useEffect(()=>{alive.current=true;return()=>{alive.current=false;liveCapture.invalidate('unmount');void captureRef.current.stopAsync().then(()=>queue.drain()).catch(()=>{});};},[liveCapture]);
+ useEffect(()=>{alive.current=true;return()=>{alive.current=false;liveCapture.invalidate('unmount');originalCapture.invalidate('unmount');void captureRef.current.stopAsync().then(()=>queue.drain()).catch(()=>{});};},[liveCapture,originalCapture]);
  useEffect(()=>{if(!capture.active)return;const timer=setInterval(()=>{const r=current.current,max=captureRef.current.snapshot.maxMps;if(r&&max!==null)r.ride.maxMps=Math.max(r.ride.maxMps??max,max);publish();},1000);return()=>clearInterval(timer);},[capture.active,publish]);
  const start=useCallback(async():Promise<string|null>=>{
   if(operation.current||!isAccountCurrent(scope)||queue.isClosed(scope.userId??'guest')||owned?.scope!==scope||!owned.ready||owned.error)return null;
@@ -105,10 +112,10 @@ export function RideProvider({children}:{children:React.ReactNode}){
    if(ride.captures.length>=64)throw Error('m2.ride.captureLimit');
    beginCapture(ride,randomUUID(),randomUUID(),mono(),RideLocation!==null?'ios_core_location':'expo_location',true);persist(ride);await queue.drain();
    if(!isAccountCurrent(scope)||queue.isClosed(scope.userId??'guest')){endCapture(ride,mono(),Date.now());persist(ride);return null;}
-   const id=await captureRef.current.start();if(queue.isClosed(ride.ownerId)){await captureRef.current.stopAsync();return null;}if(!id){endCapture(ride,mono(),Date.now());persist(ride);}else if(isAccountCurrent(scope)){const binding={scope,rideId:ride.id};boundCapture.current=binding;setCaptureOwner(binding);const c=ride.captures.at(-1)!;liveCapture.bind({scope,rideId:ride.id,captureId:c.id,segmentId:c.segmentId,platform:Platform.OS==='ios'?'ios':Platform.OS==='android'?'android':'web'});}publish();return id;
+   const id=await captureRef.current.start();if(queue.isClosed(ride.ownerId)){await captureRef.current.stopAsync();return null;}if(!id){endCapture(ride,mono(),Date.now());persist(ride);}else if(isAccountCurrent(scope)){const binding={scope,rideId:ride.id};boundCapture.current=binding;setCaptureOwner(binding);const c=ride.captures.at(-1)!,platform=Platform.OS==='ios'?'ios':Platform.OS==='android'?'android':'web';liveCapture.bind({scope,rideId:ride.id,captureId:c.id,segmentId:c.segmentId,platform});originalCapture.bind({scope,rideId:ride.id,captureId:c.id,segmentId:c.segmentId,platform,provider:c.provider,startedWallMs:c.startedAtMs,startedMonotonicMs:c.startedMonotonicMs??null});}publish();return id;
   }catch{const r=current.current;if(r?.scope===scope&&r.ride.status==='recording'){endCapture(r.ride,mono(),Date.now());r.ride.status='interrupted';persist(r.ride);publish();}if(isAccountCurrent(scope))setOwned(old=>old?{...old,error:old.error??'m2.ride.startError'}:old);return null;}
   finally{operation.current=false;if(isAccountCurrent(scope))setBusy(false);}
- },[scope,owned,persist,publish,vehicle,liveCapture]);
+ },[scope,owned,persist,publish,vehicle,liveCapture,originalCapture]);
  const pause=useCallback(async()=>{if(!isAccountCurrent(scope)||current.current?.scope!==scope)return;liveCapture.invalidate('pause');await captureRef.current.stopAsync();await queue.drain();if(isAccountCurrent(scope))publish();},[scope,publish,liveCapture]);
  const finish=useCallback(async()=>{
   if(operation.current||!isAccountCurrent(scope)||queue.isClosed(scope.userId??'guest')||current.current?.scope!==scope)return;operation.current=true;liveCapture.invalidate('stop');setBusy(true);
@@ -167,9 +174,18 @@ export function RideProvider({children}:{children:React.ReactNode}){
   }finally{appSubscription.remove();signal?.removeEventListener('abort',abort);}})();idle.current=work;try{await work;}catch{}finally{if(idle.current===work)idle.current=null;if(isAccountCurrent(requested))setLocating(false);}
  },[scope]);
  const own=owned?.scope===scope&&!queue.isClosed(scope.userId??'guest')?owned:null,ride=own?.ride??null;
+ const readOriginalCapture=useCallback(async(binding:OriginalCaptureBinding,firstSequence:number,lastSequence:number):Promise<OriginalCaptureRead>=>{
+  const owner=binding.scope.userId;const guard=()=>{if(!owner||binding.scope!==scope||!alive.current||!isAccountCurrent(scope)||queue.isClosed(owner))throw Error('ACCOUNT_CHANGED');};guard();
+  if(!Number.isInteger(firstSequence)||!Number.isInteger(lastSequence)||firstSequence<0||lastSequence<firstSequence||lastSequence-firstSequence+1>8000)throw Error('RACE_EVIDENCE_UNAVAILABLE');
+  await queue.drain();guard();const saved=await journalPort.get(owner!,binding.rideId);guard();const c=saved?.captures.find(value=>value.id===binding.captureId&&value.segmentId===binding.segmentId);
+  if(!saved||!c||c.truncated||c.provider!==binding.provider||c.startedAtMs!==binding.startedWallMs||c.startedMonotonicMs!==binding.startedMonotonicMs)throw Error('RACE_EVIDENCE_UNAVAILABLE');
+  const raw=await journalPort.receipts(owner!,saved.id,c.id);guard();const selected=raw.filter(value=>value.seq>=firstSequence&&value.seq<=lastSequence);
+  if(selected.length!==lastSequence-firstSequence+1||selected.some((value,index)=>value.seq!==firstSequence+index||value.captureId!==c.id||value.segmentId!==c.segmentId||!Number.isFinite(value.receivedMonotonicMs)))throw Error('RACE_EVIDENCE_UNAVAILABLE');
+  return {ride:clone(saved),capture:clone(c),receipts:clone(selected)};
+ },[scope]);
  const duration=own?.durationMs??0;
  const ownsCapture=captureOwner?.scope===scope&&captureOwner.rideId===ride?.id&&!!own?.ready;
- const state:RideState={...capture,liveCapture,active:ownsCapture?capture.active:false,sessionId:ownsCapture?capture.sessionId:null,nativeSource:ownsCapture?capture.nativeSource:false,message:attemptOwner===scope?capture.message:null,permissionState:attemptOwner===scope?capture.permissionState:'ready',
+ const state:RideState={...capture,liveCapture,originalCapture,readOriginalCapture,active:ownsCapture?capture.active:false,sessionId:ownsCapture?capture.sessionId:null,nativeSource:ownsCapture?capture.nativeSource:false,message:attemptOwner===scope?capture.message:null,permissionState:attemptOwner===scope?capture.permissionState:'ready',
   snapshot:ownsCapture?{...capture.snapshot,maxMps:ride?.maxMps!==null&&ride?.maxMps!==undefined?Math.max(ride.maxMps,capture.snapshot.maxMps??ride.maxMps):capture.snapshot.maxMps}:{liveMps:null,maxMps:ride?.maxMps??null,quality:'noFix',horizontalAccuracyM:null},
   start,stop:()=>{void pause().catch(()=>{});},stopAsync:pause,resetMax:()=>{if(boundCapture.current?.scope===scope&&boundCapture.current.rideId===current.current?.ride.id&&isAccountCurrent(scope))captureRef.current.resetMax();},
   getEvidence:()=>{if(boundCapture.current?.scope!==scope||boundCapture.current.rideId!==current.current?.ride.id||!isAccountCurrent(scope)||queue.isClosed(scope.userId??'guest'))return {samples:[],nativeSource:false,truncated:false,sessionId:null};const evidence=captureRef.current.getEvidence();const r=current.current;return {...evidence,truncated:evidence.truncated||!!r?.ride.captures.at(-1)?.truncated};},

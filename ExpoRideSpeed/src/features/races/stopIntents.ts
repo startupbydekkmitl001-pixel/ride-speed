@@ -1,0 +1,4 @@
+import type {AttemptAbort} from './types';
+export type RaceStopIntent={attempt_id:string;race_id:string;capture_id:string;reason:AttemptAbort['reason']};
+const uuid=(v:unknown)=>typeof v==='string'&&/^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/.test(v);
+export function parseRaceStopIntents(value:unknown):RaceStopIntent[]{if(value===undefined)return[];if(!Array.isArray(value)||value.length>32)throw Error('RACE_INVALID');const ids=new Set<string>();return value.map(v=>{if(!v||typeof v!=='object'||Array.isArray(v)||Object.keys(v).length!==4||!uuid(v.attempt_id)||!uuid(v.race_id)||!uuid(v.capture_id)||ids.has(v.attempt_id)||!['user_stop','background','capture_changed','quality','storage_error','clock_invalid','late_start'].includes(v.reason))throw Error('RACE_INVALID');ids.add(v.attempt_id);return{attempt_id:v.attempt_id,race_id:v.race_id,capture_id:v.capture_id,reason:v.reason};});}

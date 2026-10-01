@@ -7,6 +7,11 @@ import { parseSocialOperations } from '../features/social/model';
 import type { StoredSocialOperation } from '../features/social/types';
 import { parseLiveOperations } from '../features/live/model';
 import type { StoredLiveOperation } from '../features/live/types';
+import {parseRaceOperations} from '../features/races/model';
+import type {StoredRaceOperation} from '../features/races/types';
+import {parseEvidenceReferences} from '../features/races/evidenceReferences';
+import type {RaceEvidenceReference} from '../features/races/RaceEvidenceStore';
+import {parseRaceStopIntents,type RaceStopIntent} from '../features/races/stopIntents';
 
 export type LocalScope = Readonly<{ userId: string | null; generation: number }>;
 export type DevicePreferences = Omit<Preferences, 'welcomeDone'>;
@@ -19,6 +24,9 @@ export type OwnedLocalData = {
   routeConsent: boolean;
   socialOperations: StoredSocialOperation[];
   liveOperations: StoredLiveOperation[];
+  raceOperations: StoredRaceOperation[];
+  raceEvidence: RaceEvidenceReference[];
+  raceStopIntents: RaceStopIntent[];
 };
 export type LocalPatch = Partial<DevicePreferences & OwnedLocalData>;
 type Storage = { getItem: (key: string) => Promise<string | null>; setItem: (key: string, value: string) => Promise<unknown>; removeItem?: (key: string) => Promise<unknown> };
@@ -30,11 +38,12 @@ const LEGACY = 'ridespeed.local.v4', PREFS = 'ride.preferences.v5', MIGRATED = '
 const ownerKey = (scope: LocalScope) => `ride.local.v5.${scope.userId ?? 'guest'}`;
 const text = (v: unknown, max: number): v is string => typeof v === 'string' && [...v].length > 0 && [...v].length <= max && !/[\u0000-\u001f\u007f]/.test(v);
 const object = (v: unknown): Record<string, unknown> => v && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : {};
-export const emptyOwned = (): OwnedLocalData => ({ vehicles: [], selectedVehicleId: null, routes: [], welcomeDone: false, importedGuest: false, garageSync: blankGarageSync(), routeRecords: [], routeDraft: null, routeConsent: false, socialOperations: [], liveOperations: [] });
+export const emptyOwned = (): OwnedLocalData => ({ vehicles: [], selectedVehicleId: null, routes: [], welcomeDone: false, importedGuest: false, garageSync: blankGarageSync(), routeRecords: [], routeDraft: null, routeConsent: false, socialOperations: [], liveOperations: [], raceOperations:[], raceEvidence:[],raceStopIntents:[] });
 const preferences = (value: unknown): DevicePreferences => {
   const { welcomeDone: _welcome, ...device } = parsePreferences(value); return device;
 };
 const freshId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+function validateEvidenceOwner(scope:LocalScope,owned:OwnedLocalData){if(owned.raceEvidence.some(row=>row.owner_id!==scope.userId)||scope.userId===null&&(owned.raceEvidence.length>0||owned.raceOperations.length>0||owned.raceStopIntents.length>0))throw Error('RACE_EVIDENCE_UNAVAILABLE');return owned;}
 
 function parseOwned(value: unknown, stripCloud = false): OwnedLocalData {
   const stored = object(value), blank = emptyOwned();
@@ -60,6 +69,9 @@ function parseOwned(value: unknown, stripCloud = false): OwnedLocalData {
   return { ...blank, vehicles, routes: compatibleRoutes(routeRecords), routeRecords,
     socialOperations: parseSocialOperations(stored.socialOperations,stripCloud),
     liveOperations: parseLiveOperations(stored.liveOperations,stripCloud),
+    raceOperations: stripCloud?[]:parseRaceOperations(stored.raceOperations),
+    raceEvidence: stripCloud?[]:parseEvidenceReferences(stored.raceEvidence),
+    raceStopIntents: stripCloud?[]:parseRaceStopIntents(stored.raceStopIntents),
     routeDraft: parseBuilderDraft(stored.routeDraft,stripCloud), routeConsent: !stripCloud && stored.routeConsent === true,
     selectedVehicleId: typeof stored.selectedVehicleId === 'string' && vehicleIds.has(stored.selectedVehicleId) ? stored.selectedVehicleId : null,
     welcomeDone: stored.welcomeDone === true, importedGuest: stored.importedGuest === true, garageSync: parseGarageSync(stored.garageSync,stripCloud) };
@@ -100,7 +112,7 @@ export class AccountLocalStore {
       await pendingWrites; await this.migrate();
       const [raw, prefsRaw, guestRaw] = await Promise.all([this.storage.getItem(ownerKey(scope)), this.storage.getItem(PREFS), this.storage.getItem('ride.local.v5.guest')]);
       if (!this.current(scope) || revision !== this.revision) return;
-      const owned = this.dirty.get(ownerKey(scope)) ?? parseOwned(raw ? JSON.parse(raw) : null);
+      const owned = validateEvidenceOwner(scope,this.dirty.get(ownerKey(scope)) ?? parseOwned(raw ? JSON.parse(raw) : null));
       const guest = parseOwned(guestRaw ? JSON.parse(guestRaw) : null, true);
       this.publish({ scope, owned, preferences: this.dirtyPreferences ?? preferences(prefsRaw ? JSON.parse(prefsRaw) : null), ready: true,
         error: this.dirty.has(ownerKey(scope)) || this.dirtyPreferences ? 'LOCAL_WRITE_FAILED' : null,
@@ -114,7 +126,7 @@ export class AccountLocalStore {
     // successful read, including when the UI offers offline browsing.
     if (!this.current(scope) || !this.value.ready || this.closedOwners.has(ownerKey(scope)) || this.value.error === 'LOCAL_READ_FAILED') return false;
     let owned: OwnedLocalData;
-    try { owned = parseOwned({ ...this.value.owned, ...patch }); } catch { return false; }
+    try { owned = validateEvidenceOwner(scope,parseOwned({ ...this.value.owned, ...patch })); } catch { return false; }
     const device = preferences({ ...this.value.preferences, ...patch });
     this.publish({ ...this.value, owned, preferences: device, error: null });
     this.persist(scope, owned, device); return true;

@@ -1,0 +1,21 @@
+import {readFileSync,existsSync} from 'node:fs';
+import {createRequire} from 'node:module';
+import {dirname,resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import ts from 'typescript';
+const require=createRequire(import.meta.url),root=fileURLToPath(new URL('../../src/',import.meta.url));
+export function raceModule(name,overrides={}){const cache=new Map();function load(path){if(cache.has(path))return cache.get(path).exports;const module={exports:{}};cache.set(path,module);const code=ts.transpileModule(readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;new Function('require','module','exports',code)(key=>key in overrides?overrides[key]:key.startsWith('.')?load(['.ts','.tsx'].map(ext=>resolve(dirname(path),key+ext)).find(existsSync)??resolve(dirname(path),key+'.ts')):require(key),module,module.exports);return module.exports;}return load(resolve(root,'features/races',`${name}.ts`));}
+export const uuid=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
+export const owner=uuid(1),peer=uuid(2),raceId=uuid(3),attemptId=uuid(4),captureId=uuid(5),stamp='2026-10-01T02:00:00.123456+00:00',end='2026-10-01T03:00:00Z';
+export const copy=v=>JSON.parse(JSON.stringify(v));
+export const hold=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return{promise,resolve,reject};};
+export const tick=()=>new Promise(done=>setImmediate(done));
+export const approval=()=>({id:uuid(6),route_id:uuid(7),route_revision:2,route_geometry_hash:'a'.repeat(64),config_hash:'b'.repeat(64),course_id:uuid(8),session_id:uuid(9),method:'route_time_v1',category:'scooter',starts_at:stamp,ends_at:end,distance_m:500,maximum_duration_s:1800});
+export const member=(id,role='member')=>({user_id:id,role,state:'accepted',member_generation:2,friendship_generation:role==='host'?null:4,profile:{name:id===owner?'Arnalxz':'ผู้ขี่',handle:id===owner?'arnalxz':'rider',avatar_id:null},evidence_consent_version:1,consented_at:stamp,ready_revision:0,ready:false,ready_until:null});
+export const snapshot=()=>({id:raceId,creator_id:owner,revision:3,mode:'live',metric:'route_time',method:'route_time_v1',state:'lobby',approval:approval(),route_summary:{title:'เส้นทางจริง',revision:2,category:'scooter'},route_snapshot:{route_id:uuid(7),revision:2,title:'เส้นทางจริง',category:'scooter',segments:[],geometryStatus:'hidden',privacyTrimMeters:200,geometryHash:null,provider:'draft',attribution:null},starts_at:stamp,ends_at:end,lobby_epoch:uuid(10),common_start_at:null,schedule_epoch:null,topic:`rs-race:${uuid(11)}`,topic_generation:1,host_lease_until:'2026-10-01T02:00:45.123456+00:00',self_member:member(owner,'host'),members:[member(owner,'host'),member(peer)],self_ready:null,schedule_ready:[],updated_at:stamp,terminal_reason:null});
+export const arm=()=>({schema_version:1,action:'attempt_arm',attempt_id:attemptId,expected_revision:1,stage_proof_id:uuid(12),capture_id:captureId,clock_probe_ids:[uuid(20),uuid(21),uuid(22)]});
+export const operation=(request=arm(),n=30)=>({operation_id:uuid(n),request});
+export const stored=(request=arm(),n=30)=>({...operation(request,n),queued_at:stamp,last_error:null});
+export const attempt=()=>({id:attemptId,owner_id:owner,race_id:raceId,revision:2,ordinal:1,member_generation:2,approval_id:uuid(6),config_hash:'b'.repeat(64),platform:'android',provider:'expo_location',ride_id:uuid(13),capture_id:captureId,state:'armed',armed_at:stamp,schedule_epoch:null,common_start_at:null,vehicle:null,evidence:null,rejection_code:null,terminal_reason:null,terminal_at:null,updated_at:stamp});
+export const receipt=(op=operation())=>({owner_id:owner,operation_id:op.operation_id,request:op.request,applied_at:stamp,result:{action:'attempt_arm',attempt:attempt()}});
+export const clock=()=>({owner_id:owner,probe_id:uuid(20),race_id:raceId,capture_id:captureId,clock_generation:uuid(14),server_received_at:stamp,server_sent_at:stamp});

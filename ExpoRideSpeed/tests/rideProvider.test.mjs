@@ -8,6 +8,7 @@ import * as journalModel from '../src/features/rides/journalModel.ts';
 import { DurableRideQueue } from '../src/features/rides/DurableRideQueue.ts';
 import { ExclusiveLocationCapture } from '../modules/ride-location/src/sessionSupport.ts';
 import { LiveCaptureBus } from '../src/features/live/LiveCaptureBus.ts';
+import { OriginalCaptureBus } from '../src/features/races/OriginalCaptureBus.ts';
 
 const require = createRequire(import.meta.url), ts = require('typescript');
 const deferred = () => { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; };
@@ -75,6 +76,8 @@ function harness({ stored = [], scopeId = 'A', signedIn = false } = {}) {
       return [...rows.values()].filter(row => row.ownerId === owner).map(row => { const ride = copy(row); if (ride.status === 'recording') journalModel.restoreFragments(ride, receipts.get(ride.id) ?? []); return ride; }).sort((a, b) => b.startedAtMs - a.startedAtMs);
     },
     async removeOwner(owner) { for (const [id, ride] of rows) if (ride.ownerId === owner) { rows.delete(id); receipts.delete(id); } },
+    async get(owner,id){const row=rows.get(id);return row?.ownerId===owner?copy(row):null;},
+    async receipts(owner,id,captureId){return rows.get(id)?.ownerId===owner?copy((receipts.get(id)??[]).filter(row=>row.captureId===captureId)):[];},
   };
   const imports = {
     react: React, 'expo-location': {
@@ -90,6 +93,7 @@ function harness({ stored = [], scopeId = 'A', signedIn = false } = {}) {
     '../features/rides/DurableRideQueue': { DurableRideQueue }, '../features/rides/journalPort': { journalPort: port }, '../features/rides/journalModel': journalModel,
     '../features/rides/syncModel': syncModule.exports,
     '../features/live/LiveCaptureBus': {LiveCaptureBus},
+    '../features/races/OriginalCaptureBus': {OriginalCaptureBus},
     '../lib/i18n': errorModule.exports,
     '../features/rides/syncService': {
       async syncRideSummary(requested, auth, draft) {
@@ -152,6 +156,18 @@ test('actual RideProvider invalidates sharing before held stop/deletion and on i
  h.sourceUnavailable();assert.equal(ride.liveCapture.getBinding(),null);h.sample();assert.ok(ride.liveCapture.getBinding().generation>before.generation);
  const held=deferred();h.behavior.pendingStop=held;const pause=ride.pause();assert.equal(ride.liveCapture.getBinding(),null);held.resolve();await pause;await h.settle();h.behavior.pendingStop=null;
  await h.render().start();ride=await h.settle();h.sample();assert.ok(ride.liveCapture.getBinding());const removal=h.clearAccount();assert.equal(ride.liveCapture.getBinding(),null);await removal;await h.settle();h.sample();assert.equal(ride.liveCapture.getBinding(),null);
+});
+
+test('actual recorder emits every future original fix with its original clock pair; export drains exact receipts and denies stale owners',async()=>{
+ const h=harness({signedIn:true});let state=await h.settle();const events=[];state.originalCapture.subscribe(e=>events.push(e));await state.start();state=await h.settle();const binding=state.originalCapture.getBinding();assert.equal(binding.startedMonotonicMs,0);
+ h.sample({horizontalAccuracyM:80,mocked:true});h.sample();state=await h.settle();assert.equal(events.filter(e=>e.kind==='receipt').length,2);const original=events.find(e=>e.kind==='receipt');assert.equal(original.receipt.accepted,false);assert.equal(original.receipt.receivedMonotonicMs,1000);assert.equal(original.receipt.receivedAtMs,1700000001000);
+ const exported=await state.readOriginalCapture(binding,0,1);assert.equal(exported.receipts.length,2);assert.equal(exported.receipts[0].sample.mocked,true);assert.equal(exported.receipts[0].receivedMonotonicMs,1000);assert.equal(h.behavior.starts,1);
+ const prior=state;h.switchAccount('B');await h.settle();await assert.rejects(prior.readOriginalCapture(binding,0,1),/ACCOUNT_CHANGED/);assert.equal(prior.originalCapture.getBinding(),null);
+});
+
+test('original competitive capture is invalidated before a held pause and on suspend; genuine recording can continue privately',async()=>{
+ const h=harness({signedIn:true});let state=await h.settle();await state.start();state=await h.settle();h.sample();assert.ok(state.originalCapture.getBinding());h.foreground('inactive');assert.equal(state.originalCapture.getBinding(),null);assert.equal(h.behavior.active,true);
+ h.foreground('active');h.sample();const next=state.originalCapture.getBinding();assert.ok(next);const held=deferred();h.behavior.pendingStop=held;const pause=state.pause();assert.equal(state.originalCapture.getBinding(),null);held.resolve();await pause;await h.settle();
 });
 
 test('restored recording is interrupted without fabricated samples, fixes or elapsed time', async () => {

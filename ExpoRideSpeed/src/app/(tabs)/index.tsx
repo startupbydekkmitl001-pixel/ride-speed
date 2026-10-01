@@ -61,7 +61,7 @@ function MapHome(){
    {ride.ride?.status==='interrupted'&&<Note>{t('m2.ride.recoveryBody')}</Note>}
    <SpeedometerHUD snapshot={ride.snapshot} metrics={ride.metrics} units={app.data.unit} expanded={expanded} backgroundMotionAllowed={!moving} onToggleExpanded={()=>setExpanded(v=>!v)} onUnitsChange={unit=>app.update({unit})}/>
    {compactControls}
-   {!expanded&&<Row style={{gap:8}}><Button small secondary style={{flex:1}} label={t('m2.map.planRoute')} icon="git-branch-outline" disabled={moving} onPress={()=>router.push('/routes')}/><Button small secondary style={{flex:1}} label={t('m2.map.challenge')} icon="flag-outline" disabled={moving} onPress={()=>router.push('/challenges')}/></Row>}
+   {!expanded&&<Row style={{gap:8}}><Button small secondary style={{flex:1}} label={t('m2.map.planRoute')} icon="git-branch-outline" disabled={moving} onPress={()=>router.push('/routes')}/><Button small secondary style={{flex:1}} label={t('m2.map.challenge')} icon="flag-outline" disabled={moving} onPress={()=>router.push('/races')}/></Row>}
    <T size={11} style={{textAlign:'center',color:app.colors.muted}}>{t('m2.ride.foregroundOnly')}</T>
    {moving&&<Button small secondary label={t('m2.ride.passengerOverride')} onPress={ride.setPassengerOverride}/>}
   </View>
