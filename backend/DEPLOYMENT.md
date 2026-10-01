@@ -82,3 +82,20 @@ Deployed SQL/seed and reviewed canonical source hashes:
 The deployed function bundle SHA-256 is `9246D0BA56F1C2D9AAD67AC08B309EDE24253F05155F010845A7B5E09E2AD7D3`. Its saved editor source matches the reviewed bundle after CRLF normalization; the listed hash describes the local reviewed bytes. Deno validation passed. Reloaded settings showed the legacy-secret gateway off; project Auth validation remains in the handler. A live POST without a token returned 401 AUTH_REQUIRED.
 
 Final local acceptance: all 71 backend and 258 app tests, app typecheck/lint and all-platform export pass. Cases cover exact response-loss receipts, owner/path authorization, photo expiry/committed retries, immutable pending documents, crash-safe acknowledgement and deletion dependencies. The real owner loaded an empty synced garage. A separate localhost guest retained explicitly labelled local-only EV edits after reload; no fake owner garage was uploaded. Two real installed devices, private photo upload and periodic orphan cleanup remain operational acceptance gates; no account was deleted during verification.
+
+## V5 M4 — 1 October 2026
+
+Applied006 once through the authenticated SQL editor after001–005; it returned **Success. No rows returned.** Deployed the reviewed canonical route-service bundle. Existing deployed migrations remain immutable; do not replay them or run an unreconciled CLI push.
+
+| Source | SHA-256 |
+| --- | --- |
+| migrations/202610010006_private_routes_and_provider.sql | `45889DCA724C81AE804D2DD2011358393E773CC0F65862D86482AE562C5CBA5A` |
+| functions/route-service/index.ts (canonical entry, not bundle) | `264F501C105CC6624092CAD2EC55506BD790BBE758BFDC216027848C315F9D42` |
+| functions/_shared/route-provider.ts | `1115FB10A90A88FE4DD818F87BAD933222F9988A5430FF8B9789AB2E96D04166` |
+| route-service dashboard bundle | `2EA17E8C8ADE47ADC23991954BB5FC2A16FB53451A54DA5D7A051F02842F9A87` |
+
+The transaction preserves owner pins privately before sanitizing old public route and post/challenge snapshot paths, and changes no existing verification eligibility. Before deployment, aggregate counts showed no routes/post/challenge route snapshots. The function editor was reloaded and compared with the exact checked bundle after CRLF normalization. Its legacy-secret gateway is off; the handler independently validates project Auth. A live no-token POST returned401 AUTH_REQUIRED. Its private Geoapify secret is owner-provided and was never read/displayed; source/bundles contain no key value.
+
+Local validation: all98 backend tests pass; all six canonical Edge entrypoints and the final deployed bundle pass Deno checks. Tests cover exact response-loss/CAS/tombstone behavior, owner-private provider cache, service-only grants, geodesic200m projection clipping without bridging recording gaps, historical compatibility sanitization, account-deletion dependencies, microsecond cursors, live200-route capacity, max-int revision deletion, quota reservations measured after lock acquisition, and observed lowercase metric units. Provider reconciliation raises known long-detour estimates before rejecting oversized routes; unknown billed work remains explicit, with no free-quota guarantee.
+
+The real signed-in owner consented to public-landmark search/routing. Thai search results worked; the scooter route Lumphini Park Gate3→CentralWorld rendered4.1km/estimated8minutes, survived reload, and repeated reverse/undo left admitted-call/cache counters unchanged at9/2. The initial upstream200 normalization failure was diagnosed using fixed stage/unit-category enums only and repaired for documented `Meters` and observed `meters`; no coordinates/query/URL/body/key entered logs. See the M4 normalization record. No synthetic cloud route/post/ride or account deletion was performed. Native gestures/frame pacing and second-device save/conflict checks remain separate acceptance gates.

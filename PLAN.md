@@ -51,11 +51,12 @@ The user has authorized native implementation and chosen MapLibre/OpenFreeMap + 
 
 ## M4 — routes/search/road geometry
 
-- [ ] Authenticated `route-service` Edge function: bounded validated search/route requests, Geoapify key secret, per-user/shared token budget, cache, debounce, timeout/retry. Native in-app results only.
-- [ ] Pins long-press/tap/drag, undo, start/via/finish, road snapping, actual distance/ETA, saved visibility/name, recorded-route import, in-app detail and route sharing.
-- [ ] Add route geometry/revisions/provider hash; private/public projections and server ≥200 m endpoint trimming, privacy-aware existing snapshot remediation. Geometry changes reset approvals; invite binds immutable revision.
-- [ ] Test stale route responses, pin edits, disconnected geometry, search/route quotas, short routes entirely hidden, RLS/foreign route ownership/public leaks/cache consent. Hosted road request once secret available, never log coordinates/key.
-- [ ] Commit M4; report five lines.
+- [x] Authenticated `route-service` Edge function: bounded validated search/route requests, Geoapify key secret, per-user/shared token budget, cache, debounce, timeout/retry. Native in-app results only.
+- [x] Pins long-press/tap/drag, undo, start/via/finish, road snapping, actual distance/ETA, saved visibility/name, recorded-route import, in-app detail and route sharing.
+- [x] Add route geometry/revisions/provider hash; private/public projections and server ≥200 m endpoint trimming, privacy-aware existing snapshot remediation. Geometry changes reset approvals; invite binds immutable revision.
+- [x] Test stale route responses, pin edits, disconnected geometry, search/route quotas, short routes entirely hidden, RLS/foreign route ownership/public leaks/cache consent. Hosted real road request and cache/reload pass; no coordinates/key logged. See `docs/design/m4-acceptance-v5.md`.
+- [ ] Installed-device drag/camera/performance and genuine-route two-device save/conflict acceptance; source/hosted-provider checks do not imply these measurements.
+- [x] Commit M4; report five lines.
 
 ## M5 — friends, convoy and challenges
 

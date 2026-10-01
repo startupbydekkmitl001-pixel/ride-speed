@@ -1,0 +1,38 @@
+# M4 route UI — acceptance notes for V5
+
+Reviewed 1 October 2026. These notes cover source behavior and local tests. The root milestone report owns hosted-provider/browser results and release hashes; native gestures, frame rate, road access and installed-device behavior are separate acceptance results.
+
+## Behavior reviewed
+
+- The route screen waits for owner storage before mounting its editor. AuthScope generation and an incoming shared route ID remount the editor. Provider callbacks reject a stale account, and authenticated provider calls carry the initiating account JWT. A late A→B→A result cannot become current again.
+- Opening the planner sends no search or route request. Search text and selected pins leave the device only after explicit provider consent. Search waits 400 ms and at least three normalized Unicode characters; calculation waits 400 ms after pin changes or drag completion. Automatic location acquisition does not supply provider proximity. Declining consent leaves local map pins usable.
+- Map taps and long presses add ordered start/via/finish pins, up to twelve. Only the selected marker is draggable. Drag completion checks renderer generation, selected ID, unchanged origin and edit mode. Stop controls offer selection, naming, reordering, removal, reversal and return to start. Pin changes and undo invalidate road proof; undo never revives an old token.
+- A cached road preview without an owner-bound token remains visible but cannot be saved as a road route. The UI labels it as cached, offers recalculation, and enables Save only after new provider proof. Recalculation eligibility never converts an imported bicycle route or recorded fragment into a motor route.
+- The adapter publishes draft changes promptly, while the owner store serializes local writes. A saved route returns success only after its immutable operation is locally durable. The editor baseline rejects a changed or deleted saved target. An unfinished different draft is retained rather than replaced by editing or importing another route.
+- Recovery controls distinguish continuing an unfinished draft, copying an existing edit into a separate route, and discarding unfinished changes. Reset asks for confirmation and changes only the working draft; saved records stay in the library. Conflict resolution preserves the current local document until the user chooses a version. Keeping a locally edited route after a remote deletion creates a new record and retains the old tombstone.
+- Recorded import preserves independent compressed pause/GPS-gap fragments and has no invented road ETA. Provider MultiLineString parts also remain disconnected. Reopening an owner road route preserves the calculation timestamp; a definitively rejected/expired source is reopened without its stale proof so it can be calculated again.
+- Movement locks typing, pin edits, list scrolling, sharing and interactive sheets. A sensor transition cancels a pending consent decision and dismisses the adapter's import/reset sheets. The provider rejects edit actions while locked, and component callbacks recheck current movement/account state after async work. Passenger mode remains the explicit ride-provider override.
+- A shared detail receives only the server's authorized projection. It does not recreate original pins, stop labels, bounds, full distance/ETA or provider time. The displayed own-device location is local user context, not donor data. Shared links contain an opaque route ID, and current authorization determines whether the recipient can load it.
+- Auth-required search/calculation/save errors include an optional sign-in entry. The builder closes its sheet before calling the adapter's navigation callback. The builder has no router import or automatic redirect; its close callback is limited to explicit back/return controls. A previous hot-refresh navigation symptom did not have a deterministic source redirect and was absent in the root's fresh run.
+
+## Precision and assumptions
+
+Road distance and estimated duration come from the checked provider response, never from straight-line draft pins. Estimates exclude live traffic. Distance is currently rounded to at most one decimal kilometre; positive estimates below a minute are presented as one minute. The current presentation also rounds a provider zero-second duration to one minute; it must not be interpreted as exact timing. Recorded-route ETA is unavailable, and shared projections omit full metrics for privacy.
+
+Search is restricted to Thailand in this pilot. The app's limits are twelve stops, 200 km summed straight-line pin distance and 450 km returned road distance. These are pilot policy limits, not provider capability or road-access guarantees. Scooter/motorcycle/car category controls the requested routing profile. Bicycle imports keep their recorded geometry; motor routing is unavailable for that category.
+
+Draft editing depends on a prompt controlled `onChange` update and a fresh editor mount when changing owner or edited route. Search/calculation results cannot certify a route locally: saving uses the opaque server token, and the backend checks its owner, pins and profile. The cached preview is display data only. An expired-token source error is definitive only after checking the immutable operation receipt; an uncertain network result retains the original operation for retry.
+
+## Source verification
+
+The focused builder, draft persistence and presentation suite passed 13 tests after the tokenless-preview recovery fix. Cases cover guest transfer with proof stripping and regeneration, ordered pins/undo, request generations, invalid coordinates and oversized geometry, disconnected recording fragments, provider timestamps and blocked proof. Four tests execute the actual root route adapter with controlled hooks/deferred projection transport: a current preview opens its server projection, while Back, movement, unmount and stale-owner completions cannot reopen it. The three cancellation cases failed before the request-gate fix and passed afterward. Provider transport and marker policy tests cover JWT binding, explicit consent/no egress before confirmation, bounded errors, stale owner responses and late drag completion. The root's last full run before these new recovery/navigation tests passed 313 app tests; final whole-app checks belong to the root acceptance report.
+
+No hosted route, private coordinates, account deletion or browser changes were performed by this review. No mock provider routes are shipped in the UI.
+
+## Remaining UI acceptance
+
+Use an isolated test account/guest to exercise consent accept/decline, auth entry, search, two pins, road calculation, pin drag, undo, return trip, private save, reload, edit, draft recovery/reset, conflict choice and sanitized share preview. Verify an actual road response once the deployed provider is ready. Validate the short-route hidden projection and a recipient's authorization separately from the owner's full map.
+
+Installed iPhone 14 Plus/iOS 26 and a mid-range Android device still need native drag, long-press, camera fit, keyboard/safe-area, Dynamic Type/Thai marks, screen-reader controls, Reduce Motion/Transparency, 50-marker map interaction, FPS, memory and battery acceptance. Native drag uses renderer events rather than a React frame loop, but source structure does not establish a measured frame rate.
+
+The review found and fixed a navigation edge where an owner share-preview fetch could finish after Back and reopen shared detail. A navigation request generation now invalidates that result on mode changes, movement and unmount, with account checks before applying state. The fix does not change projection authorization or geometry.

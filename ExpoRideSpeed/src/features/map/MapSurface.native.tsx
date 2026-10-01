@@ -1,10 +1,11 @@
 import type { CameraRef, GeoJSONSourceRef, MapRef, MapProps } from '@maplibre/maplibre-react-native';
-import React, { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import React, { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { theme } from '../../lib/theme';
-import { cameraCommand, cappedFitCamera, fitIntent, fixData, fromLngLat, peersData, pinsData, safeCamera, safeInsets, toLngLat, trackData } from './geometry';
+import { cameraCommand, cappedFitCamera, fitIntent, fitInsetsAboveFooter, fixData, fromLngLat, peersData, pinsData, safeCamera, safeInsets, toLngLat, trackData } from './geometry';
 import { MapStatusTracker } from './lifecycle';
 import { mapCopy } from './mapCopy';
+import { finishPinDrag, startPinDrag, type PinDragTicket } from './pinDrag';
 import { createMapStyle } from './mapStyle';
 import { mapIds, overlayLayers, peerClusterOptions } from './overlays';
 import type { MapCamera, MapCameraCommand, MapCoordinate, MapFitOptions, MapHandle, MapSurfaceProps } from './MapSurface.types';
@@ -16,6 +17,9 @@ try {
   runtime = require('@maplibre/maplibre-react-native');
 } catch { /* Report unsupported below. */ }
 type Intent = { kind: 'camera'; value: MapCameraCommand } | { kind: 'fit'; coordinates: readonly MapCoordinate[]; options: MapFitOptions };
+// RN11.4 adds Map.contentInset to every camera stop on both platforms. Camera
+// commands own padding once, including explicit fit viewports and initial state.
+const rendererInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const Overlay = memo(function Overlay({ data, source, layers, sourceRef, onPress, cluster = false }: {
   data: GeoJSON.GeoJSON; source: string; layers: ReturnType<typeof overlayLayers>;
   sourceRef?: React.Ref<GeoJSONSourceRef>; onPress?: React.ComponentProps<NonNullable<typeof runtime>['GeoJSONSource']>['onPress']; cluster?: boolean;
@@ -26,23 +30,38 @@ const Overlay = memo(function Overlay({ data, source, layers, sourceRef, onPress
     {layers.map(layer => <Layer key={layer.id} {...layer} />)}
   </GeoJSONSource>;
 });
+function DraggablePin({pin,mode,onStart,onEnd,onSelect}:{pin:MapSurfaceProps['pins'][number];mode:MapSurfaceProps['theme'];onStart:(id:string)=>PinDragTicket|null;onEnd:(ticket:PinDragTicket|null,coordinate:MapCoordinate)=>void;onSelect:(id:string)=>void}){
+  const ticket=useRef<PinDragTicket|null>(null);
+  if(!runtime)return null;
+  const {ViewAnnotation}=runtime;
+  return <ViewAnnotation id={`rs-drag-${pin.id}`} lngLat={toLngLat(pin.coordinate)!} draggable selected title={pin.label}
+    onPress={event=>{event.stopPropagation();onSelect(pin.id);}}
+    onDragStart={()=>{ticket.current=onStart(pin.id);}}
+    onDragEnd={event=>{const coordinate=fromLngLat(event.nativeEvent.lngLat),current=ticket.current;ticket.current=null;if(coordinate)onEnd(current,coordinate);}}>
+    <View collapsable={false} accessible accessibilityLabel={pin.label} style={{width:theme.material.minTarget,height:theme.material.minTarget,alignItems:'center',justifyContent:'center'}}>
+      <View style={{width:36,height:36,borderRadius:18,backgroundColor:theme[mode].ink,borderColor:theme[mode].accent,borderWidth:3,alignItems:'center',justifyContent:'center'}}><Text style={{fontFamily:'Manrope-600',fontSize:14,color:theme[mode].bg}}>{pin.order}</Text></View>
+    </View>
+  </ViewAnnotation>;
+}
 
 export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props, ref) {
-  const latest = useRef(props); latest.current = props;
-  const initial = useRef(safeCamera(props.initialCamera));
-  const viewport = useRef<MapCamera | null>(initial.current);
+  const latest = useRef(props); useLayoutEffect(()=>{latest.current=props;});
+  const [initial] = useState(()=>safeCamera(props.initialCamera));
+  const viewport = useRef<MapCamera | null>(initial);
   const viewportSize = useRef({ width: 0, height: 0 });
+  const attributionHeight = useRef<number>(theme.material.minTarget);
   const nativeMap = useRef<MapRef>(null), camera = useRef<CameraRef>(null), peerSource = useRef<GeoJSONSourceRef>(null);
   const alive = useRef(true), epoch = useRef(0), peerVersion = useRef(0), pending = useRef<Intent | null>(null);
   const styleReady = useRef(false);
-  const [overlaysReady, setOverlaysReady] = useState(false);
-  const tracker = useRef<MapStatusTracker | null>(null);
-  if (!tracker.current) tracker.current = new MapStatusTracker(status => { if (alive.current) latest.current.onStatus(status); });
+  const [tracker] = useState(()=>new MapStatusTracker(props.onStatus));
+  useLayoutEffect(()=>{tracker.setListener(status=>{if(alive.current)latest.current.onStatus(status);});},[tracker]);
   const style = useMemo(() => {
     const value = createMapStyle(props.theme, props.locale);
     value.metadata = { ...(value.metadata as Record<string, unknown> | undefined), 'ride:retry': props.retryToken };
     return value;
   }, [props.theme, props.locale, props.retryToken]);
+  const [loadedStyle,setLoadedStyle]=useState<typeof style|null>(null);
+  const overlaysReady=loadedStyle===style;
   const insets = useMemo(() => safeInsets(props.contentInsets), [props.contentInsets]);
   const layers = useMemo(() => overlayLayers(props.theme), [props.theme]);
   const routeLayers = useMemo(() => layers.filter(layer => 'source' in layer && layer.source === mapIds.track), [layers]);
@@ -50,7 +69,8 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
   const peerLayers = useMemo(() => layers.filter(layer => 'source' in layer && layer.source === mapIds.peers), [layers]);
   const fixLayers = useMemo(() => layers.filter(layer => 'source' in layer && layer.source === mapIds.fix), [layers]);
   const route = useMemo(() => trackData(props.track), [props.track]);
-  const pins = useMemo(() => pinsData(props.pins, props.selectedPinId), [props.pins, props.selectedPinId]);
+  const editablePin = props.mode === 'edit' && props.onMovePin ? props.pins.find(pin => pin.id === props.selectedPinId && toLngLat(pin.coordinate)) : undefined;
+  const pins = useMemo(() => pinsData(editablePin ? props.pins.filter(pin=>pin.id!==editablePin.id) : props.pins, props.selectedPinId), [props.pins, props.selectedPinId, editablePin]);
   const peers = useMemo(() => peersData(props.peers), [props.peers]);
   const fix = useMemo(() => fixData(props.userFix), [props.userFix]);
 
@@ -58,11 +78,11 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
   useEffect(() => { alive.current = true; return invalidate; }, [invalidate]);
   useEffect(() => { ++peerVersion.current; }, [peers]);
   useEffect(() => {
-    ++epoch.current; styleReady.current = false; setOverlaysReady(false);
-    tracker.current!.beginStyle(latest.current.online);
-    if (!runtime) tracker.current!.fail({ state: 'unsupported', reason: 'native-module' });
-  }, [style]);
-  useEffect(() => { tracker.current!.setOnline(props.online); }, [props.online]);
+    ++epoch.current; styleReady.current = false;
+    tracker.beginStyle(latest.current.online);
+    if (!runtime) tracker.fail({ state: 'unsupported', reason: 'native-module' });
+  }, [style,tracker]);
+  useEffect(() => { tracker.setOnline(props.online); }, [props.online,tracker]);
 
   const apply = useCallback((intent: Intent) => {
     if (!alive.current) return;
@@ -78,7 +98,10 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
     } else {
       const target = fitIntent(intent.coordinates, intent.options);
       if (!target) return;
-      const padding = safeInsets(intent.options.padding ?? latest.current.contentInsets);
+      const requested = safeInsets(intent.options.padding ?? latest.current.contentInsets);
+      const padding = target.kind === 'bounds' ? fitInsetsAboveFooter(requested, {
+        height: attributionHeight.current, gap: theme.space.sm, markerSize: theme.material.minTarget,
+      }) : requested;
       const duration = latest.current.reducedMotion ? 0 : Number.isFinite(intent.options.durationMs) ? Math.max(0, intent.options.durationMs!) : 300;
       if (target.kind === 'center') {
         camera.current.easeTo({ center: target.center, zoom: target.zoom, bearing: 0, pitch: 0, padding, duration, easing: 'ease' });
@@ -143,30 +166,35 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
   }, []);
   const onStyleLoaded = useCallback(() => {
     if (!alive.current) return;
-    styleReady.current = true; setOverlaysReady(true); tracker.current!.styleLoaded();
+    styleReady.current = true; setLoadedStyle(style); tracker.styleLoaded();
     const command = pending.current; pending.current = null;
     if (command) apply(command);
     else if (viewport.current) apply({ kind: 'camera', value: { ...viewport.current, durationMs: 0 } });
-  }, [apply]);
+  }, [apply,style,tracker]);
   if (!runtime) return <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.map[props.theme].background }]} />;
   const { Map, Camera } = runtime;
-  return <View style={StyleSheet.absoluteFill} onLayout={event => { viewportSize.current = { width: event.nativeEvent.layout.width, height: event.nativeEvent.layout.height }; }}><Map ref={nativeMap} testID="ride-map" style={StyleSheet.absoluteFill} mapStyle={style} contentInset={insets}
+  return <View style={StyleSheet.absoluteFill} onLayout={event => { viewportSize.current = { width: event.nativeEvent.layout.width, height: event.nativeEvent.layout.height }; }}><Map ref={nativeMap} testID="ride-map" style={StyleSheet.absoluteFill} mapStyle={style} contentInset={rendererInsets}
     dragPan touchZoom doubleTapZoom doubleTapHoldZoom touchRotate touchPitch={props.mode !== 'glance'}
     attribution={false} logo={false} compass={false}
     tintColor={theme[props.theme].ink} androidView="texture" accessibilityLabel={mapCopy[props.locale].map}
     onPress={event => { const coordinate = fromLngLat(event.nativeEvent.lngLat); if (alive.current && coordinate && latest.current.mode !== 'glance') latest.current.onPress?.(coordinate); }}
     onLongPress={event => { const coordinate = fromLngLat(event.nativeEvent.lngLat); if (alive.current && coordinate && latest.current.mode !== 'glance') latest.current.onLongPress?.(coordinate); }}
     onRegionDidChange={onRegionChange} onDidFinishLoadingStyle={onStyleLoaded}
-    onDidFinishRenderingMapFully={() => { if (styleReady.current) tracker.current!.fullyRendered(); }}
-    onDidFailLoadingMap={() => tracker.current!.tileFailed()}>
-    <Camera ref={camera} initialViewState={initial.current ? { ...initial.current, center: toLngLat(initial.current.center)!, padding: insets } : undefined} minZoom={0} maxZoom={22} />
+    onDidFinishRenderingMapFully={() => { if (styleReady.current) tracker.fullyRendered(); }}
+    onDidFailLoadingMap={() => tracker.tileFailed()}>
+    <Camera ref={camera} initialViewState={initial ? { ...initial, center: toLngLat(initial.center)!, padding: insets } : undefined} minZoom={0} maxZoom={22} />
     {overlaysReady && <>
       <Overlay source={mapIds.track} data={route} layers={routeLayers} />
       <Overlay source={mapIds.pins} data={pins} layers={pinLayers} onPress={onPinPress} />
+      {editablePin && <DraggablePin key={`${props.theme}:${props.locale}:${props.retryToken}:${editablePin.id}`} pin={editablePin} mode={props.theme}
+        onStart={id=>startPinDrag({...latest.current,alive:alive.current,ready:styleReady.current,epoch:epoch.current},id)}
+        onEnd={(ticket,coordinate)=>{const result=finishPinDrag(ticket,{...latest.current,alive:alive.current,ready:styleReady.current,epoch:epoch.current},coordinate);if(result)latest.current.onMovePin?.(result.id,result.coordinate);}}
+        onSelect={id=>{if(alive.current&&styleReady.current&&latest.current.mode==='edit')latest.current.onSelectPin?.(id);}}/>}
       <Overlay source={mapIds.peers} data={peers} layers={peerLayers} sourceRef={peerSource} onPress={onPeerPress} cluster />
       <Overlay source={mapIds.fix} data={fix} layers={fixLayers} />
     </>}
   </Map><Pressable accessibilityRole="button" accessibilityLabel={mapCopy[props.locale].attribution}
+    onLayout={event => { const height = event.nativeEvent.layout.height; if (Number.isFinite(height)) attributionHeight.current = Math.max(theme.material.minTarget, height); }}
     onPress={() => { void nativeMap.current?.showAttribution().catch(() => {}); }}
     style={{ position: 'absolute', bottom: insets.bottom + theme.space.sm, left: insets.left + theme.space.sm, right: insets.right + theme.space.sm, minHeight: theme.material.minTarget, justifyContent: 'center', alignItems: 'flex-start' }}>
     <Text style={{ fontSize: 10, lineHeight: 15, color: theme.map[props.theme].label, backgroundColor: theme[props.theme].glassScrim, borderRadius: theme.radius.small, paddingHorizontal: theme.space.sm, paddingVertical: theme.space.xs }}>OpenFreeMap · OpenMapTiles · © OpenStreetMap</Text>

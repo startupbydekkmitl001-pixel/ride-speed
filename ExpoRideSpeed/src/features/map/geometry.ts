@@ -71,6 +71,12 @@ export function safeInsets(value: MapInsets): MapInsets {
   const safe = (number: number) => Number.isFinite(number) ? Math.max(0, number) : 0;
   return { top: safe(value.top), right: safe(value.right), bottom: safe(value.bottom), left: safe(value.left) };
 }
+/** Bounds fit reserves the attribution target and the endpoint marker above it. */
+export function fitInsetsAboveFooter(value: MapInsets, footer: { height: number; gap: number; markerSize: number }): MapInsets {
+  const padding = safeInsets(value);
+  const safe = (number: number) => Number.isFinite(number) ? Math.max(0, number) : 0;
+  return { ...padding, bottom: padding.bottom + safe(footer.height) + safe(footer.gap) * 2 + safe(footer.markerSize) / 2 };
+}
 /** Native fitBounds has no maxZoom option. Cap only a fit that would zoom too far. */
 export function cappedFitCamera(bounds: [number, number, number, number], viewport: { width: number; height: number }, insets: MapInsets, maxZoom: number): { center: MapCoordinate; zoom: number } | null {
   const padding = safeInsets(insets), width = viewport.width - padding.left - padding.right, height = viewport.height - padding.top - padding.bottom;

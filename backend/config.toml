@@ -16,5 +16,8 @@ verify_jwt = false
 [functions.vehicle-photo-url]
 verify_jwt = false
 
+[functions.route-service]
+verify_jwt = false
+
 # Each handler explicitly validates the Bearer token through Supabase Auth getUser.
 # The gateway's legacy JWT check is disabled to support current publishable keys.

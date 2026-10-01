@@ -1,0 +1,77 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { addBuilderStop, moveBuilderPin, removeBuilderStop, reverseBuilderStops, undoBuilder, blankBuilder, applyRoadResult, routeInputKey, RequestGate, builderDocument, builderHasSaveSource, needsRoadCalculation } from '../src/features/routes/builderModel.ts';
+import { parseBuilderDraft } from '../src/features/routes/persistenceModel.ts';
+const a = { latitude: 13.7, longitude: 100.5 }, b = { latitude: 13.71, longitude: 100.51 }, c = { latitude: 13.72, longitude: 100.52 };
+const added = (state, id, coordinate) => addBuilderStop(state, { id, coordinate, label: id });
+test('ordered pins become start/via/finish; edit invalidates actual road distance and undo never reuses a route token', () => {
+  let state = added(added(blankBuilder('scooter'), 'a', a), 'b', b);
+  const road = { routeToken:'token', requestHash:'hash', provider:'geoapify', profile:'scooter', segments:[[a,b]], distanceMeters:1400, durationSeconds:110, calculatedAt:'2026-10-01T00:00:00Z', attribution:'Geoapify', cached:false };
+  state = applyRoadResult(state, routeInputKey(state.value), road);
+  assert.equal(state.value.geometry.distanceMeters, 1400);
+  state = added(state, 'c', c);
+  assert.equal(state.value.geometry, null);
+  assert.deepEqual(state.value.stops.map(x=>x.id), ['a','b','c']);
+  state = undoBuilder(state);
+  assert.deepEqual(state.value.stops.map(x=>x.id), ['a','b']);
+  assert.equal(state.value.geometry, null);
+});
+test('stale road responses cannot replace edited pins and disconnected geometry is not bridged', () => {
+  let state = added(added(blankBuilder('car'), 'a', a), 'b', b);
+  const key = routeInputKey(state.value);
+  const road = { routeToken:'token', requestHash:'hash', provider:'geoapify', profile:'drive', segments:[[a,b],[c,{latitude:13.73,longitude:100.53}]], distanceMeters:2400, durationSeconds:220, calculatedAt:'2026-10-01T00:00:00Z', attribution:'Geoapify', cached:false };
+  const snapped = applyRoadResult(state, key, road);
+  assert.equal(snapped.value.geometry.segments.length, 2);
+  assert.equal(builderDocument({...snapped.value,title:'Route'}).source.kind,'road');
+  state = moveBuilderPin(state,'b',c);
+  assert.equal(applyRoadResult(state,key,road),state);
+  assert.equal(state.value.geometry,null);
+  assert.throws(()=>builderDocument({...state.value,title:'Route'}),/ROUTE_NOT_READY/);
+});
+test('undo/reverse/removal keep stable pin identity; invalid coordinates and excess stops cannot enter a draft', () => {
+  let state=added(added(added(blankBuilder('scooter'),'a',a),'b',b),'c',c);
+  state=reverseBuilderStops(state);
+  assert.deepEqual(state.value.stops.map(x=>x.id),['c','b','a']);
+  state=removeBuilderStop(state,'b');
+  assert.deepEqual(state.value.stops.map(x=>x.id),['c','a']);
+  assert.equal(moveBuilderPin(state,'absent',b),state);
+  assert.equal(added(state,'bad',{latitude:NaN,longitude:0}),state);
+  for(let i=0;i<15;i++)state=added(state,`id${i}`,a);
+  assert.equal(state.value.stops.length,12);
+  assert.equal(state.history.length<=30,true);
+});
+test('request generations are independent of wall clock and obsolete completion never becomes current again', () => {
+  const gate=new RequestGate();
+  const one=gate.begin('same', 3), two=gate.begin('same',3);
+  assert.equal(gate.accepts(one,'same',3),false);
+  assert.equal(gate.accepts(two,'same',3),true);
+  gate.invalidate();
+  assert.equal(gate.accepts(two,'same',3),false);
+  const three=gate.begin('same',4);
+  assert.equal(gate.accepts(three,'same',3),false);
+  assert.equal(gate.accepts(three,'same',4),true);
+});
+test('copied road preview requires new owner proof and can recalculate without editing or losing its cached geometry', () => {
+  const stops=[{id:'a',label:'Start',coordinate:a},{id:'b',label:'Finish',coordinate:b}];
+  const cache={kind:'road',segments:[[a,b],[c,{latitude:13.73,longitude:100.53}]],distanceMeters:2400,durationSeconds:220,routeToken:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',requestHash:'a'.repeat(64),calculatedAt:'2026-10-01T00:00:00.000Z'};
+  const transferred=parseBuilderDraft({localId:null,value:{title:'Copied route',category:'scooter',visibility:'friends',stops,geometry:cache}},true).value;
+  assert.deepEqual(transferred.geometry.segments,cache.segments);
+  assert.deepEqual(transferred.stops,stops);
+  assert.equal(transferred.visibility,'private');
+  assert.equal(builderHasSaveSource(transferred),false);
+  assert.equal(needsRoadCalculation(transferred),true);
+  assert.throws(()=>builderDocument(transferred),/ROUTE_NOT_READY/);
+  const road={routeToken:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',requestHash:'b'.repeat(64),provider:'geoapify',profile:'scooter',segments:cache.segments,distanceMeters:2400,durationSeconds:220,calculatedAt:'2026-10-01T01:00:00.000Z',attribution:'Geoapify',cached:false};
+  const refreshed=applyRoadResult({value:transferred,history:[]},routeInputKey(transferred),road).value;
+  assert.equal(builderHasSaveSource(refreshed),true);
+  assert.equal(needsRoadCalculation(refreshed),false);
+  assert.deepEqual(builderDocument(refreshed).source,{kind:'road',routeToken:road.routeToken});
+});
+test('road recalculation eligibility does not turn recorded gaps or bicycle imports into a motor route',()=>{
+  const empty=blankBuilder('scooter').value;
+  assert.equal(needsRoadCalculation(empty),false);
+  const recorded={...empty,stops:[{id:'a',label:'Start',coordinate:a},{id:'b',label:'Finish',coordinate:b}],geometry:{kind:'recorded',segments:[[a,b]],distanceMeters:100,durationSeconds:null,recordedParts:['??']}};
+  assert.equal(builderHasSaveSource(recorded),true);
+  assert.equal(needsRoadCalculation(recorded),false);
+  assert.equal(needsRoadCalculation({...recorded,geometry:null,category:'bicycle'}),false);
+});

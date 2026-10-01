@@ -4,6 +4,14 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url), ts = require('typescript');
 const imports = { './preferences': await import('../src/lib/preferences.ts'), '../features/garage/localModel': await import('../src/features/garage/localModel.ts') };
+function compile(path, dependencies={}) {
+ const out={exports:{}};const source=readFileSync(new URL(path,import.meta.url),'utf8');
+ const js=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+ new Function('require','module','exports',js)(name=>{if(name in dependencies)return dependencies[name];throw Error(name);},out,out.exports);return out.exports;
+}
+const routeSync=compile('../src/features/routes/syncModel.ts');
+imports['../features/routes/localModel']=compile('../src/features/routes/localModel.ts',{'./syncModel':routeSync});
+imports['../features/routes/persistenceModel']=await import('../src/features/routes/persistenceModel.ts');
 const module = { exports: {} };
 try {
   const source = readFileSync(new URL('../src/lib/accountLocalStore.ts', import.meta.url), 'utf8');
@@ -104,7 +112,7 @@ test('device preferences survive account switches while onboarding and selected 
 });
 
 test('malformed owner data is bounded and never leaves a dangling vehicle selection', async () => {
-  const h = fixture(); h.values.set('ride.local.v5.A', JSON.stringify({ vehicles: [vehicle('valid'), { ...vehicle('bad'), category: 'aircraft' }], selectedVehicleId: 'missing', routes: [{ id: 'bad', name: 'Bad', stops: [{ latitude: 900, longitude: 2 }] }] }));
+  const h = fixture(); h.values.set('ride.local.v5.A', JSON.stringify({ vehicles: [vehicle('valid'), { ...vehicle('bad'), category: 'aircraft' }], selectedVehicleId: 'missing', routes: [] }));
   await h.store.hydrate(h.scope); const state = h.store.getSnapshot();
   assert.equal(state.owned.vehicles.length, 1); assert.equal(state.owned.selectedVehicleId, null); assert.equal(state.owned.routes.length, 0);
 });
@@ -154,4 +162,26 @@ test('failed device preference persistence stays visible across an account switc
   h.failPreferences(false); await h.store.retry(h.scope);
   assert.equal(h.store.getSnapshot().error, null);
   assert.equal(JSON.parse(h.values.get('ride.preferences.v5')).language, 'th');
+});
+
+const routeDocument=()=>({schema_version:1,title:'Private route',category:'scooter',visibility:'private',stops:[{lat:13,lng:100,label:'Start'},{lat:13.01,lng:100.01,label:'Finish'}],source:{kind:'draft'}});
+test('canonical route records, pending operations, deletion tombstones and planning draft survive restart',async()=>{
+ const h=fixture();await h.store.hydrate(h.scope);const document=routeDocument();
+ const record={localId:'private',document,geometry:null,sync:{cloudId:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',revision:0,cleanFingerprint:null,pending:{action:'save',draft:{operationId:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',routeId:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',expectedRevision:0,document}},deleted:false,serverDeleted:false,blocked:null}};
+ const draft={localId:null,value:{title:'',category:'scooter',visibility:'private',stops:[],geometry:null}};
+ h.store.update(h.scope,{routeRecords:[record],routeDraft:draft,routeConsent:true});await h.store.flush();await h.store.hydrate(h.switch('A'));
+ assert.deepEqual(h.store.getSnapshot().owned.routeRecords,[record]);assert.deepEqual(h.store.getSnapshot().owned.routeDraft,draft);assert.equal(h.store.getSnapshot().owned.routeConsent,true);
+ const tombstone={...record,sync:{...record.sync,pending:null,deleted:true,serverDeleted:true,revision:1}};h.store.update(h.scope,{routeRecords:[tombstone]});await h.store.flush();await h.store.hydrate(h.switch('A'));
+ assert.equal(h.store.getSnapshot().owned.routes.length,0);assert.equal(h.store.getSnapshot().owned.routeRecords[0].sync.serverDeleted,true);
+});
+test('authoritative empty route records cannot resurrect legacy compatibility routes',async()=>{
+ const h=fixture();h.values.set('ride.local.v5.A',JSON.stringify({routeRecords:[],routes:[{id:'old',name:'Old',stops:[{id:'s',name:'Start',latitude:1,longitude:2},{id:'f',name:'Finish',latitude:2,longitude:3}]}]}));await h.store.hydrate(h.scope);assert.deepEqual(h.store.getSnapshot().owned.routes,[]);assert.deepEqual(h.store.getSnapshot().owned.routeRecords,[]);
+});
+test('corrupt canonical route retry fails hydration and cannot overwrite its recovery record',async()=>{
+ const h=fixture();const raw=JSON.stringify({routeRecords:[{localId:'bad',document:routeDocument(),geometry:null,sync:{pending:{garbage:true}}}]});h.values.set('ride.local.v5.A',raw);await h.store.hydrate(h.scope);assert.equal(h.store.getSnapshot().error,'LOCAL_READ_FAILED');assert.equal(h.store.update(h.scope,{routeRecords:[]}),false);assert.equal(h.values.get('ride.local.v5.A'),raw);
+});
+
+test('legacy incomplete route is preserved, while invalid legacy pins fail instead of silently erasing data',async()=>{
+ const h=fixture();h.values.set('ride.local.v5.A',JSON.stringify({routes:[{id:'incomplete',name:'Draft',stops:[{id:'s',name:'Start',latitude:1,longitude:2}]}]}));await h.store.hydrate(h.scope);assert.equal(h.store.getSnapshot().owned.routeRecords[0].document.stops.length,1);
+ const bad=JSON.stringify({routes:[{id:'broken',name:'Broken',stops:[{id:'s',name:'Start',latitude:900,longitude:2}]}]});h.values.set('ride.local.v5.B',bad);await h.store.hydrate(h.switch('B'));assert.equal(h.store.getSnapshot().error,'LOCAL_READ_FAILED');assert.equal(h.values.get('ride.local.v5.B'),bad);
 });

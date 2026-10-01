@@ -16,14 +16,16 @@ import {
 } from "../components/ui";
 import { pickPicture, pictureBytes } from "../lib/photos";
 import type { supabase } from "../lib/supabase";
-import { useApp } from "../state/AppState";
 import { accountClient, isAccountCurrent, useAuth } from "../state/AuthState";
+import {useI18n} from '../lib/i18n';
+import {useRoutes} from '../state/RouteState';
+import {fingerprintRoute} from '../features/routes/localModel';
+import {getRouteOwner,getRouteProjection} from '../features/routes/syncService';
+import {sharePreview,type ShareSnapshot} from '../features/routes/compatibilityModel';
+import SharedRouteSnapshot from '../features/routes/SharedRouteSnapshot';
 
-type PreviewRoute = {
+type PreviewRoute = ShareSnapshot & {
   id: string;
-  revision: number;
-  title: string;
-  stops: { label: string; lat: number; lng: number }[];
 };
 type Picture = { uri: string; base64: string };
 type Attempt = {
@@ -40,22 +42,6 @@ function message(error: unknown, fallback: string) {
   return error && typeof error === "object" && "message" in error
     ? String(error.message)
     : fallback;
-}
-function validRoute(route: PreviewRoute | null): route is PreviewRoute {
-  return (
-    !!route?.id &&
-    Number.isInteger(route.revision) &&
-    route.revision > 0 &&
-    Array.isArray(route.stops) &&
-    route.stops.length >= 2 &&
-    route.stops.length <= 12 &&
-    route.stops.every(
-      (s) =>
-        typeof s.label === "string" &&
-        Number.isFinite(s.lat) &&
-        Number.isFinite(s.lng),
-    )
-  );
 }
 async function readPost(client: Client, attempt: Attempt) {
   const result = await client
@@ -162,7 +148,7 @@ export default function ComposeScreen() {
 }
 
 function AccountComposer({ userId }: { userId: string }) {
-  const { data } = useApp();
+  const routes=useRoutes(),{t}=useI18n();
   const { session, scope } = useAuth();
   const client = useMemo(
     () =>
@@ -191,7 +177,8 @@ function AccountComposer({ userId }: { userId: string }) {
       alive.current = false;
     };
   }, []);
-  const localRoute = data.routes.find((r) => r.id === routeId);
+  const attachable=routes.records.filter(r=>!r.sync.deleted&&r.sync.cloudId&&!r.sync.pending&&!r.sync.blocked&&r.sync.cleanFingerprint===fingerprintRoute(r.document));
+  const localRoute = attachable.find((r) => r.localId === routeId);
 
   async function preparePreview() {
     if (!client || lock.current || !isAccountCurrent(scope)) return;
@@ -208,20 +195,13 @@ function AccountComposer({ userId }: { userId: string }) {
       if (!caption.trim()) throw new Error("เพิ่มแคปชันก่อนดูตัวอย่าง");
       let snapshot: PreviewRoute | null = null;
       if (routeId) {
-        if (!localRoute?.cloudId)
-          throw new Error("บันทึกเส้นทางออนไลน์ก่อนแนบลงในโพสต์");
-        const result = await client
-          .from("rs_routes")
-          .select("id,revision,title,stops")
-          .eq("id", localRoute.cloudId)
-          .eq("owner_id", userId)
-          .single();
+        if (!localRoute?.sync.cloudId)
+          throw new Error(t('m4.compatibility.onlineRequired'));
+        const [owner,projection]=await Promise.all([getRouteOwner(scope,session!,localRoute.sync.cloudId),getRouteProjection(scope,session!,localRoute.sync.cloudId)]);
         if (!alive.current || !isAccountCurrent(scope)) return;
-        if (result.error || !validRoute(result.data as PreviewRoute | null))
-          throw new Error(
-            "โหลดเส้นทางฉบับออนไลน์ไม่สำเร็จ กรุณาซิงก์เส้นทางแล้วลองอีกครั้ง",
-          );
-        snapshot = result.data as PreviewRoute;
+        const shared=sharePreview(owner,projection);
+        if(!owner)throw Error('ROUTE_UNAVAILABLE');
+        snapshot={...shared,id:owner.id};
       }
       if (!alive.current || !isAccountCurrent(scope)) return;
       setCloudSnapshot(snapshot);
@@ -230,7 +210,7 @@ function AccountComposer({ userId }: { userId: string }) {
       attempt.current = null;
     } catch (error) {
       if (alive.current && isAccountCurrent(scope))
-        setError(message(error, "เตรียมตัวอย่างไม่สำเร็จ ลองอีกครั้ง"));
+        setError(error instanceof Error&&error.message==='ROUTE_REVISION_CONFLICT'?t('m4.compatibility.routeChanged'):message(error, "เตรียมตัวอย่างไม่สำเร็จ ลองอีกครั้ง"));
     } finally {
       lock.current = false;
       if (alive.current && isAccountCurrent(scope)) setBusy(false);
@@ -369,18 +349,7 @@ function AccountComposer({ userId }: { userId: string }) {
                 <Note>ความเร็วที่ผู้โพสต์ระบุ · ไม่ใช้จัดอันดับ</Note>
               ) : null}
               {cloudSnapshot && (
-                <>
-                  <T weight="medium">{cloudSnapshot.title}</T>
-                  {cloudSnapshot.stops.map((stop, i) => (
-                    <T key={i} size={13} muted>
-                      {i + 1}. {stop.label} · {stop.lat.toFixed(5)},{" "}
-                      {stop.lng.toFixed(5)}
-                    </T>
-                  ))}
-                  <T size={12} muted>
-                    เส้นทางออนไลน์ฉบับ {cloudSnapshot.revision}
-                  </T>
-                </>
+                <SharedRouteSnapshot value={{...cloudSnapshot,...cloudSnapshot.geometry}} />
               )}
               <T size={13}>
                 ผู้ชม:{" "}
@@ -431,19 +400,18 @@ function AccountComposer({ userId }: { userId: string }) {
                 onPress={() => setRouteId(null)}
                 disabled={busy}
               />
-              {data.routes
-                .filter((r) => r.cloudId)
+              {attachable
                 .map((r) => (
                   <Button
-                    key={r.id}
+                    key={r.localId}
                     small
-                    secondary={routeId !== r.id}
-                    label={r.name}
-                    onPress={() => setRouteId(r.id)}
+                    secondary={routeId !== r.localId}
+                    label={r.document.title}
+                    onPress={() => setRouteId(r.localId)}
                     disabled={busy}
                   />
                 ))}
-              {!data.routes.some((r) => r.cloudId) && (
+              {!attachable.length && (
                 <Note>
                   บันทึกเส้นทางออนไลน์จากแท็บเส้นทางก่อน เพื่อแนบลงในโพสต์
                 </Note>
@@ -464,7 +432,7 @@ function AccountComposer({ userId }: { userId: string }) {
           )}
           {(preview ? cloudSnapshot : localRoute) && (
             <Note>
-              โพสต์นี้จะแชร์พิกัดทุกจุดที่แสดง ตรวจสอบจุดใกล้บ้านก่อนโพสต์
+              {t('m4.compatibility.shareNotice')}
             </Note>
           )}
           {!!error && <Note error>{error}</Note>}

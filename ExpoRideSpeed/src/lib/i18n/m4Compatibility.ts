@@ -1,0 +1,26 @@
+export const m4CompatibilityEn={
+ 'm4.compatibility.category.scooter':'Scooter','m4.compatibility.category.motorcycle':'Motorcycle','m4.compatibility.category.car':'Car','m4.compatibility.category.bicycle':'Bicycle',
+ 'm4.compatibility.unavailable':'This older invitation keeps route details only. Its map is unavailable; ask the sender for a new invitation.',
+ 'm4.compatibility.invalid':'Route details are unavailable. Refresh before accepting.',
+ 'm4.compatibility.revision':'Version {{revision}} · {{category}}',
+ 'm4.compatibility.trimmed':'Shared map: the first and last 200 m are hidden. Recording gaps stay separate.',
+ 'm4.compatibility.hidden':'The shared route is hidden because endpoint privacy leaves too little geometry.',
+ 'm4.compatibility.snapshot':'This invitation keeps this shared route version even if the owner edits it later.',
+ 'm4.compatibility.routeChanged':'The route changed. Refresh its online version and preview again.',
+ 'm4.compatibility.shareNotice':'Only the shared map shown in this preview is attached. Private pins, labels and full trip metrics stay out of the post.',
+ 'm4.compatibility.onlineRequired':'Sync this route online before attaching it.',
+ 'm4.compatibility.segmentCount':'{{count}} separate map parts',
+} as const;
+export const m4CompatibilityTh:Record<keyof typeof m4CompatibilityEn,string>={
+ 'm4.compatibility.category.scooter':'สกู๊ตเตอร์','m4.compatibility.category.motorcycle':'มอเตอร์ไซค์','m4.compatibility.category.car':'รถยนต์','m4.compatibility.category.bicycle':'จักรยาน',
+ 'm4.compatibility.unavailable':'คำชวนเดิมเก็บไว้เฉพาะรายละเอียดเส้นทาง ไม่มีแผนที่ให้ตรวจสอบ กรุณาขอคำชวนใหม่จากผู้ส่ง',
+ 'm4.compatibility.invalid':'ข้อมูลเส้นทางไม่พร้อม กรุณารีเฟรชก่อนตอบรับ',
+ 'm4.compatibility.revision':'ฉบับ {{revision}} · {{category}}',
+ 'm4.compatibility.trimmed':'แผนที่ที่แชร์ซ่อนช่วง 200 เมตรแรกและสุดท้าย และไม่ลากเส้นเชื่อมช่วงที่หยุดบันทึก',
+ 'm4.compatibility.hidden':'ซ่อนเส้นทางบนแผนที่ เพราะหลังตัดช่วงต้นและท้ายแล้วเหลือระยะน้อยเกินไป',
+ 'm4.compatibility.snapshot':'คำชวนนี้เก็บเส้นทางที่แชร์ฉบับนี้ไว้ แม้ผู้ส่งจะแก้เส้นทางภายหลัง',
+ 'm4.compatibility.routeChanged':'เส้นทางเปลี่ยนแล้ว กรุณารีเฟรชฉบับออนไลน์และดูตัวอย่างอีกครั้ง',
+ 'm4.compatibility.shareNotice':'โพสต์จะแนบเฉพาะแผนที่ที่แสดงในตัวอย่างนี้ ไม่แนบหมุด ชื่อสถานที่ หรือสถิติเต็มของทริปส่วนตัว',
+ 'm4.compatibility.onlineRequired':'ซิงก์เส้นทางออนไลน์ก่อนแนบลงในโพสต์',
+ 'm4.compatibility.segmentCount':'เส้นทางบนแผนที่ {{count}} ช่วงที่แยกจากกัน',
+};

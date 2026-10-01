@@ -1,11 +1,17 @@
 import { m1En, m1Th } from "./m1";
 import { m2En, m2Th } from "./m2";
 import { m3En, m3Th } from "./m3";
+import { m4En, m4Th } from "./m4";
+import { m4AdapterEn, m4AdapterTh } from "./m4Adapter";
+import { m4CompatibilityEn, m4CompatibilityTh } from "./m4Compatibility";
 
 const en = {
   ...m1En,
   ...m2En,
   ...m3En,
+  ...m4En,
+  ...m4AdapterEn,
+  ...m4CompatibilityEn,
   "common.close": "Close",
   "common.retry": "Try again",
   "common.wait": "Just a moment",
@@ -164,6 +170,9 @@ const th: Record<TranslationKey, string> = {
   ...m1Th,
   ...m2Th,
   ...m3Th,
+  ...m4Th,
+  ...m4AdapterTh,
+  ...m4CompatibilityTh,
   "common.close": "ปิด",
   "common.retry": "ลองอีกครั้ง",
   "common.wait": "รอสักครู่",

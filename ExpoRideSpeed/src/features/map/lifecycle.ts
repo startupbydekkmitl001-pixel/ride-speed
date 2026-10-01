@@ -9,6 +9,7 @@ export class MapStatusTracker {
   private terminal: MapStatus | null = null;
   private last = '';
   constructor(private notify: (status: MapStatus) => void) {}
+  setListener(notify: (status: MapStatus) => void) { this.notify = notify; }
   private publish() {
     const status: MapStatus = this.terminal ?? (!this.online ? { state: 'degraded', reason: 'offline' }
       : this.tileError ? { state: 'degraded', reason: 'tiles' }

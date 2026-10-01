@@ -2,12 +2,13 @@ import Constants from 'expo-constants';
 import type { GeoJSONSource, Map as GLMap, MapMouseEvent } from 'maplibre-gl';
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
 import { theme } from '../../lib/theme';
-import { cameraCommand, fitIntent, fixData, fromLngLat, mapWorkerUrl, peersData, pinsData, safeCamera, safeInsets, toLngLat, trackData } from './geometry';
+import { cameraCommand, fitIntent, fitInsetsAboveFooter, fixData, fromLngLat, mapWorkerUrl, peersData, pinsData, safeCamera, safeInsets, toLngLat, trackData } from './geometry';
 import { MapStatusTracker } from './lifecycle';
 import { mapCopy } from './mapCopy';
 import { createMapStyle } from './mapStyle';
 import { mapIds, overlayLayers, peerClusterOptions } from './overlays';
 import { GeoJSONUpdateQueue } from './sourceUpdates';
+import { finishPinDrag, startPinDrag, type PinDragTicket } from './pinDrag';
 import type { MapCamera, MapCameraCommand, MapCoordinate, MapFitOptions, MapHandle, MapSurfaceProps } from './MapSurface.types';
 import './MapSurface.web.css';
 
@@ -31,11 +32,13 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
   const alive = useRef(false), styleReady = useRef(false), epoch = useRef(0), peerVersion = useRef(0);
   const pending = useRef<Intent | null>(null), writers = useRef(new Map<string, GeoJSONUpdateQueue>());
   const restart = useRef<(() => void) | null>(null);
+  const updateDragMarker = useRef<(() => void)|null>(null);
   const tracker = useRef<MapStatusTracker | null>(null);
   if (!tracker.current) tracker.current = new MapStatusTracker(status => { if (alive.current) latest.current.onStatus(status); });
   const style = useMemo(() => createMapStyle(props.theme, props.locale), [props.theme, props.locale]);
   const track = useMemo(() => trackData(props.track), [props.track]);
-  const pins = useMemo(() => pinsData(props.pins, props.selectedPinId), [props.pins, props.selectedPinId]);
+  const editablePin = props.mode === 'edit' && props.onMovePin ? props.pins.find(pin=>pin.id===props.selectedPinId && toLngLat(pin.coordinate)) : undefined;
+  const pins = useMemo(() => pinsData(editablePin ? props.pins.filter(pin=>pin.id!==editablePin.id) : props.pins, props.selectedPinId), [props.pins, props.selectedPinId, editablePin]);
   const peers = useMemo(() => peersData(props.peers), [props.peers]);
   const fix = useMemo(() => fixData(props.userFix), [props.userFix]);
   const data = useMemo(() => ({ [mapIds.track]: track, [mapIds.pins]: pins, [mapIds.peers]: peers, [mapIds.fix]: fix }), [track, pins, peers, fix]);
@@ -57,7 +60,17 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
       if (!target) return;
       const options = { padding: safeInsets(intent.options.padding ?? latest.current.contentInsets), duration: latest.current.reducedMotion ? 0 : Number.isFinite(intent.options.durationMs) ? Math.max(0, intent.options.durationMs!) : 300, bearing: 0, pitch: 0 };
       if (target.kind === 'center') map.easeTo({ ...options, center: target.center, zoom: target.zoom });
-      else map.fitBounds([[target.bounds[0], target.bounds[1]], [target.bounds[2], target.bounds[3]]], { ...options, maxZoom: target.maxZoom });
+      else {
+        const creditHeight = map.getContainer().querySelector<HTMLElement>('.maplibregl-ctrl-attrib')?.getBoundingClientRect().height ?? 0;
+        const padding = fitInsetsAboveFooter(options.padding, {
+          height: Math.max(theme.material.minTarget, Number.isFinite(creditHeight) ? creditHeight : 0),
+          gap: theme.space.sm, markerSize: theme.material.minTarget,
+        });
+        // GL JS adds fit padding to the transform's persistent padding. Store
+        // this viewport once; adding it again can leave no usable phone height.
+        map.setPadding(padding);
+        map.fitBounds([[target.bounds[0], target.bounds[1]], [target.bounds[2], target.bounds[3]]], { ...options, padding: 0, maxZoom: target.maxZoom });
+      }
     }
   }, []);
   useImperativeHandle(ref, () => ({
@@ -108,6 +121,26 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
       };
       positionCredits(); map.setPadding(safeInsets(latest.current.contentInsets));
       let longPress: ReturnType<typeof setTimeout> | null = null, origin: { x: number; y: number } | null = null, suppressClickUntil = 0;
+      let marker:import('maplibre-gl').Marker|null=null, dragTicket:PinDragTicket|null=null;
+      const syncDragMarker = () => {
+        marker?.remove(); marker=null; dragTicket=null;
+        const current=latest.current, pin=current.pins.find(value=>value.id===current.selectedPinId), coordinate=pin&&toLngLat(pin.coordinate);
+        if(!alive.current || mapRef.current!==map || !styleReady.current || current.mode!=='edit' || !current.onMovePin || !pin || !coordinate)return;
+        const target=document.createElement('div'); target.className='ride-map-drag-pin';
+        target.setAttribute('role','button'); target.tabIndex=0; target.setAttribute('aria-label',pin.label);
+        target.style.setProperty('--pin-fill',theme[current.theme].ink); target.style.setProperty('--pin-ink',theme[current.theme].bg); target.style.setProperty('--pin-accent',theme[current.theme].accent);
+        const number=document.createElement('span'); number.textContent=String(pin.order); target.append(number);
+        target.addEventListener('click',event=>{event.stopPropagation();if(latest.current.mode==='edit')latest.current.onSelectPin?.(pin.id);});
+        const created=new module.Marker({element:target,draggable:true,anchor:'center'}).setLngLat(coordinate).addTo(map); marker=created;
+        created.on('dragstart',()=>{cancelLongPress();dragTicket=startPinDrag({...latest.current,alive:alive.current,ready:styleReady.current,epoch:epoch.current},pin.id);});
+        created.on('dragend',()=>{
+          const ticket=dragTicket;dragTicket=null;suppressClickUntil=Date.now()+500;
+          const moved=created.getLngLat(), coordinate=fromLngLat([moved.lng,moved.lat]);
+          const result=coordinate&&marker===created?finishPinDrag(ticket,{...latest.current,alive:alive.current,ready:styleReady.current,epoch:epoch.current},coordinate):null;
+          if(result)latest.current.onMovePin?.(result.id,result.coordinate);
+        });
+      };
+      updateDragMarker.current=syncDragMarker;
       const cancelLongPress = () => { if (longPress) clearTimeout(longPress); longPress = null; origin = null; };
       const fireLongPress = (point: { x: number; y: number }) => {
         if (latest.current.mode === 'glance' || !latest.current.onLongPress || !styleReady.current) return;
@@ -164,6 +197,7 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
           writers.current.set(id, new GeoJSONUpdateQueue(value => source.setData(value), () => { if (alive.current && source === map.getSource(id)) tracker.current!.tileFailed(); }));
         }
         for (const layer of overlayLayers(latest.current.theme)) if (!map.getLayer(layer.id)) map.addLayer(layer);
+        syncDragMarker();
         positionCredits(); credits.setAttribute('aria-label', mapCopy[latest.current.locale].attribution);
         const command = pending.current; pending.current = null;
         if (command) apply(command);
@@ -177,6 +211,7 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
       element!.addEventListener('pointerup', cancelLongPress); element!.addEventListener('pointercancel', cancelLongPress); element!.addEventListener('pointerleave', cancelLongPress);
       const resize = new ResizeObserver(() => { map.resize(); positionCredits(); }); resize.observe(element!);
       cleanup = () => {
+        marker?.remove();marker=null;dragTicket=null;if(updateDragMarker.current===syncDragMarker)updateDragMarker.current=null;
         cancelLongPress(); resize.disconnect();
         element!.removeEventListener('pointerdown', pointerDown); element!.removeEventListener('pointermove', pointerMove);
         element!.removeEventListener('pointerup', cancelLongPress); element!.removeEventListener('pointercancel', cancelLongPress); element!.removeEventListener('pointerleave', cancelLongPress);
@@ -205,6 +240,7 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
   }, [style, props.retryToken]);
   useEffect(() => { writers.current.get(mapIds.track)?.update(track); }, [track]);
   useEffect(() => { writers.current.get(mapIds.pins)?.update(pins); }, [pins]);
+  useEffect(() => { updateDragMarker.current?.(); }, [props.pins,props.selectedPinId,props.mode,props.onMovePin,props.theme,props.locale]);
   useEffect(() => { ++peerVersion.current; writers.current.get(mapIds.peers)?.update(peers); }, [peers]);
   useEffect(() => { writers.current.get(mapIds.fix)?.update(fix); }, [fix]);
   useEffect(() => { tracker.current!.setOnline(props.online); }, [props.online]);

@@ -14,6 +14,7 @@ import { OnlineProvider } from "../state/OnlineState";
 import { RiderProfileProvider } from "../state/RiderProfile";
 import { RideProvider,useRide } from "../state/RideState";
 import { GarageProvider } from "../state/GarageState";
+import { RouteProvider } from "../state/RouteState";
 import { Button, T } from "../components/ui";
 import { errorKey, useI18n } from "../lib/i18n";
 
@@ -75,7 +76,7 @@ export default function RootLayout() {
         <AppProvider>
           <OnlineProvider>
             <RiderProfileProvider>
-              <GarageProvider><RideProvider><MotionProvider><Navigation /></MotionProvider></RideProvider></GarageProvider>
+              <GarageProvider><RideProvider><RouteProvider><MotionProvider><Navigation /></MotionProvider></RouteProvider></RideProvider></GarageProvider>
             </RiderProfileProvider>
           </OnlineProvider>
         </AppProvider>

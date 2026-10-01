@@ -11,6 +11,11 @@ import {
   useAuth,
 } from "../state/AuthState";
 import { useOnline, type Friend } from "../state/OnlineState";
+import {useI18n} from '../lib/i18n';
+import {getRouteOwner,getRouteProjection} from '../features/routes/syncService';
+import {isReviewableShareSnapshot,sharePreview} from '../features/routes/compatibilityModel';
+import SharedRouteSnapshot from '../features/routes/SharedRouteSnapshot';
+import type {RouteCategory,RouteProjection} from '../features/routes/syncTypes';
 import {
   Button,
   Empty,
@@ -24,16 +29,12 @@ import {
 } from "./ui";
 
 type Mode = "group_ride" | "timed_race";
-type Stop = { label: string; lat: number; lng: number };
-type Snapshot = {
-  title: string;
-  stops: Stop[];
-  revision: number;
-  category: string;
-};
-type CloudRoute = Snapshot & {
+type CloudRoute = {
   id: string;
   owner_id: string;
+  title: string;
+  revision: number;
+  category: RouteCategory;
   approved_course_id: string | null;
   approved_revision: number | null;
 };
@@ -48,7 +49,7 @@ type CourseSession = {
 type Challenge = {
   id: string;
   creator_id: string;
-  route_snapshot: Snapshot;
+  route_snapshot: unknown;
   mode: Mode;
   metric: string;
   course_session_id: string | null;
@@ -65,6 +66,7 @@ type Member = {
 type Review = {
   id: string;
   route: CloudRoute;
+  shared:RouteProjection;
   mode: Mode;
   friend: Friend;
   course?: Course;
@@ -87,7 +89,7 @@ const empty: Data = {
   members: [],
 };
 const routeColumns =
-  "id,owner_id,title,stops,revision,category,approved_course_id,approved_revision";
+  "id,owner_id,title,revision,category,approved_course_id,approved_revision";
 const date = (value: string) =>
   new Date(value).toLocaleString("th-TH", {
     day: "numeric",
@@ -96,13 +98,6 @@ const date = (value: string) =>
     hour: "2-digit",
     minute: "2-digit",
   });
-const categoryName = (value: string) =>
-  ({
-    scooter: "สกู๊ตเตอร์",
-    motorcycle: "มอเตอร์ไซค์",
-    car: "รถยนต์",
-    bicycle: "จักรยาน",
-  })[value] ?? value;
 function localInput(ms: number) {
   const d = new Date(ms);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
@@ -120,24 +115,12 @@ function parseLocal(value: string) {
     ? d.getTime()
     : NaN;
 }
-function completeSnapshot(
-  value: Snapshot | null | undefined,
-): value is Snapshot {
+function validRouteMetadata(value:CloudRoute|null|undefined):value is CloudRoute {
   return (
     !!value?.title &&
     Number.isInteger(value.revision) &&
     value.revision > 0 &&
-    Array.isArray(value.stops) &&
-    value.stops.length >= 2 &&
-    value.stops.length <= 12 &&
-    value.stops.every(
-      (s) =>
-        typeof s.label === "string" &&
-        Number.isFinite(s.lat) &&
-        Math.abs(s.lat) <= 90 &&
-        Number.isFinite(s.lng) &&
-        Math.abs(s.lng) <= 180,
-    )
+    typeof value.id==='string'&&/^[a-f0-9-]{36}$/.test(value.id)&&['scooter','motorcycle','car','bicycle'].includes(value.category)
   );
 }
 function failure(error: unknown, fallback: string) {
@@ -207,53 +190,6 @@ function Choice({
   );
 }
 
-function RouteSnapshot({ value }: { value: Snapshot }) {
-  const { colors } = useApp();
-  if (!completeSnapshot(value))
-    return <Note error>รายละเอียดเส้นทางไม่ครบ กรุณารีเฟรชก่อนตอบรับ</Note>;
-  return (
-    <View style={{ gap: 12 }}>
-      <Row style={{ justifyContent: "space-between", flexWrap: "wrap" }}>
-        <T size={18} weight="semibold">
-          {value.title}
-        </T>
-        <T muted size={12}>
-          ฉบับ {value.revision} · {categoryName(value.category)}
-        </T>
-      </Row>
-      {value.stops.map((stop, i) => (
-        <Row key={i} style={{ alignItems: "flex-start" }}>
-          <View
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: 14,
-              backgroundColor: colors.raised,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <T numeric size={12}>
-              {i + 1}
-            </T>
-          </View>
-          <View style={{ flex: 1 }}>
-            <T size={14} weight="medium">
-              {stop.label}
-            </T>
-            <T numeric size={12} muted selectable>
-              {stop.lat.toFixed(5)}, {stop.lng.toFixed(5)}
-            </T>
-          </View>
-        </Row>
-      ))}
-      <T muted size={12}>
-        คำชวนเก็บพิกัดฉบับนี้ไว้ แม้จะแก้เส้นทางภายหลัง
-      </T>
-    </View>
-  );
-}
-
 export default function Challenges() {
   const { session, scope } = useAuth();
   // Only this account-owned surface remounts; the router and auth callback stay mounted.
@@ -263,6 +199,7 @@ export default function Challenges() {
 }
 
 function AccountChallenges({ userId }: { userId: string }) {
+  const {t}=useI18n();
   const now = useNow(),
     { colors } = useApp(),
     { friends } = useOnline();
@@ -381,7 +318,7 @@ function AccountChallenges({ userId }: { userId: string }) {
   const acceptedFriends = friends.filter((f) => f.state === "accepted");
   const routes = data.routes.filter(
     (r) =>
-      completeSnapshot(r) &&
+      validRouteMetadata(r) &&
       (mode === "group_ride" ||
         (r.approved_course_id === courseId &&
           r.approved_revision === r.revision)),
@@ -430,16 +367,16 @@ function AccountChallenges({ userId }: { userId: string }) {
     tell("");
     try {
       // Load the exact cloud version that will be shown for consent, never the device draft.
-      const result = await client
-        .from("rs_routes")
-        .select(routeColumns)
-        .eq("id", selectedRoute.id)
-        .eq("owner_id", userId)
-        .single();
+      const [result,owner,shared] = await Promise.all([
+        client.from('rs_routes').select(routeColumns).eq('id',selectedRoute.id).eq('owner_id',userId).single(),
+        getRouteOwner(scope,session!,selectedRoute.id),getRouteProjection(scope,session!,selectedRoute.id),
+      ]);
       if (!mounted.current || !isAccountCurrent(scope)) return;
-      if (result.error || !completeSnapshot(result.data))
+      if (result.error || !validRouteMetadata(result.data))
         throw new Error("revision");
       const route = result.data as CloudRoute;
+      sharePreview(owner,shared);
+      if(!shared||route.revision!==shared.revision)throw Error('revision');
       let course: Course | undefined, round: CourseSession | undefined;
       if (mode === "timed_race") {
         const [courseResult, roundResult] = await Promise.all([
@@ -486,6 +423,7 @@ function AccountChallenges({ userId }: { userId: string }) {
       setReview({
         id: randomUUID(),
         route,
+        shared,
         mode,
         friend: selectedFriend,
         course,
@@ -633,7 +571,7 @@ function AccountChallenges({ userId }: { userId: string }) {
             </View>
           </Row>
           <Panel>
-            <RouteSnapshot value={review.route} />
+            <SharedRouteSnapshot value={review.shared} invitation />
             <View
               style={{
                 borderTopWidth: 1,
@@ -748,7 +686,7 @@ function AccountChallenges({ userId }: { userId: string }) {
                 <Choice
                   key={route.id}
                   title={route.title}
-                  detail={`${route.stops.length} จุด · ${categoryName(route.category)} · ฉบับ ${route.revision}`}
+                  detail={t('m4.compatibility.revision',{revision:route.revision,category:t(`m4.compatibility.category.${route.category}`)})}
                   selected={routeId === route.id}
                   disabled={busy}
                   onPress={() => setRouteId(route.id)}
@@ -927,7 +865,7 @@ function AccountChallenges({ userId }: { userId: string }) {
                   </T>
                 </View>
               </Row>
-              <RouteSnapshot value={row.route_snapshot} />
+              <SharedRouteSnapshot value={row.route_snapshot} invitation map={false} />
               <View style={{ gap: 4 }}>
                 <T size={14}>{date(row.starts_at)}</T>
                 <T muted size={12}>
@@ -975,7 +913,7 @@ function AccountChallenges({ userId }: { userId: string }) {
                       label="ยอมรับ"
                       disabled={
                         busy ||
-                        !completeSnapshot(row.route_snapshot) ||
+                        !isReviewableShareSnapshot(row.route_snapshot) ||
                         !!loadError
                       }
                       onPress={() => void decide(row.id, "accept")}

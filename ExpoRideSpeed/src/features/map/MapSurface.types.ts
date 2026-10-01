@@ -32,6 +32,8 @@ export interface MapSurfaceProps {
   onPress?(coordinate: MapCoordinate): void;
   onLongPress?(coordinate: MapCoordinate): void;
   onSelectPin?(id: string): void;
+  /** Engine drag end only; ignored outside edit mode or for a stale selected pin. */
+  onMovePin?(id: string, coordinate: MapCoordinate): void;
   onSelectPeer?(id: string): void;
   onUserGesture?(): void;
 }

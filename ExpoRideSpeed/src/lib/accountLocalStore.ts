@@ -1,6 +1,8 @@
-import type { GarageVehicle, SavedRoute, Stop } from './domain';
+import type { GarageVehicle, SavedRoute } from './domain';
 import { parsePreferences, type Preferences } from './preferences';
 import { blankGarageSync, parseGarageSync, type GarageLocalSync } from '../features/garage/localModel';
+import { compatibleRoutes, parseRouteRecords, type RouteLocalRecord } from '../features/routes/localModel';
+import { parseBuilderDraft, type StoredBuilderDraft } from '../features/routes/persistenceModel';
 
 export type LocalScope = Readonly<{ userId: string | null; generation: number }>;
 export type DevicePreferences = Omit<Preferences, 'welcomeDone'>;
@@ -8,6 +10,9 @@ export type OwnedLocalData = {
   vehicles: GarageVehicle[]; selectedVehicleId: string | null; routes: SavedRoute[];
   welcomeDone: boolean; importedGuest: boolean;
   garageSync: GarageLocalSync;
+  routeRecords: RouteLocalRecord[];
+  routeDraft: StoredBuilderDraft | null;
+  routeConsent: boolean;
 };
 export type LocalPatch = Partial<DevicePreferences & OwnedLocalData>;
 type Storage = { getItem: (key: string) => Promise<string | null>; setItem: (key: string, value: string) => Promise<unknown>; removeItem?: (key: string) => Promise<unknown> };
@@ -19,8 +24,7 @@ const LEGACY = 'ridespeed.local.v4', PREFS = 'ride.preferences.v5', MIGRATED = '
 const ownerKey = (scope: LocalScope) => `ride.local.v5.${scope.userId ?? 'guest'}`;
 const text = (v: unknown, max: number): v is string => typeof v === 'string' && [...v].length > 0 && [...v].length <= max && !/[\u0000-\u001f\u007f]/.test(v);
 const object = (v: unknown): Record<string, unknown> => v && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : {};
-const coordinate = (v: unknown, max: number): v is number => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= max;
-export const emptyOwned = (): OwnedLocalData => ({ vehicles: [], selectedVehicleId: null, routes: [], welcomeDone: false, importedGuest: false, garageSync: blankGarageSync() });
+export const emptyOwned = (): OwnedLocalData => ({ vehicles: [], selectedVehicleId: null, routes: [], welcomeDone: false, importedGuest: false, garageSync: blankGarageSync(), routeRecords: [], routeDraft: null, routeConsent: false });
 const preferences = (value: unknown): DevicePreferences => {
   const { welcomeDone: _welcome, ...device } = parsePreferences(value); return device;
 };
@@ -44,24 +48,12 @@ function parseOwned(value: unknown, stripCloud = false): OwnedLocalData {
       ...(typeof v.color === 'string' && /^#[a-f\d]{6}$/i.test(v.color) ? { color:v.color.toUpperCase() } : {}),
       ...(!stripCloud && typeof v.photoPath === 'string' && /^[a-f\d-]{36}\/[a-f\d-]{36}\.(jpg|png|webp)$/i.test(v.photoPath) ? { photoPath:v.photoPath } : {}) });
   }
-  const routes: SavedRoute[] = [], routeIds = new Set<string>();
-  for (const candidate of Array.isArray(stored.routes) ? stored.routes.slice(0, 500) : []) {
-    const r = object(candidate);
-    if (!text(r.id, 100) || routeIds.has(r.id) || !text(r.name, 80) || !Array.isArray(r.stops) || r.stops.length < 2 || r.stops.length > 12) continue;
-    const stops: Stop[] = [], stopIds = new Set<string>();
-    for (const candidateStop of r.stops) {
-      const s = object(candidateStop);
-      if (!text(s.id, 100) || stopIds.has(s.id) || !text(s.name, 100) || !coordinate(s.latitude, 90) || !coordinate(s.longitude, 180)) break;
-      stopIds.add(s.id); stops.push({ id: s.id, name: s.name, latitude: s.latitude, longitude: s.longitude });
-    }
-    if (stops.length !== r.stops.length) continue;
-    routeIds.add(r.id);
-    const cloud = !stripCloud && typeof r.cloudId === 'string' && /^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(r.cloudId) && Number.isSafeInteger(r.cloudRevision) && Number(r.cloudRevision) > 0
-      ? { cloudId: r.cloudId, cloudRevision: Number(r.cloudRevision) } : {};
-    routes.push({ id: r.id, name: r.name, stops, closedCourse: r.closedCourse === true, ...cloud,
-      ...(['scooter', 'motorcycle', 'car', 'bicycle'].includes(String(r.category)) ? { category: r.category as SavedRoute['category'] } : {}) });
-  }
-  return { ...blank, vehicles, routes, selectedVehicleId: typeof stored.selectedVehicleId === 'string' && vehicleIds.has(stored.selectedVehicleId) ? stored.selectedVehicleId : null,
+  // Canonical retries/tombstones are authoritative. Invalid canonical data fails
+  // hydration rather than silently discarding an operation with an unknown result.
+  const routeRecords = parseRouteRecords(stored.routeRecords, stored.routes, stripCloud);
+  return { ...blank, vehicles, routes: compatibleRoutes(routeRecords), routeRecords,
+    routeDraft: parseBuilderDraft(stored.routeDraft,stripCloud), routeConsent: !stripCloud && stored.routeConsent === true,
+    selectedVehicleId: typeof stored.selectedVehicleId === 'string' && vehicleIds.has(stored.selectedVehicleId) ? stored.selectedVehicleId : null,
     welcomeDone: stored.welcomeDone === true, importedGuest: stored.importedGuest === true, garageSync: parseGarageSync(stored.garageSync,stripCloud) };
 }
 
@@ -113,7 +105,9 @@ export class AccountLocalStore {
     // An unread record is not an empty record. Keep the recovery copy until a
     // successful read, including when the UI offers offline browsing.
     if (!this.current(scope) || !this.value.ready || this.closedOwners.has(ownerKey(scope)) || this.value.error === 'LOCAL_READ_FAILED') return false;
-    const owned = parseOwned({ ...this.value.owned, ...patch }), device = preferences({ ...this.value.preferences, ...patch });
+    let owned: OwnedLocalData;
+    try { owned = parseOwned({ ...this.value.owned, ...patch }); } catch { return false; }
+    const device = preferences({ ...this.value.preferences, ...patch });
     this.publish({ ...this.value, owned, preferences: device, error: null });
     this.persist(scope, owned, device); return true;
   }
@@ -162,9 +156,10 @@ export class AccountLocalStore {
     const guest = parseOwned(raw ? JSON.parse(raw) : null, true);
     const idMap = new Map(guest.vehicles.map(vehicle => [vehicle.id, freshId()]));
     const copiedVehicles = guest.vehicles.map(vehicle => ({ ...vehicle, id: idMap.get(vehicle.id)! }));
-    const copiedRoutes = guest.routes.map(route => ({ ...route, id: freshId(), stops: route.stops.map(stop => ({ ...stop, id: freshId() })) }));
-    this.update(scope, { vehicles: [...this.value.owned.vehicles, ...copiedVehicles], routes: [...this.value.owned.routes, ...copiedRoutes],
-      selectedVehicleId: this.value.owned.selectedVehicleId ?? idMap.get(guest.selectedVehicleId ?? '') ?? null, importedGuest: true });
+    const copiedRecords = guest.routeRecords.filter(record=>!record.sync.deleted).map(record=>({ ...record, localId:freshId(), document:{...record.document,visibility:'private' as const} }));
+    if (!this.update(scope, { vehicles: [...this.value.owned.vehicles, ...copiedVehicles], routeRecords: [...this.value.owned.routeRecords, ...copiedRecords],
+      selectedVehicleId: this.value.owned.selectedVehicleId ?? idMap.get(guest.selectedVehicleId ?? '') ?? null, importedGuest: true })
+    ) throw new Error('LOCAL_WRITE_FAILED');
     this.publish({ ...this.value, guestAvailable: false });
     await this.flush();
     if (!this.current(scope)) throw new Error('ACCOUNT_CHANGED');
