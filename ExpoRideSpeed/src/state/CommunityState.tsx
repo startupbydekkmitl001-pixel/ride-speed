@@ -1,0 +1,68 @@
+import {CryptoDigestAlgorithm,digest,randomUUID} from 'expo-crypto';
+import React,{createContext,useCallback,useContext,useEffect,useLayoutEffect,useMemo,useRef,useState,useSyncExternalStore} from 'react';
+import {AppState as NativeAppState} from 'react-native';
+import {CommunityCoordinator} from '../features/community/CommunityCoordinator';
+import {CommunityPhotoStore} from '../features/community/CommunityPhotoStore';
+import {communityPhotoDisk} from '../features/community/photoDisk';
+import {communityCanonical,parseCommunityDrafts,type CommunityDraftRecord,type OwnedCommunityOperation} from '../features/community/localModel';
+import {getCommunityOperation,getCommunityPost,mutateCommunity} from '../features/community/service';
+import {getCommunityOwnerPost} from '../features/community/communityOwnerService';
+import {validateMediaReservation} from '../features/community/model';
+import type {CommunityRequest,CommunityStoredOperation,CommunityLatest,CommunityMediaReservation} from '../features/community/types';
+import {useApp} from './AppState';
+import {accountClient,isAccountCurrent,useAuth,type AuthScope} from './AuthState';
+import {useRide} from './RideState';
+import {useSocial} from './SocialState';
+const monotonicNow=()=>performance.now(),closedOwners=new Set<string>(),closures=new Set<{owner:string;close:()=>void}>();
+export const communityPhotos=new CommunityPhotoStore({current:isAccountCurrent,disk:communityPhotoDisk,sha256:async bytes=>{const value=await digest(CryptoDigestAlgorithm.SHA256,Uint8Array.from(bytes));return Array.from(new Uint8Array(value),n=>n.toString(16).padStart(2,'0')).join('');}});
+/** Confirmed server deletion only. All transport closes before asynchronous private byte removal. */
+export function clearCommunityAccount(scope:AuthScope){if(!scope.userId)return Promise.resolve();closedOwners.add(scope.userId);for(const entry of closures)if(entry.owner===scope.userId)entry.close();return communityPhotos.closeOwner(scope);}
+type State={ready:boolean;pending:readonly CommunityStoredOperation[];drafts:readonly CommunityDraftRecord[];busy:boolean;error:string|null;latest:CommunityLatest|null;retryAfterMs:number|null;appliedVersion:number;privacyKey:string;privacyPending:boolean;
+ mutate:(request:CommunityRequest,guard?:()=>void)=>Promise<string|null>;enqueuePublication:(request:CommunityRequest,operationId:string,guard?:()=>void)=>Promise<string|null>;retry:()=>Promise<void>;retirePublished:()=>Promise<void>;discardDraft:(draftId:string,guard?:()=>void)=>Promise<void>;readDrafts:()=>CommunityDraftRecord[];updateDrafts:(reduce:(fresh:CommunityDraftRecord[])=>CommunityDraftRecord[])=>Promise<void>;signed:()=>NonNullable<ReturnType<typeof useAuth>['session']>;guardOwner:()=>void;
+};
+const Context=createContext<State|null>(null),empty:OwnedCommunityOperation[]=[],noDrafts:CommunityDraftRecord[]=[];
+export function CommunityProvider({children}:{children:React.ReactNode}){
+ const auth=useAuth(),app=useApp(),ride=useRide(),social=useSocial(),{scope}=auth;
+ const refs=useRef({auth,app,moving:ride.movingLocked}),foreground=useRef(NativeAppState.currentState==='active'),activityEpoch=useRef(0);
+ const [active,setActive]=useState(()=>NativeAppState.currentState==='active'),[closedScope,setClosedScope]=useState<AuthScope|null>(null),[appliedVersion,setAppliedVersion]=useState(0);
+ useLayoutEffect(()=>{if(refs.current.moving!==ride.movingLocked)++activityEpoch.current;refs.current={auth,app,moving:ride.movingLocked};},[auth,app,ride.movingLocked]);
+ const guardOwner=useCallback(()=>{if(!isAccountCurrent(scope)||!scope.userId||closedOwners.has(scope.userId))throw Error('ACCOUNT_CHANGED');},[scope]);
+ const canSend=useCallback(()=>{guardOwner();const s=refs.current;return foreground.current&&NativeAppState.currentState==='active'&&!s.moving&&s.auth.ready&&s.app.ready&&!!s.auth.session&&s.auth.session.user.id===scope.userId&&s.app.storageError!=='LOCAL_READ_FAILED';},[scope,guardOwner]);
+ const signed=useCallback(()=>{guardOwner();if(!canSend())throw Error('COMMUNITY_INACTIVE');return refs.current.auth.session!;},[guardOwner,canSend]);
+ const readDrafts=useCallback(()=>{guardOwner();const owned=refs.current.app.getOwned();if(!owned||refs.current.app.storageError==='LOCAL_READ_FAILED')throw Error('LOCAL_READ_FAILED');return parseCommunityDrafts(owned.communityDrafts,scope.userId);},[guardOwner,scope]);
+ const updateDrafts=useCallback(async(reduce:(fresh:CommunityDraftRecord[])=>CommunityDraftRecord[])=>{guardOwner();const result=parseCommunityDrafts(reduce(readDrafts()),scope.userId);if(!refs.current.app.update({communityDrafts:result}))throw Error(refs.current.app.storageError??'LOCAL_WRITE_FAILED');await refs.current.app.flushStorage();guardOwner();},[readDrafts,guardOwner,scope]);
+ // Constructor only stores guarded ports. Egress happens after a durable flush.
+ // eslint-disable-next-line react-hooks/refs
+ const coordinator=useMemo(()=>new CommunityCoordinator({ownerId:scope.userId??'',guard:guardOwner,canSend,
+  read:()=>{guardOwner();const owned=refs.current.app.getOwned();if(!owned||refs.current.app.storageError==='LOCAL_READ_FAILED')throw Error('LOCAL_READ_FAILED');return owned.communityOperations;},
+  update:async reduce=>{guardOwner();const owned=refs.current.app.getOwned();if(!owned)throw Error('LOCAL_READ_FAILED');if(!refs.current.app.update({communityOperations:reduce(owned.communityOperations)}))throw Error(refs.current.app.storageError??'LOCAL_WRITE_FAILED');await refs.current.app.flushStorage();guardOwner();},
+  flush:async()=>{guardOwner();await refs.current.app.flushStorage();guardOwner();},operationId:randomUUID,nowISO:()=>new Date().toISOString(),monotonicNow,
+  send:op=>mutateCommunity(scope,signed(),{operationId:op.operationId,request:op.request}),status:op=>getCommunityOperation(scope,signed(),op.operationId),
+  applied:async receipt=>{guardOwner();if(receipt.request.action==='publish'&&receipt.result.kind==='post'){const document=receipt.request.document,result=receipt.result;await updateDrafts(rows=>{const target=rows.find(row=>row.operationId===receipt.operation_id);if(!target||target.post_id!==result.post_id||communityCanonical(target.document)!==communityCanonical(document)||!['pending','published'].includes(target.status)||target.status==='published'&&target.post_revision!==result.content_revision)throw Error('COMMUNITY_INVALID_RESPONSE');return rows.map(row=>row===target?{...row,status:'published',post_revision:result.content_revision,error:null}:row);});}guardOwner();setAppliedVersion(v=>v+1);},
+ }),[scope,guardOwner,canSend,signed,updateDrafts]);
+ const queue=useSyncExternalStore(coordinator.subscribe,coordinator.getSnapshot,coordinator.getSnapshot);
+ useEffect(()=>{const close=()=>{coordinator.close();setClosedScope(scope);};const entry={owner:scope.userId??'',close};closures.add(entry);return()=>{closures.delete(entry);coordinator.close();};},[coordinator,scope]);
+ useEffect(()=>{const listener=NativeAppState.addEventListener('change',state=>{if(foreground.current!==(state==='active'))++activityEpoch.current;foreground.current=state==='active';setActive(foreground.current);});return()=>listener.remove();},[]);
+ const ready=auth.ready&&app.ready&&closedScope!==scope&&!closedOwners.has(scope.userId??'')&&app.storageError!=='LOCAL_READ_FAILED';
+ const photoReferences=useCallback(()=>readDrafts().flatMap(row=>row.photos.map(photo=>({post_id:row.post_id,media_id:photo.media_id}))),[readDrafts]);
+ const recoverPending=useCallback(async()=>{signed();await refs.current.app.flushStorage();signed();await communityPhotos.prune(scope,photoReferences,guardOwner);signed();for(const draft of readDrafts()){if(draft.status!=='pending')continue;const queued=refs.current.app.getOwned()?.communityOperations.find(op=>op.operationId===draft.operationId);const request:CommunityRequest={schema_version:1,action:'publish',post_id:draft.post_id,expected_revision:draft.post_revision,document:draft.document};if(queued){if(communityCanonical(queued.request)!==communityCanonical(request))throw Error('COMMUNITY_OPERATION_CONFLICT');continue;}signed();await coordinator.enqueue(request,draft.operationId!);guardOwner();}await coordinator.retry();},[scope,coordinator,signed,readDrafts,guardOwner,photoReferences]);
+ useEffect(()=>{if(ready&&active&&auth.session&&!ride.movingLocked)void recoverPending().catch(()=>{});},[ready,active,auth.session,ride.movingLocked,recoverPending]);
+ useEffect(()=>{const last=queue.latest;if(last?.status!=='rejected'||!scope.userId)return;void updateDrafts(rows=>rows.map(row=>row.operationId===last.operationId&&row.status==='pending'?{...row,status:'local',operationId:null,error:last.error}:row)).catch(()=>{});},[queue.latest,scope,updateDrafts]);
+ const pending=ready&&scope.userId?app.data.communityOperations:empty;
+ const privacyPending=pending.some(op=>op.request.action==='delete_post'||op.request.action==='audience')||social.pending.some(op=>op.request.action==='friend_action'&&['block','remove'].includes(op.request.verb));
+ const privacyKey=JSON.stringify([scope.generation,privacyPending,appliedVersion,social.accountRevision,social.latest?.operationId??null]);
+ return <Context.Provider value={{ready,pending,drafts:ready&&scope.userId?app.data.communityDrafts:noDrafts,busy:ready&&queue.busy,error:app.storageError??queue.error,latest:ready?queue.latest:null,retryAfterMs:queue.retryAfterMs,appliedVersion,privacyPending,privacyKey,guardOwner,signed,readDrafts,updateDrafts,
+  mutate:async(request,callerGuard=()=>{})=>{guardOwner();callerGuard();const session=signed(),epoch=activityEpoch.current,accept=()=>{signed();callerGuard();if(epoch!==activityEpoch.current)throw Error('COMMUNITY_INACTIVE');};if(request.action==='publish')throw Error('COMMUNITY_REVIEW_REQUIRED');const own=request.action==='audience'||request.action==='delete_post',detail=own?await getCommunityOwnerPost(scope,session,request.post_id):await getCommunityPost(scope,session,request.post_id);accept();if(detail.post.content_revision!==request.expected_revision||own&&!['published','hidden'].includes((detail.post as {state:string}).state))throw Error('COMMUNITY_CHANGED');return coordinator.enqueue(request,undefined,accept);},
+  enqueuePublication:async(request,operationId,callerGuard=()=>{})=>{signed();callerGuard();const epoch=activityEpoch.current,accept=()=>{signed();callerGuard();if(epoch!==activityEpoch.current)throw Error('COMMUNITY_INACTIVE');};if(request.action!=='publish')throw Error('COMMUNITY_INVALID');const draft=readDrafts().find(row=>row.status==='pending'&&row.operationId===operationId&&row.post_id===request.post_id&&row.post_revision===request.expected_revision&&communityCanonical(row.document)===communityCanonical(request.document));if(!draft)throw Error('COMMUNITY_REVIEW_REQUIRED');return coordinator.enqueue(request,operationId,accept);},
+  retry:async()=>{signed();await refs.current.app.retryStorage();signed();await recoverPending();guardOwner();},
+  discardDraft:async(id,callerGuard=()=>{})=>{guardOwner();callerGuard();const row=readDrafts().find(d=>d.draft_id===id);if(!row||!['local','preparing'].includes(row.status)||refs.current.app.getOwned()?.communityOperations.some(op=>op.request.post_id===row.post_id))throw Error('COMMUNITY_CHANGED');await updateDrafts(rows=>{callerGuard();const fresh=rows.find(d=>d.draft_id===id);if(!fresh||!['local','preparing'].includes(fresh.status))throw Error('COMMUNITY_CHANGED');return rows.filter(d=>d.draft_id!==id);});guardOwner();await communityPhotos.prune(scope,photoReferences,guardOwner);guardOwner();},
+  retirePublished:async()=>{guardOwner();const pendingPosts=new Set(refs.current.app.getOwned()?.communityOperations.map(op=>op.request.post_id)),retired=readDrafts().filter(row=>row.status==='published'&&!pendingPosts.has(row.post_id));
+   // The confirmed immutable post remains on the server. Keep its local cleanup
+   // metadata until every private candidate is removed, so restart can retry.
+   for(const row of retired)for(const photo of row.photos){guardOwner();const fresh=readDrafts();if(!fresh.some(d=>d.draft_id===row.draft_id&&d.status==='published')||fresh.some(d=>d.draft_id!==row.draft_id&&d.photos.some(p=>p.media_id===photo.media_id)))throw Error('COMMUNITY_CHANGED');await communityPhotos.remove(scope,{post_id:row.post_id,media_id:photo.media_id},guardOwner);}
+   const ids=new Set(retired.map(row=>row.draft_id));await updateDrafts(rows=>rows.filter(row=>!ids.has(row.draft_id)||row.status!=='published'));guardOwner();await communityPhotos.prune(scope,photoReferences,guardOwner);guardOwner();},
+ }}>{children}</Context.Provider>;
+}
+export function useCommunity(){const state=useContext(Context);if(!state)throw Error('CommunityProvider is required');return state;}
+/** Captured owner JWT + immutable reserved path. No background work or overwrite. */
+export async function uploadCommunityPhoto(scope:AuthScope,session:NonNullable<ReturnType<typeof useAuth>['session']>,reservation:CommunityMediaReservation,bytes:Uint8Array,guard:()=>void){guard();if(!isAccountCurrent(scope)||scope.userId!==session.user.id)throw Error('ACCOUNT_CHANGED');const frozen=validateMediaReservation(reservation,scope.userId!,reservation.post_id,reservation.media_id);if(frozen.state!=='reserved'||!(bytes instanceof Uint8Array)||bytes.byteLength<1||bytes.byteLength>1048576)throw Error('COMMUNITY_MEDIA_INVALID');const client=accountClient(scope,session),result=await client.storage.from(frozen.bucket).upload(frozen.path,Uint8Array.from(bytes).buffer,{contentType:'image/jpeg',upsert:false,cacheControl:'60'});guard();if(!isAccountCurrent(scope))throw Error('ACCOUNT_CHANGED');if(result.error)throw Error('COMMUNITY_MEDIA_UNAVAILABLE');}

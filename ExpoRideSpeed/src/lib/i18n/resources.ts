@@ -9,6 +9,8 @@ import { m5bEn, m5bTh } from "./m5b";
 import {m5cEn,m5cTh} from '../raceI18n';
 import {m6En,m6Th} from '../rankedI18n';
 import {m6pEn,m6pTh} from '../rankedPublicationI18n';
+import {m7En,m7Th} from '../communityI18n';
+import {m7OwnerEn,m7OwnerTh} from '../communityOwnerI18n';
 
 const en = {
   ...m1En,
@@ -22,6 +24,8 @@ const en = {
   ...m5cEn,
   ...m6En,
   ...m6pEn,
+  ...m7En,
+  ...m7OwnerEn,
   "common.close": "Close",
   "common.retry": "Try again",
   "common.wait": "Just a moment",
@@ -188,6 +192,8 @@ const th: Record<TranslationKey, string> = {
   ...m5cTh,
   ...m6Th,
   ...m6pTh,
+  ...m7Th,
+  ...m7OwnerTh,
   "common.close": "ปิด",
   "common.retry": "ลองอีกครั้ง",
   "common.wait": "รอสักครู่",

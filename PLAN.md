@@ -85,11 +85,12 @@ The user has authorized native implementation and chosen MapLibre/OpenFreeMap + 
 
 ## M7 — community
 
-- [ ] Latest/Top week/Friends virtualized feed, real loading/empty/error/offline states, optimistic likes/comments/save, deep-link share/report/block, moderation queue.
-- [ ] Durable composer: verified or self-reported ride attachment, actual summary/vehicle/private-trimmed route snapshot, six ≤1600 px metadata-stripped photos with blurhash; caption≤150 and description/visibility.
-- [ ] Versioned media reservations/post publish/interactions/feed cursor RPCs and RLS; private Storage, signer only for currently visible parent posts, orphan/deletion cleanup.
-- [ ] Test media ownership/cap/ordering/retries, 150-char new posts without truncating old data, route privacy, stable cursors, block/hide/delete child visibility/counts/signatures and optimistic rollback. Real two-account posting acceptance where available.
-- [ ] Commit M7; report five lines.
+- [x] Latest/Top week/Friends FlashList feed, real loading/empty/error/offline states, durable interactions/comments/save, deep-link share/report/block and service-only moderation contracts. Hidden posts retain owner metadata for private revocation/delete.
+- [x] Durable composer: genuine ride/saved-route attachment review, actual summary/vehicle/200m endpoint-trimmed route, six ≤1600 px metadata-stripped JPEG photos with server blurhash; caption≤150 and explicit visibility.
+- [x] Versioned reservations/publish/interactions/feed cursor RPCs and private RLS/Storage, parent-ACL-fenced signer and bounded cleanup handlers.011/012 and three workers deployed once; approved legacy gateway settings off, each handler rejects anonymous requests401.
+- [x] Source checks:961 app and277 backend tests, zero skips; whole typecheck/lint and web/iOS/Android exports pass. Media ownership/caps/recovery, cursor/privacy/child visibility, retained confirmations, recycling and strict decoders verified. See docs/design/m7-acceptance-v5.md.
+- [ ] Hosted positive posting/photo/two-account acceptance: Google sign-in succeeds, existing account/profile API currently fails with PGRST002503 despite successful cache notification. Protected binary-cleanup schedule/observed execution and native codec/performance remain separate gates; no synthetic hosted posts added.
+- [x] Commit M7 source; report five lines. Operational/device gates above remain open.
 
 ## M8 — motion, performance, accessibility/store prep
 

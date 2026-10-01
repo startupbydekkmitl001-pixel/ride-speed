@@ -164,7 +164,8 @@ test('additive migration preserves exact legacy worker bodies and seeds only a r
  const prior=new PGlite();try{
   await prior.exec('create role anon nologin;create role authenticated nologin;create role service_role nologin bypassrls;');await prior.exec(schema);for(const owner of owners)await prior.query('insert into auth.users values($1)',[owner]);
   const directory=new URL('../migrations/',import.meta.url),files=(await readdir(directory)).filter(x=>x.endsWith('.sql')).sort(),migration=files.find(x=>x.startsWith('202610010010_'));
-  for(const file of files.filter(x=>x!==migration))await prior.exec(await readFile(new URL(file,directory),'utf8'));
+  // Capture010's real predecessor state, excluding all later additive slices.
+  for(const file of files.filter(x=>x<migration))await prior.exec(await readFile(new URL(file,directory),'utf8'));
   const q=ports(prior);await profiles(q);const challenge=nextRaceId(),submission=nextRaceId(),pending=nextRaceId();
   await q.admin("insert into public.rs_challenges(id,creator_id,route_snapshot,category,mode,metric,starts_at,ends_at) values($1,$2,'{}','scooter','group_ride','none',now()-interval '1 hour',now()+interval '1 hour')",[challenge,A]);
   for(const value of[submission,pending])await q.admin("insert into public.rs_submissions(id,owner_id,challenge_id,evidence_path,visibility,state) values($1,$2,$3,$4,'private','queued')",[value,A,challenge,`${A}/${value}.bin`]);

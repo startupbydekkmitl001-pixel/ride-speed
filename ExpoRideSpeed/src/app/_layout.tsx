@@ -19,6 +19,7 @@ import { SocialProvider } from "../state/SocialState";
 import { LiveProvider,useLive } from "../state/LiveState";
 import {RaceProvider,useRace} from '../state/RaceState';
 import {RankedProvider} from '../state/RankedState';
+import {CommunityProvider} from '../state/CommunityState';
 import { Button, T } from "../components/ui";
 import { errorKey, useI18n } from "../lib/i18n";
 
@@ -62,6 +63,8 @@ function Navigation() {
           <Stack.Screen name="vehicle-picker" options={{ presentation: "modal" }} />
           <Stack.Screen name="auth" options={{ presentation: "modal" }} />
           <Stack.Screen name="compose" options={{ presentation: "modal" }} />
+          <Stack.Screen name="community-post" />
+          <Stack.Screen name="community-posts" />
           <Stack.Screen name="convoy" />
           <Stack.Screen name="friend-links" />
           <Stack.Screen name="races" />
@@ -90,7 +93,7 @@ export default function RootLayout() {
       <AuthProvider>
         <AppProvider>
             <RiderProfileProvider>
-              <GarageProvider><RideProvider><RouteProvider><SocialProvider><LiveProvider><RaceProvider><RankedProvider><OnlineProvider><MotionProvider><Navigation /></MotionProvider></OnlineProvider></RankedProvider></RaceProvider></LiveProvider></SocialProvider></RouteProvider></RideProvider></GarageProvider>
+              <GarageProvider><RideProvider><RouteProvider><SocialProvider><LiveProvider><RaceProvider><RankedProvider><CommunityProvider><OnlineProvider><MotionProvider><Navigation /></MotionProvider></OnlineProvider></CommunityProvider></RankedProvider></RaceProvider></LiveProvider></SocialProvider></RouteProvider></RideProvider></GarageProvider>
             </RiderProfileProvider>
         </AppProvider>
       </AuthProvider>

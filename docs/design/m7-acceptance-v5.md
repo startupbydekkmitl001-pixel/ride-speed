@@ -1,0 +1,55 @@
+# M7 Community — source, privacy and deployment acceptance
+
+Recorded on 2026-10-01. Community now has genuine backend readers, recoverable publication drafts, private validated photos and explicit owner privacy controls. Local passing tests and aggregate deployment readiness do not demonstrate a hosted publication, two-account visibility or installed-device performance.
+
+## Implemented source and UI
+
+- Latest, Top this week and Friends read canonical server pages. Top this week uses the Bangkok Monday-based week and eligible unique non-self likes, with the scoring rule visible in the UI. Exact owner/filter/window/revision keysets preserve UTC microseconds. Failed or unread pages never claim an empty community.
+- Feed, detail comments, photo galleries, owner settings and Ranked use FlashList v2. Current viewability controls private image requests; recycled assets reset their image/retry state and ignore retired callbacks. Background, movement, owner changes and privacy changes retire rendering and held reads. This verifies source behavior, not phone frame rate or memory use.
+- The composer retains up to four owner-scoped local drafts. It accepts a 150-codepoint caption, a longer description, real owned ride/route choices, an audience and up to six ordered photos. A fresh attachment review freezes server-derived statistics and safe route geometry. Ride summaries remain self-reported; publication creates no Ranked qualification or verification badge.
+- Ride and saved-route projections preserve disconnected parts and trim at least the first and last 200 m. Short or unavailable geometry stays hidden. A detail route action opens a genuine interactive MapLibre preview of the canonical trimmed geometry, without private stops, user GPS, peers or invented connections.
+- Photo preparation re-encodes JPEG pixels to a maximum 1600 px edge and 1 MiB. Owner-scoped immutable local bytes survive interruption and ambiguous responses. Server reservations, uploads and pixel validation complete before publication. Local, uploading, pending, rejected and published states remain distinct; confirmed publication provides a post exit.
+- Likes and saves are desired-state operations. Comments, reports, sharing, blocking and owner audience/deletion use current canonical bindings. Pending overlays never invent confirmed counts. Block reads actual bounded Social pair pages and does not infer absence from a partially loaded friend list. Moderation reports confirm receipt only.
+- Feed/detail hosts repeat captured account and screen-activity guards before and after asynchronous reads, signing, sharing and write preflight. A held callback cannot regain authority after background/foreground, focus or A→B→A changes. The deep link is the allowlisted app route `community-post?postId=<UUID>`; duplicate/extra parameters, hashes and arbitrary paths are rejected. No signed URL appears in route parameters or persisted data.
+- Manage posts is reachable from Profile. Its separate owner page/getter expose only post ID, content revision, audience, state and update time, including hidden and deleted settings. Hidden captions, photos and geometry stay unavailable. Auth-only owners can explicitly review an owned audience/deletion CAS and reconcile pending privacy work without completing a social profile. New viewer interactions still use their ordinary profile/visibility guards.
+- Owner confirmations hold a memory-only consent version. Closing/reopening a sheet, changing audience, changing the canonical revision or retiring activity invalidates retained confirmations, including a held parent preflight. After durable queue acceptance, presentation checks that same local consent/activity; normal canonical getter retirement or later loss of connectivity cannot turn an accepted queued ID into a false read error. Read-only drafts/deleted rows have no write affordance.
+
+## API and private photo boundaries
+
+The client uses typed `rs_community_feed`, `rs_community_post`, `rs_community_comments`, `rs_community_attachment_review`, post/media reservation, mutation and owned receipt APIs. Separate `rs_community_owner_posts` and `rs_community_owner_post` serve metadata-only settings. New writes retire the superseded browser Community APIs. Unknown results retain the exact durable operation; receipt replay confirms only that operation and never substitutes for a current permission/settings read.
+
+The private `ride-post-media` bucket accepts JPEG up to 1 MiB. `community-media-commit` downloads only the reserved owner/post/media path and validates the actual bounded bytes, digest, decoded entropy/pixels, dimensions and allowed JPEG metadata. `community-media-url` signs only currently authorized included media, then repeats authorization. Its 60-second URL is kept in a bounded owner/post/revision/digest memory lease and retired immediately by local privacy/activity changes. An already-issued URL can remain valid until its short expiry; no immediate server revocation claim is made.
+
+Photo cleanup is service-only, bounded and binary-first. Account deletion includes both reserved and orphaned private paths. A 256 MiB post-media budget and 768 MiB application reserved-plus-actual budget serialize allocations across the six application buckets. They protect application admission; they do not guarantee organization billing or free-tier headroom. Cleanup scheduling and operation remain separate acceptance work.
+
+## Source verification
+
+Root also verified an isolated exact-index candidate that excludes concurrent M8 work and unrelated dirty design references:961/961 app tests and277/277 backend tests, both zero skips; full TypeScript/lint and web/iOS/Android exports pass. Candidate tests use the same disposable loopback PostgreSQL17.11 for actual concurrency checks. Windows checkout line conversion was corrected from the exact Git index before the immutable-migration hash check; source/index011/012 hashes remain unchanged. Three generated Community bundle provenance/license/auth tests, nine native/config/gate checks and21 Python build tests pass. Logs are `build/m7-index-*.txt`. Original upstream vendor/license whitespace is preserved intentionally; owned-source diff whitespace checks pass.
+
+The final independent complete app run passed **961/961 tests, zero skips**. Full TypeScript passed and the frozen owner/shared-helper slice has zero scoped lint findings. Existing Node module-type notices remain test-run diagnostics, not failed cases.
+
+The owner slice passed **26 tests**: eight strict model/installed-SDK/finite-reader cases, five actual host cases and thirteen actual TSX cases. The earlier peer run counted 25 owner cases before the final offline-after-durable-acceptance regression. Combining the final owner slice with 27 ordinary Community UI/recycling cases gives **53/53**. This preserves the default social-profile gate while testing the owner-only `requireProfile:false` option and pending-private retry guard. Independent peer review found no remaining confirmed lifecycle/privacy blocker in these frozen files.
+
+Independent backend review reran **274/274** tests against frozen 011 with zero skips. The backend author subsequently ran **277/277**, including three additive 012 upgrade/decoder/readiness regressions; those three cases were also independently rerun. Four Community races use actual independent PostgreSQL connections, and maintained client decoders consume real SQL responses. Eleven canonical Edge entrypoints and the JPEG benchmark script passed the author's Deno checks. Isolated legal 1600² baseline/progressive entropy measurements fit the local budget; they are not hosted CPU or native codec acceptance.
+
+## Observed hosted deployment
+
+Root deployed 011 once at reviewed SHA256 `ADCFA97FB0B81F7727B7068310062873D19A1C77AFEA38768AA2E539861EEBAC`. Aggregate readiness at **07:35:00.712777 UTC** showed all eight private tables with RLS and no direct app/anon table access, 25 inspected public entries including eleven new authenticated APIs and eight new service-only APIs, private 1 MiB JPEG bucket, retired browser grants and disabled race policy. There were **zero posts, media, reports and operations**. No synthetic production content was created for acceptance.
+
+The original legacy create→delete sequence revealed a terminal revision0 compatibility error after 011 became immutable. Root applied only additive 012 at SHA256 `D68F84930EDF17F6BAE544F7E6529BACD4F34D28E88B3DBDC7E9EFC71D532F09` at approximately **07:57 UTC**. The **07:58:07.873101 UTC** read-only proof reported three not-deleted draft guards, zero repairable rows, the retained definer/empty search path, and no direct anon/app/service execution of the private projection helper. Live drafts remain revision0 and read-only; deployed 011 bytes are unchanged.
+
+Root saved and deployed the reviewed standalone handlers, retaining vendor notices and legacy gateway checking off with each handler's own authentication:
+
+| Handler | Saved bundle SHA256 |
+| --- | --- |
+| community-media-commit | `91C97BAF46916A5ABD6BBAF43F5A0F2CDA1FE8A2EE45962C5A5E7EA2DC0FAC3A` |
+| community-media-url | `DFC9C816B7265CB0A8AB6F317CCEDA02F29E53AA024D52FF0A26BC577C9ADDAB` |
+| community-media-cleanup | `F9D8905AD1366D63E00887FE719C2B51981DF400E608CBE552FB609C51AC9230` |
+
+Anonymous checks at **07:56:23.461 UTC** returned 401 `COMMUNITY_AUTH_REQUIRED` from both user handlers and 401 `SERVICE_AUTH_REQUIRED` from cleanup, before any work. Aggregate evidence is retained under `build/review-v5/m7`; canonical inventory belongs in `backend/DEPLOYMENT.md`.
+
+## Remaining acceptance gates
+
+Google authentication succeeds for the genuine owner, but the latest hosted app attempt encountered existing account/profile RPC **PGRST002 HTTP 503** database/schema-cache connectivity errors. Root requested cache notification at approximately 07:59 UTC and is testing recovery. No successful signed Community feed/settings read, positive hosted post/photo, signed-image expiry, two-account block/visibility or report recovery is claimed by this record while that outage remains.
+
+After recovery, verify genuine empty reads first, then consenting-account publication, immutable photo/attachment recovery, audience revocation, comments/block/report and restart behavior. Operate protected cleanup and observe actual storage/database/egress usage. Rebuild this M7 source for iOS/Android; older successful native artifacts predate it. Physical-device JPEG preparation, screen-reader/Dynamic Type behavior, 60/120 Hz motion, 30-minute memory/battery and mid-range Android checks remain unmeasured. No race pilot, operator approval, cleanup schedule or positive production fixture was enabled by this milestone.

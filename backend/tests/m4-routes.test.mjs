@@ -53,7 +53,7 @@ test('short geometry hides completely and disconnected recording gaps are never 
 test('compatibility post/challenge snapshots bind only trimmed independent parts and never raw pins',async()=>{
  // Existing profile-dependent social APIs stay intact; private route saves do not need a profile.
  await as(B,"select public.rs_upsert_profile('route_friend','Friend')");
- await as(B,'select public.rs_create_post($1)',[id(24)]);await as(B,"select public.rs_publish_post($1,'Test only','',null,$2,1,'community',null)",[id(24),id(23)]);
+ await legacyInternalAs(B,'select public.rs_create_post($1)',[id(24)]);await legacyInternalAs(B,"select public.rs_publish_post($1,'Test only','',null,$2,1,'community',null)",[id(24),id(23)]);
  await legacyInternalAs(B,"select public.rs_create_challenge($1,$2,1,'group_ride',null,now()+interval '1 hour',now()+interval '2 hours')",[id(25),id(23)]);
  for(const table of ['public.rs_posts','public.rs_challenges']){const snapshot=(await admin(`select route_snapshot from ${table} where id=$1`,[table.endsWith('posts')?id(24):id(25)])).rows[0].route_snapshot;assert.equal(snapshot.revision,1);assert.equal(snapshot.segments.length,2);assert.equal('stops' in snapshot,false);assert.equal('routeToken' in snapshot,false);assert.equal(JSON.stringify(snapshot).includes('home-secret'),false);}
 });

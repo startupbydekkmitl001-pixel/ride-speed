@@ -2,6 +2,7 @@ import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { Switch, View } from "react-native";
 import { RiderCard } from "../../components/RiderCard";
+import { CommunityManagePostsButton } from "../../features/community/CommunityManagePostsButton";
 import {
   Button,
   Field,
@@ -329,6 +330,7 @@ function AccountProfile() {
         {account.error && <Note error>{t("profile.privacyPending")}</Note>}
         <Button secondary label={t("profile.privacySave")} disabled={!account.ready || account.busy} busy={busy} onPress={savePrivacy} />
       </Panel>}
+      {session && <CommunityManagePostsButton />}
       <Button secondary label={t("profile.legal")} icon="document-text-outline" onPress={() => router.push("/auth/legal")} />
       {session ? (
         <Panel>

@@ -8,7 +8,7 @@ const functionsRoot = path.join(root, 'backend', 'functions');
 const output = path.join(root, 'build', 'deploy-m1');
 const names = process.argv.slice(2);
 if (!names.length) names.push('profile-avatar-url', 'delete-account');
-const moduleBundles = new Set(['verify-race-attempt', 'race-evidence-cleanup']);
+const moduleBundles = new Set(['verify-race-attempt', 'race-evidence-cleanup', 'community-media-commit', 'community-media-url', 'community-media-cleanup']);
 if (names.some(name => !['profile-avatar-url', 'delete-account', 'vehicle-photo-url', 'route-service', ...moduleBundles].includes(name))) throw new Error('Unsupported dashboard handler');
 fs.mkdirSync(output, { recursive: true });
 const manifest = {};
@@ -52,12 +52,23 @@ for (const name of names) {
       absWorkingDir: root,
       entryPoints: [path.join(functionsRoot, name, 'index.ts')],
       bundle: true, format: 'esm', platform: 'neutral', target: 'es2022',
-      external: ['npm:@supabase/supabase-js@2.117.2'],
+      external: ['npm:@supabase/supabase-js@2.117.2', 'npm:blurhash@2.0.5'],
       write: false, sourcemap: false, legalComments: 'inline',
     });
     bundle = built.outputFiles[0].text;
     extension = 'js';
     generator = { framework: 'esbuild', version: esbuild.version, format: 'esm', target: 'es2022', canonicalTypeCheck: 'deno check backend/functions/<name>/index.ts' };
+  }
+  if (name === 'community-media-commit') {
+    // The dashboard deploys this one file; license sidecars are not uploaded.
+    // Include the full upstream redistribution notices inside its JS artifact.
+    for (const notice of ['jpeg-js-LICENSE.txt', 'Apache-2.0-LICENSE.txt']) {
+      const file = path.join(functionsRoot, '_shared', 'vendor', notice);
+      const source = fs.readFileSync(file, 'utf8');
+      if (source.includes('*/')) throw new Error('Unsafe embedded license notice');
+      sources.push({ path: path.relative(root, file).replaceAll(path.sep, '/'), sha256: crypto.createHash('sha256').update(source).digest('hex') });
+      bundle = `/* ${notice}\n${source}\n*/\n` + bundle;
+    }
   }
   fs.writeFileSync(path.join(output, `${name}.${extension}`), bundle);
   manifest[name] = { sha256: crypto.createHash('sha256').update(bundle).digest('hex'), sources, ...(generator ? { extension, generator } : {}) };

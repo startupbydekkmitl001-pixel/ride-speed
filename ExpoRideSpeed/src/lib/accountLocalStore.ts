@@ -13,6 +13,7 @@ import {parseEvidenceReferences} from '../features/races/evidenceReferences';
 import type {RaceEvidenceReference} from '../features/races/RaceEvidenceStore';
 import {parseRaceStopIntents,type RaceStopIntent} from '../features/races/stopIntents';
 import {parseRankedOperations,type StoredRankedOperation} from '../features/ranked/publicationModel';
+import {parseCommunityOperations,parseCommunityDrafts,type OwnedCommunityOperation,type CommunityDraftRecord} from '../features/community/localModel';
 
 export type LocalScope = Readonly<{ userId: string | null; generation: number }>;
 export type DevicePreferences = Omit<Preferences, 'welcomeDone'>;
@@ -29,6 +30,8 @@ export type OwnedLocalData = {
   raceEvidence: RaceEvidenceReference[];
   raceStopIntents: RaceStopIntent[];
   rankedOperations: StoredRankedOperation[];
+  communityOperations:OwnedCommunityOperation[];
+  communityDrafts:CommunityDraftRecord[];
 };
 export type LocalPatch = Partial<DevicePreferences & OwnedLocalData>;
 type Storage = { getItem: (key: string) => Promise<string | null>; setItem: (key: string, value: string) => Promise<unknown>; removeItem?: (key: string) => Promise<unknown> };
@@ -40,12 +43,12 @@ const LEGACY = 'ridespeed.local.v4', PREFS = 'ride.preferences.v5', MIGRATED = '
 const ownerKey = (scope: LocalScope) => `ride.local.v5.${scope.userId ?? 'guest'}`;
 const text = (v: unknown, max: number): v is string => typeof v === 'string' && [...v].length > 0 && [...v].length <= max && !/[\u0000-\u001f\u007f]/.test(v);
 const object = (v: unknown): Record<string, unknown> => v && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : {};
-export const emptyOwned = (): OwnedLocalData => ({ vehicles: [], selectedVehicleId: null, routes: [], welcomeDone: false, importedGuest: false, garageSync: blankGarageSync(), routeRecords: [], routeDraft: null, routeConsent: false, socialOperations: [], liveOperations: [], raceOperations:[], raceEvidence:[],raceStopIntents:[],rankedOperations:[] });
+export const emptyOwned = (): OwnedLocalData => ({ vehicles: [], selectedVehicleId: null, routes: [], welcomeDone: false, importedGuest: false, garageSync: blankGarageSync(), routeRecords: [], routeDraft: null, routeConsent: false, socialOperations: [], liveOperations: [], raceOperations:[], raceEvidence:[],raceStopIntents:[],rankedOperations:[],communityOperations:[],communityDrafts:[] });
 const preferences = (value: unknown): DevicePreferences => {
   const { welcomeDone: _welcome, ...device } = parsePreferences(value); return device;
 };
 const freshId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-function validateEvidenceOwner(scope:LocalScope,owned:OwnedLocalData){if(owned.raceEvidence.some(row=>row.owner_id!==scope.userId)||scope.userId===null&&(owned.raceEvidence.length>0||owned.raceOperations.length>0||owned.raceStopIntents.length>0))throw Error('RACE_EVIDENCE_UNAVAILABLE');parseRankedOperations(owned.rankedOperations,scope.userId);return owned;}
+function validateEvidenceOwner(scope:LocalScope,owned:OwnedLocalData){if(owned.raceEvidence.some(row=>row.owner_id!==scope.userId)||scope.userId===null&&(owned.raceEvidence.length>0||owned.raceOperations.length>0||owned.raceStopIntents.length>0))throw Error('RACE_EVIDENCE_UNAVAILABLE');parseRankedOperations(owned.rankedOperations,scope.userId);parseCommunityOperations(owned.communityOperations,scope.userId);parseCommunityDrafts(owned.communityDrafts,scope.userId);return owned;}
 
 function parseOwned(value: unknown, stripCloud = false): OwnedLocalData {
   const stored = object(value), blank = emptyOwned();
@@ -75,6 +78,8 @@ function parseOwned(value: unknown, stripCloud = false): OwnedLocalData {
     raceEvidence: stripCloud?[]:parseEvidenceReferences(stored.raceEvidence),
     raceStopIntents: stripCloud?[]:parseRaceStopIntents(stored.raceStopIntents),
     rankedOperations: stripCloud?[]:parseRankedOperations(stored.rankedOperations),
+    communityOperations:stripCloud?[]:parseCommunityOperations(stored.communityOperations),
+    communityDrafts:stripCloud?[]:parseCommunityDrafts(stored.communityDrafts),
     routeDraft: parseBuilderDraft(stored.routeDraft,stripCloud), routeConsent: !stripCloud && stored.routeConsent === true,
     selectedVehicleId: typeof stored.selectedVehicleId === 'string' && vehicleIds.has(stored.selectedVehicleId) ? stored.selectedVehicleId : null,
     welcomeDone: stored.welcomeDone === true, importedGuest: stored.importedGuest === true, garageSync: parseGarageSync(stored.garageSync,stripCloud) };

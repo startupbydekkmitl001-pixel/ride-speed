@@ -4,12 +4,14 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import {raceModule,stored,uuid} from './helpers/races.mjs';
 import {rankedModule} from './rankedFixtures.mjs';
+import {communityModule,owner as communityOwner,document as communityDocument} from './communityFixtures.mjs';
 const require = createRequire(import.meta.url), ts = require('typescript');
 const imports = { './preferences': await import('../src/lib/preferences.ts'), '../features/garage/localModel': await import('../src/features/garage/localModel.ts') };
 imports['../features/races/model']=raceModule('model');
 imports['../features/races/evidenceReferences']=raceModule('evidenceReferences');
 imports['../features/races/stopIntents']=raceModule('stopIntents');
 imports['../features/ranked/publicationModel']=rankedModule('publicationModel');
+imports['../features/community/localModel']=communityModule('localModel');
 function compile(path, dependencies={}) {
  const out={exports:{}};const source=readFileSync(new URL(path,import.meta.url),'utf8');
  const js=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
@@ -45,6 +47,10 @@ const liveOperation = () => ({operationId:'dddddddd-dddd-4ddd-8ddd-dddddddddddd'
 const evidenceRef=()=>({owner_id:uuid(1),attempt_id:uuid(4),race_id:uuid(3),ride_id:uuid(13),capture_id:uuid(5),sha256:'a'.repeat(64),byte_length:3000,first_sequence:4,last_sequence:7,sample_count:4});
 const stopIntent=()=>({attempt_id:uuid(4),race_id:uuid(3),capture_id:uuid(5),reason:'background'});
 const rankedOperation=()=>({owner_id:uuid(1),operation_id:uuid(90),request:{schema_version:1,action:'publication_set',metric:'sustained_speed',record_id:uuid(80),expected_revision:0,audience:'friends'},queued_at:'2026-10-01T00:00:00Z',last_error:null});
+const communityOperation=()=>({owner_id:communityOwner,operationId:uuid(190),request:{schema_version:1,action:'publish',post_id:uuid(180),expected_revision:0,document:communityDocument()},queuedAt:'2026-10-01T00:00:00Z',lastError:null});
+const communityDraft=()=>({owner_id:communityOwner,draft_id:uuid(170),post_id:uuid(180),revision:1,document:{...communityDocument(),caption:'',ride:null,include_ride_route:false,media_ids:[]},photos:[],post_revision:0,status:'local',operationId:null,error:null,created_at:'2026-10-01T00:00:00Z',updated_at:'2026-10-01T00:00:00Z'});
+test('community drafts and exact pending publish survive restart without foreign owner or guest authority',async()=>{const h=fixture();await h.store.hydrate(h.switch(communityOwner));assert.equal(h.store.update(h.scope,{communityDrafts:[communityDraft()],communityOperations:[communityOperation()]}),true);await h.store.flush();await h.store.hydrate(h.switch(communityOwner));assert.equal(h.store.getSnapshot().owned.communityDrafts.length,1);assert.equal(h.store.getSnapshot().owned.communityOperations.length,1);await h.store.hydrate(h.switch(uuid(2)));assert.equal(h.store.getSnapshot().owned.communityDrafts.length,0);assert.equal(h.store.update(h.scope,{communityOperations:[communityOperation()]}),false);h.values.set('ride.local.v5.guest',JSON.stringify({vehicles:[vehicle('guest')],communityDrafts:[communityDraft()],communityOperations:[communityOperation()]}));await h.store.importGuest(h.scope);assert.equal(h.store.getSnapshot().owned.vehicles.length,1);assert.equal(h.store.getSnapshot().owned.communityOperations.length,0);assert.equal(h.store.getSnapshot().owned.communityDrafts.length,0);});
+test('corrupt community draft preserves unread recovery and cannot be silently overwritten',async()=>{const h=fixture(),key=`ride.local.v5.${communityOwner}`,raw=JSON.stringify({communityDrafts:[{...communityDraft(),signed_url:'private'}]});h.values.set(key,raw);await h.store.hydrate(h.switch(communityOwner));assert.equal(h.store.getSnapshot().error,'LOCAL_READ_FAILED');assert.equal(h.store.update(h.scope,{communityDrafts:[]}),false);assert.equal(h.values.get(key),raw);});
 
 test('ranked sharing intent survives restart, cannot cross owners and is removed only after confirmed account cleanup',async()=>{
  const h=fixture();await h.store.hydrate(h.switch(uuid(1)));const account=h.scope,op=rankedOperation();assert.equal(h.store.update(account,{rankedOperations:[op]}),true);await h.store.flush();await h.store.hydrate(h.switch(uuid(1)));assert.deepEqual(JSON.parse(JSON.stringify(h.store.getSnapshot().owned.rankedOperations)),[op]);await h.store.hydrate(h.switch(uuid(2)));assert.equal(h.store.getSnapshot().owned.rankedOperations.length,0);assert.equal(h.store.update(h.scope,{rankedOperations:[op]}),false);await h.store.forgetAccount(account);assert.equal(h.values.has(`ride.local.v5.${uuid(1)}`),false);

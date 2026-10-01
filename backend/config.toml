@@ -25,6 +25,15 @@ verify_jwt = false
 [functions.race-evidence-cleanup]
 verify_jwt = false
 
+[functions.community-media-commit]
+verify_jwt = false
+
+[functions.community-media-url]
+verify_jwt = false
+
+[functions.community-media-cleanup]
+verify_jwt = false
+
 # User handlers explicitly validate the Bearer token through Supabase Auth getUser.
-# race-evidence-cleanup instead requires the existing configured service secret.
+# race/community media cleanup require the existing configured service secret.
 # The gateway's legacy JWT check is disabled to support current publishable keys.

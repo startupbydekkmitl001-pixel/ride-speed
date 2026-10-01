@@ -1,6 +1,16 @@
 # RideSpeed online backend
 
-Deployment sources for Supabase Auth, PostgreSQL/RLS, private Storage, server Broadcast presence and four Edge Functions. [API.md](API.md) is the native contract. No credentials or artificial course approvals are seeded.
+M7 setup, retained legacy behavior, explicit publication and photo/capacity/cleanup contracts are detailed in [COMMUNITY.md](COMMUNITY.md). Apply only its separately reviewed additive011 after the hosted001–010 inventory; never replay those migrations. New canonical handlers are `community-media-commit`, `community-media-url` and service-only `community-media-cleanup`, each with its config entry. They reuse existing project credentials, and account deletion retains its deployed entrypoint.
+
+```powershell
+npm test
+npx --yes deno check --node-modules-dir=auto functions/community-media-commit/index.ts functions/community-media-url/index.ts functions/community-media-cleanup/index.ts
+npx --yes deno run --node-modules-dir=auto --allow-read scripts/benchmark-community-jpeg.ts
+```
+
+Run from `backend/`. The benchmark generates synthetic legal1600px JPEG bytes and performs actual strict entropy decoding/digest/pixel placeholder validation, without a project or user photo. Optional local fixture path tests an independently encoded JPEG. Retain the pinned strict vendor's BSD/Apache licenses in deployed bundles; native Expo/browser output and hosted256MB/2s acceptance remain separate. Register/observe a protected bounded binary cleanup job only after the user's operator confirmation; local source never installs Cron/Vault or invokes production deletion.
+
+Deployment sources for Supabase Auth, PostgreSQL/RLS, private Storage, server Broadcast presence and maintained Edge Functions. [API.md](API.md) is the native contract. No credentials or artificial course approvals are seeded.
 
 Local verification: Node 24, `npm ci` then `npm test` in this directory. Tests execute **all** timestamp-sorted migrations with real PostgreSQL grants/RLS in PGlite, evidence recomputation and the maintained Edge handlers. Coverage includes onboarding/profile separation, preference revisions, ghost-mode topic revocation, owner-bound immutable avatar uploads, accepted/blocked avatar access, cross-owner challenge/evidence/record deletion, stale verifier fencing, deletion retries and Storage→DB→Auth failure gates. M2 adds owner/Auth-only private summary sync, exact operation replay, CAS/immutable snapshots, bounded geometry, keyset history and deletion fences/purge. Auth, Storage and Realtime boundaries are stubs; these tests do **not** prove a hosted Supabase integration. Check all Edge entrypoints:
 

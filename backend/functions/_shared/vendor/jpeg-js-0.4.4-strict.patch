@@ -1,0 +1,50 @@
+diff --git a/backend/node_modules/jpeg-js/lib/decoder.js b/backend/functions/_shared/vendor/jpeg-js-0.4.4-strict.mjs
+index 1982481..138bc30 100644
+--- a/backend/node_modules/jpeg-js/lib/decoder.js
++++ b/backend/functions/_shared/vendor/jpeg-js-0.4.4-strict.mjs
+@@ -325,16 +325,19 @@ var JpegImage = (function jpegImage() {
+         }
+       }
+ 
+-      if (mcu === mcuExpected) {
+-        // Skip trailing bytes at the end of the scan - until we reach the next marker
+-        do {
+-          if (data[offset] === 0xFF) {
+-            if (data[offset + 1] !== 0x00) {
+-              break;
+-            }
+-          }
+-          offset += 1;
+-        } while (offset < data.length - 2);
++      // Ride Speed strict privacy delta: all unused alignment bits are one,
++      // and no unread entropy-tail bytes may hide payload before a marker.
++      if (bitsCount && (bitsData & ((1 << bitsCount) - 1)) !== ((1 << bitsCount) - 1)) {
++        throw new Error("Invalid JPEG alignment padding");
++      }
++      // jpeg-js0.4.4 writes one stuffed all-one alignment byte even when the
++      // final MCU ends exactly at a byte boundary. It carries no free payload
++      // bits. Accept only this exact inert byte, once; the next bytes must mark.
++      if (mcu === mcuExpected && bitsCount === 0 && data[offset] === 0xFF && data[offset + 1] === 0x00) {
++        offset += 2;
++      }
++      if (mcu === mcuExpected && (data[offset] !== 0xFF || data[offset + 1] === 0x00)) {
++        throw new Error("Unread JPEG entropy tail");
+       }
+ 
+       // find marker
+@@ -1088,14 +1091,7 @@ var JpegImage = (function jpegImage() {
+   return constructor;
+ })();
+ 
+-if (typeof module !== 'undefined') {
+-	module.exports = decode;
+-} else if (typeof window !== 'undefined') {
+-	window['jpeg-js'] = window['jpeg-js'] || {};
+-	window['jpeg-js'].decode = decode;
+-}
+-
+-function decode(jpegData, userOpts = {}) {
++export function decode(jpegData, userOpts = {}) {
+   var defaultOpts = {
+     // "undefined" means "Choose whether to transform colors based on the image’s color model."
+     colorTransform: undefined,

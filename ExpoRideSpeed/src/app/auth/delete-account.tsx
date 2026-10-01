@@ -18,6 +18,7 @@ import { clearLiveAccount } from "../../state/LiveState";
 import { liveSecrets } from "../../features/live/secretStorage";
 import {clearRaceAccount} from '../../state/RaceState';
 import {clearRankedAccount} from '../../state/RankedState';
+import {clearCommunityAccount} from '../../state/CommunityState';
 
 export default function DeleteAccountScreen() {
   const { scope } = useAuth();
@@ -62,7 +63,9 @@ function AccountDeletion() {
           clearLiveAccount(scope); ensure();
           clearSocialAccount(scope); ensure();
           clearRankedAccount(scope); ensure();
-          await clearRaceAccount(scope); ensure();
+          // Close all account-owned transports synchronously before awaiting byte removal.
+          const communityCleanup=clearCommunityAccount(scope),raceCleanup=clearRaceAccount(scope);
+          await Promise.all([communityCleanup,raceCleanup]); ensure();
           await ride.stopAsync(); ensure();
           await rider.clearAccount(); ensure();
           await clearOnboardingAccount(scope); ensure();

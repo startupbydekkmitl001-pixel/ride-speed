@@ -1,10 +1,12 @@
 # Native client contract (v5)
 
-Status: the foundation and additive M1 account/avatar lifecycle are deployed; hosted acceptance is recorded separately in DEPLOYMENT.md. Additive M2 private-summary source is locally verified and awaits its separate hosted review/deployment. Use the project URL + **publishable** key in the app. Keep secret/service credentials only in Edge Functions. All owner RPCs derive the acting UID from the authenticated session.
+M7's exact Community publication/media/read/owner-settings contract and limits are in [COMMUNITY.md](COMMUNITY.md). Its client DTOs remain in `features/community/types.ts`; owner metadata has separate strict client types. An additive source file is not a hosted deployment claim.
+
+Hosted schema and worker acceptance is recorded separately in DEPLOYMENT.md; new reviewed source does not itself prove deployment. Use the project URL + **publishable** key in the app. Keep secret/service credentials only in Edge Functions. All owner RPCs derive the acting UID from the authenticated session.
 
 ## M2 private ride summaries
 
-The journal/outbox is separate from native competition evidence. `202610010004_private_ride_summaries.sql` adds `rs_rides` and private operation receipts. Auth-only users can sync without creating a profile. Every summary, vehicle/class hint and statistic remains **self-reported and private**. These rows cannot populate ranks, friend presence or community posts. No raw GPS sample arrays, accuracy/source evidence or Storage upload is part of summary sync.
+The journal/outbox is separate from native competition evidence. `202610010004_private_ride_summaries.sql` adds `rs_rides` and private operation receipts. Auth-only users can sync without creating a profile. Every summary, vehicle/class hint and statistic remains **self-reported and private**. These rows cannot populate ranks or friend presence. M7 allows a separate explicit Community publication of a server-projected summary and trimmed geometry; syncing alone never publishes it. No raw GPS sample arrays, accuracy/source evidence or Storage upload is part of summary sync.
 
 ```ts
 rs_sync_ride_summary({

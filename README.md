@@ -68,6 +68,8 @@ This table records the older build9 roadmap. For current V5 source, use [PLAN.md
 
 ## Current app on Windows
 
+Current V5 Community source includes a durable six-photo composer, genuine ride/route attachment review, Latest/Top week/Friends feed, comments/likes/save/report/block and owner sharing controls. Community and Ranked use SDK-compatible FlashList; source recycling checks are separate from measured native performance. See [M7 acceptance](docs/design/m7-acceptance-v5.md) and [deployment evidence](backend/DEPLOYMENT.md). Current checks:961 app tests and277 backend tests with zero skips, TypeScript/lint clean, and iOS/Android/web exports successful. These sources require a new native build; older published build9 and verified adfd511 artifacts do not contain this slice. The real Google login succeeds, but existing profile/account API currently returns PGRST002503; positive online posting acceptance remains unresolved.
+
 The app uses Expo SDK 57, Expo Router, a local Swift Core Location module and Node tests. V5 preserves timestamps, accuracy/source flags and local journal receipts; recording remains foreground-only. Raw proof is separate from a self-reported cloud summary, and no display animation changes evidence. Published build 9 retains its earlier memory-only limitation. The sample GPX is not a replay feature.
 
 With a compatible Node version and dependencies available, open PowerShell here:

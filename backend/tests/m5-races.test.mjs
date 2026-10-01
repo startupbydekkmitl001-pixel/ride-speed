@@ -136,11 +136,13 @@ test('host loss before common epoch cancels authority while post-epoch host loss
 });
 test('race evidence256MiB budget counts pending reservations and actual orphans once, while exact bind replay stays free',async()=>{
  const f=await createRace(p),a=await reserveRaceAttempt(p,f),armed=await armRaceAttempt(p,f,a);
- await p.admin("insert into storage.objects(bucket_id,name,owner_id,metadata) values('ride-race-evidence','operator-orphan',null,$1::jsonb)",[JSON.stringify({size:268435456-50000,mimetype:'application/json'})]);
+ //011 reserves the bucket maximum until actual upload qualification; the old
+ // declared-byte helper remains unchanged and separately asserted below.
+ await p.admin("insert into storage.objects(bucket_id,name,owner_id,metadata) values('ride-race-evidence','operator-orphan',null,$1::jsonb)",[JSON.stringify({size:268435456-2097152,mimetype:'application/json'})]);
  const bound=await bindRaceEvidence(p,a,armed);assert.ok(bound.receipt.result.reservation);
  assert.deepEqual(await mutate(A,bound.operation,bound.body),bound.receipt);
  const replayPath=bound.receipt.result.reservation.path;await p.as(A,"insert into storage.objects(bucket_id,name,owner_id,metadata) values('ride-race-evidence',$1,$2,'{\"size\":50000,\"mimetype\":\"application/json\"}')",[replayPath,A]);
- assert.equal(Number((await p.admin('select ride_private.race_reserved_evidence_bytes() n')).rows[0].n),268435456);
+ assert.equal(Number((await p.admin('select ride_private.race_reserved_evidence_bytes() n')).rows[0].n),268435456-2097152+50000);assert.equal(Number((await p.admin("select ride_private.community_storage_bytes('ride-race-evidence') n")).rows[0].n),268435456);
  const aborted=await mutate(A,nextRaceId(),request('attempt_abort',{attempt_id:a.attemptId,expected_revision:bound.receipt.result.attempt.revision,reason:'user_stop'}));assert.equal(aborted.result.attempt.state,'aborted');
  const b=await reserveRaceAttempt(p,f),second=await armRaceAttempt(p,f,b),denied=await mutate(A,nextRaceId(),{...bound.body,attempt_id:b.attemptId,capture_id:b.captureId,expected_revision:second.receipt.result.attempt.revision});error(denied,'RACE_CAPACITY');
  assert.equal((await p.admin('select evidence_path from ride_private.race_attempts where id=$1',[b.attemptId])).rows[0].evidence_path,null);

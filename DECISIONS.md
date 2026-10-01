@@ -83,6 +83,15 @@
 - The bilingual registry is flat, so disable i18next namespace and key separators for class keys containing colons. Use `{{value}}` interpolation and test the real translators, not a key-returning screen fixture alone.
 - M6 source and hosted owner empty-read acceptance are separate from genuine positive-result/two-account and native performance acceptance. Native artifacts at adfd511 predate M6, and the route-time pilot remains disabled pending its existing operational/device gates.
 
+## M7 — private media and durable community
+
+- Use real owner-reviewed ride/saved-route projections, fixed typed DTOs and200m endpoint trimming; ordinary ride maxima never qualify for Ranked by appearing in a post. New content is150 Unicode characters plus a separate description; legacy content remains readable without truncation.
+- Keep JPEG candidates in owner-private local storage. Metadata adoption and pruning share one serialized byte lane; publication operations flush before egress and recover exact IDs/status before sending. Unknown disk/server outcomes remain retryable.
+- New published photos require bounded actual entropy decode, SHA256 and server BlurHash; current parent visibility is checked before signing and before displaying.60s URLs remain memory-only, and FlashList recycled images use binding-specific recycling/retry fences. Source recycling tests do not measure phone frame rates.
+- Keep reviewed deployed011 immutable. Repair the additionally reproduced deleted-draft upgrade projection through additive012, including unchanged helper grants/signature/search path and independent real database regressions.
+- Use SDK57-compatible FlashList2.0.2 for community galleries/comments/feed and Ranked. Explicitly disable default anchor maintenance for changing filter lists and retire visibility grants at owner/generation boundaries. Pin versions in the lockfile; native rebuild is required.
+- Hosted schema/worker readiness is separate from positive app acceptance. Current Google login reaches the app, but existing account/profile requests returned PostgRESTPGRST002503; routine schema reload succeeded and the retry still failed. Do not weaken authentication, invent successful posts, or call an export/device codec a real hosted acceptance check.
+
 ## M8 — original loop family and integration
 
 - Render one Remotion project for all14roles×2themes. The user permits either motion renderer; the HyperFrames creative/motion guidance informed direction, with Remotion supplying the verified production pipeline. Every loop is original, frame-derived and silent; native content supplies actual identity and state.

@@ -87,19 +87,19 @@ test('saved-route revisions protect edits; explicit shares and challenge snapsho
 });
 
 test('posts require explicit audience, all supplied speeds remain self-reported, private media cannot be signed by arbitrary readers', async () => {
-  await as(A,'select public.rs_create_post($1)',[postId]);
-  await as(A,`select public.rs_publish_post($1,'Hello','Ride note',88,null,null,'friends',null)`,[postId]);
+  await legacyInternalAs(A,'select public.rs_create_post($1)',[postId]);
+  await legacyInternalAs(A,`select public.rs_publish_post($1,'Hello','Ride note',88,null,null,'friends',null)`,[postId]);
   assert.equal((await as(B,'select * from public.rs_posts')).rows.length,1);
   assert.equal((await as(C,'select * from public.rs_posts')).rows.length,0);
-  await as(A,`select public.rs_publish_post($1,'Hello','Ride note',88,null,null,'community',null)`,[postId]);
-  const feed = await as(C,'select * from public.rs_feed(30,null)');
+  await legacyInternalAs(A,`select public.rs_publish_post($1,'Hello','Ride note',88,null,null,'community',null)`,[postId]);
+  const feed = await legacyInternalAs(C,'select * from public.rs_feed(30,null)');
   assert.equal(feed.rows[0].speed_status,'self_reported');
   assert.deepEqual((await legacyInternalAs(C, `select * from public.rs_leaderboard('today','motorcycle','community',null)`)).rows,[]);
   await assert.rejects(as(C,'select public.rs_moderate_post($1,true)',[postId]),/permission denied/i);
-  await as(C,`select public.rs_report_post($1,'privacy','Please review')`,[postId]);
+  await legacyInternalAs(C,`select public.rs_report_post($1,'privacy','Please review')`,[postId]);
   assert.equal((await as(B,'select * from public.rs_post_reports')).rows.length,0);
-  await assert.rejects(as(A,`select public.rs_publish_post($1,'Hello','Ride note',88,$2,1,'community',null)`,[postId,routeId]),/revision changed/i);
-  await as(A,`select public.rs_publish_post($1,'Hello','Ride note',88,$2,2,'community',null)`,[postId,routeId]);
+  await assert.rejects(legacyInternalAs(A,`select public.rs_publish_post($1,'Hello','Ride note',88,$2,1,'community',null)`,[postId,routeId]),/revision changed/i);
+  await legacyInternalAs(A,`select public.rs_publish_post($1,'Hello','Ride note',88,$2,2,'community',null)`,[postId,routeId]);
   assert.equal((await as(C,'select route_snapshot from public.rs_posts where id=$1',[postId])).rows[0].route_snapshot.revision,2);
 });
 
@@ -134,12 +134,15 @@ test('presence is opt-in, server TTL expires, and block revokes shares, posts, i
 
 test('media ownership and server-only broadcast resist direct impersonation', async () => {
   const path = `${A}/${postId}/abcdef.jpg`;
-  await as(A, `insert into storage.objects(bucket_id,name) values('ride-community',$1)`, [path]);
+  await assert.rejects(as(A, `insert into storage.objects(bucket_id,name) values('ride-community',$1)`, [path]), /row-level security/i);
+  // A genuine pre-upgrade object remains owner-readable; new uploads must use
+  //011's reservation pipeline and cannot call the retired legacy policy.
+  await admin(`insert into storage.objects(bucket_id,name,metadata) values('ride-community',$1,'{"size":100,"mimetype":"image/jpeg"}')`, [path]);
   await assert.rejects(as(C, `insert into storage.objects(bucket_id,name) values('ride-community',$1)`, [path]), /row-level security/i);
   assert.equal((await as(C, `select * from storage.objects where name=$1`, [path])).rows.length, 0);
   assert.equal((await as(A, `select * from storage.objects where name=$1`, [path])).rows.length, 1);
   await assert.rejects(as(A, `insert into realtime.messages(topic,extension,payload) values('rs-presence:any','broadcast','{"online":true}')`), /row-level security/i);
-  await as(A, 'select public.rs_delete_post($1)', [postId]);
+  await legacyInternalAs(A, 'select public.rs_delete_post($1)', [postId]);
   assert.equal((await as(C, 'select * from public.rs_posts where id=$1', [postId])).rows.length, 0);
 });
 

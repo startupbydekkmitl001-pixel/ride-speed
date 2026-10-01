@@ -8,6 +8,8 @@
   "devDependencies": {
     "@electric-sql/pglite": "0.3.14",
     "@supabase/supabase-js": "2.117.2",
+    "blurhash": "2.0.5",
+    "jpeg-js": "0.4.4",
     "pg": "8.22.0"
   }
 }
