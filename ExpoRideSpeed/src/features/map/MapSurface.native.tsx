@@ -112,6 +112,11 @@ export default forwardRef<MapHandle, MapSurfaceProps>(function MapSurface(props,
       }
     }
   }, []);
+  useEffect(() => {
+    // Camera now owns all overlay padding. Preserve the last measured camera
+    // when a HUD/sheet resizes instead of waiting for another recenter intent.
+    if (styleReady.current && viewport.current) apply({ kind: 'camera', value: { ...viewport.current, durationMs: 0 } });
+  }, [insets, apply]);
   useImperativeHandle(ref, () => ({
     setCamera: value => apply({ kind: 'camera', value }),
     fitCoordinates: (coordinates, options = {}) => apply({ kind: 'fit', coordinates, options }),

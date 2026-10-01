@@ -14,12 +14,31 @@ const stops = [{ latitude: 13.7, longitude: 100.49 }, { latitude: 13.74, longitu
 
 function adapter() {
   const output = [], ref = { current: null };
+  const refs = [], states = [], memos = [], effects = [];
+  let refIndex = 0, stateIndex = 0, memoIndex = 0, effectIndex = 0;
+  const scheduled = [];
+  const same = (a, b) => !!a && !!b && a.length === b.length && a.every((value, index) => Object.is(value, b[index]));
+  const memo = (callback, deps) => {
+    const index = memoIndex++;
+    if (!memos[index] || !same(memos[index].deps, deps)) memos[index] = { value: callback(), deps };
+    return memos[index].value;
+  };
   const native = { Map: 'NativeMap', Camera: 'NativeCamera', GeoJSONSource: 'GeoJSONSource', Layer: 'Layer', ViewAnnotation: 'ViewAnnotation' };
   const jsx = (type, props) => ({ type, props });
-  const react = { memo: value => value, forwardRef: value => value, useRef: current => ({ current }),
-    useMemo: callback => callback(), useCallback: callback => callback,
-    useState: initial => [typeof initial === 'function' ? initial() : initial, () => {}],
-    useLayoutEffect: callback => { callback(); }, useEffect: () => {},
+  const react = { memo: value => value, forwardRef: value => value,
+    useRef: current => { const index = refIndex++; return refs[index] ??= { current }; },
+    useMemo: memo, useCallback: (callback, deps) => memo(() => callback, deps),
+    useState: initial => {
+      const index = stateIndex++;
+      if (!(index in states)) states[index] = typeof initial === 'function' ? initial() : initial;
+      return [states[index], value => { states[index] = typeof value === 'function' ? value(states[index]) : value; }];
+    },
+    useLayoutEffect: callback => { callback(); }, useEffect: (callback, deps) => {
+      const index = effectIndex++;
+      if (!effects[index] || !same(effects[index].deps, deps)) scheduled.push(() => {
+        effects[index]?.cleanup?.(); effects[index] = { deps, cleanup: callback() };
+      });
+    },
     useImperativeHandle: (target, create) => { target.current = create(); },
   };
   const deps = { react, 'react/jsx-runtime': { jsx, jsxs: jsx, Fragment: 'Fragment' },
@@ -44,11 +63,19 @@ function adapter() {
     return module.exports;
   }
   const Surface = load(resolve(root, 'features/map/MapSurface.native.tsx')).default;
-  const tree = Surface({ initialCamera: { center: stops[0], zoom: 13, bearing: 0, pitch: 0 },
+  let props = { initialCamera: { center: stops[0], zoom: 13, bearing: 0, pitch: 0 },
     contentInsets: insets, theme: 'dark', locale: 'th', mode: 'browse', reducedMotion: true,
     track: null, pins: [], peers: [], userFix: null, selectedPinId: null, retryToken: 0,
     online: true, onStatus: () => {},
-  }, ref);
+  };
+  function render(patch = {}) {
+    props = { ...props, ...patch };
+    refIndex = stateIndex = memoIndex = effectIndex = 0;
+    const result = Surface(props, ref);
+    while (scheduled.length) scheduled.shift()();
+    return result;
+  }
+  const tree = render();
   const map = tree.props.children.find(value => value.type === native.Map);
   const camera = map.props.children.find(value => value?.type === native.Camera);
   const attribution = tree.props.children.find(value => value.type === 'Pressable');
@@ -59,7 +86,7 @@ function adapter() {
   tree.props.onLayout({ nativeEvent: { layout: { width: 428, height: 926 } } });
   map.props.onDidFinishLoadingStyle();
   output.length = 0;
-  return { handle: ref.current, map, camera, attribution, output };
+  return { handle: ref.current, map, camera, attribution, output, render };
 }
 
 // Both pinned native engines add Map.contentInset to the camera stop padding:
@@ -93,4 +120,21 @@ test('native nearby bounds cap zoom with the same single-owner attribution allow
   assert.equal(value.output.at(-1).kind, 'center');
   assert.equal(value.output.at(-1).value.zoom, 15);
   assert.deepEqual(effective(value.map, value.output.at(-1).value.padding), { top: 130, right: 68, bottom: 518, left: 24 });
+});
+
+test('native measured overlay inset changes reapply padding without moving the latest panned camera', () => {
+  const value = adapter();
+  value.map.props.onRegionDidChange({ nativeEvent: { center: [100.501, 13.728], zoom: 12.3, bearing: 18, pitch: 24, userInteraction: true } });
+  value.output.length = 0;
+  const changed = { top: 150, right: 68, bottom: 476, left: 24 };
+  value.render({ contentInsets: changed });
+  assert.equal(value.output.length, 1, 'new overlay measurements must update the native camera padding');
+  const command = value.output[0].value;
+  assert.deepEqual(effective(value.map, command.padding), changed);
+  assert.ok(Math.abs(command.center[0] - 100.501) < 1e-9);
+  assert.equal(command.center[1], 13.728);
+  assert.equal(command.zoom, 12.3);
+  assert.equal(command.bearing, 18);
+  assert.equal(command.pitch, 24);
+  assert.equal(command.duration, 0);
 });
