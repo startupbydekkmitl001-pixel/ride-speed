@@ -8,7 +8,8 @@ const functionsRoot = path.join(root, 'backend', 'functions');
 const output = path.join(root, 'build', 'deploy-m1');
 const names = process.argv.slice(2);
 if (!names.length) names.push('profile-avatar-url', 'delete-account');
-if (names.some(name => !['profile-avatar-url', 'delete-account', 'vehicle-photo-url', 'route-service'].includes(name))) throw new Error('Unsupported dashboard handler');
+const moduleBundles = new Set(['verify-race-attempt', 'race-evidence-cleanup']);
+if (names.some(name => !['profile-avatar-url', 'delete-account', 'vehicle-photo-url', 'route-service', ...moduleBundles].includes(name))) throw new Error('Unsupported dashboard handler');
 fs.mkdirSync(output, { recursive: true });
 const manifest = {};
 for (const name of names) {
@@ -41,9 +42,25 @@ for (const name of names) {
     visiting.delete(file); seen.add(file);
   }
   visit(path.join(functionsRoot, name, 'index.ts'));
-  const bundle = parts.join('\n');
-  fs.writeFileSync(path.join(output, `${name}.ts`), bundle);
-  manifest[name] = { sha256: crypto.createHash('sha256').update(bundle).digest('hex'), sources };
+  let bundle = parts.join('\n'), extension = 'ts', generator;
+  if (moduleBundles.has(name)) {
+    // Unlike the historical typed helpers, .mjs modules need their own lexical
+    // scopes. The pinned motion workspace supplies esbuild; no credentials,
+    // app environment or remote module is loaded by this build step.
+    const esbuild = require(path.join(root, 'motion', 'node_modules', 'esbuild'));
+    const built = esbuild.buildSync({
+      absWorkingDir: root,
+      entryPoints: [path.join(functionsRoot, name, 'index.ts')],
+      bundle: true, format: 'esm', platform: 'neutral', target: 'es2022',
+      external: ['npm:@supabase/supabase-js@2.117.2'],
+      write: false, sourcemap: false, legalComments: 'inline',
+    });
+    bundle = built.outputFiles[0].text;
+    extension = 'js';
+    generator = { framework: 'esbuild', version: esbuild.version, format: 'esm', target: 'es2022', canonicalTypeCheck: 'deno check backend/functions/<name>/index.ts' };
+  }
+  fs.writeFileSync(path.join(output, `${name}.${extension}`), bundle);
+  manifest[name] = { sha256: crypto.createHash('sha256').update(bundle).digest('hex'), sources, ...(generator ? { extension, generator } : {}) };
 }
 fs.writeFileSync(path.join(output, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
 console.log(`Bundled ${names.join(', ')} from canonical sources into build/deploy-m1.`);

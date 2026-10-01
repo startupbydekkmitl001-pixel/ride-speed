@@ -19,5 +19,12 @@ verify_jwt = false
 [functions.route-service]
 verify_jwt = false
 
-# Each handler explicitly validates the Bearer token through Supabase Auth getUser.
+[functions.verify-race-attempt]
+verify_jwt = false
+
+[functions.race-evidence-cleanup]
+verify_jwt = false
+
+# User handlers explicitly validate the Bearer token through Supabase Auth getUser.
+# race-evidence-cleanup instead requires the existing configured service secret.
 # The gateway's legacy JWT check is disabled to support current publishable keys.
