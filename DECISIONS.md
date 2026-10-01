@@ -27,7 +27,7 @@
 - Use native SQLite and web IndexedDB rather than SQLite WASM on web, avoiding cross-origin isolation headers that disrupt OAuth. Test actual SQL/IDB adapter behavior in addition to the global provider's captured-location ports. Failed writes remain queued and never let finalization overtake receipts.
 - Keep the proven SpeedEngine and use Reanimated SVG for the portable instrument; Skia is installed for later native shaders. Rolling digits/needle do not contribute evidence. There are no per-frame React state updates. Native frame rate remains a measured gate.
 - Cloud summaries are owner-only, self-reported and bounded. Oversized geometry stays saved locally with a sync message; do not merge gaps, silently clip an observed maximum or relabel it verified. A frozen operation survives response loss and disk retry.
-- Foreground interruption is explicit. Pause/GPS failure retain the last confirmed moving lock; only a fresh suitable stationary reading or passenger override releases it. Confirmed account deletion permanently closes that owner's local acquisition/write/proof boundary before cleanup finishes.
+- Foreground interruption is explicit. Pause/GPS failure retain the last confirmed moving lock; only a fresh suitable stationary reading releases it (passenger override removed at the user’s request on 1 October). Confirmed account deletion permanently closes that owner's local acquisition/write/proof boundary before cleanup finishes.
 - Run native compilation on public standard GitHub runners. The Android standalone preview uses Expo's public debug certificate, bundles its JS and is labeled unfit for store submission. iPhone artifacts remain unsigned. Compile/installation/performance are distinct results.
 
 ## M3 — garage ownership and catalog
@@ -114,3 +114,9 @@
 
 - Remove the560px web shell cap only for the home map. Short-wide browser maps use a side instrument panel and camera/credits insets; native/tall defaults and other web routes retain their existing layout.
 - Keep the single moving speed/GPS HUD outside the scroll lane, and terminal controls fixed/reachable even after a stationary scroll or retained moving lock on pause/interruption. Extreme text uses labeled52px terminal icons without font caps; stationary detail remains readable/scrollable. Source component budgets and real default-scale browser rectangles are distinct from native glyph/performance acceptance. See docs/design/map-web-layout-v5.md.
+
+### 1 October — faster GPS readout, no passenger mode or CarPlay
+
+CarPlay is cancelled; its draft is removed, with no native entitlement/configuration added. Passenger state and bypass controls are removed. Precise native speed (reported uncertainty 0–1 m/s, horizontal accuracy ≤20 m, fresh timestamp, valid coordinates and plausible continuity) feeds the live display immediately. Records still require three consistent observations and server evidence validation. Expo fallback has no velocity uncertainty and keeps its three-fix acquisition gate; a sustained rising/falling trend uses the newest observation to avoid median delay. A ≤0.3 m/s stop entry and ≤0.55 m/s hold suppress tiny idle jitter; raw evidence and record candidates are not rewritten. These are calibratable display heuristics, not an accuracy guarantee.
+
+The initial display is zero with an honest waiting-for-GPS label. It never creates a zero measurement. Signal loss after measurement remains unavailable. A paused user can tap recenter to acquire up to 10 seconds of foreground GPS and release the lock only after three fresh, accurate, nonmocked readings ≤0.3 m/s across at least 1.5 seconds; cancellation/background/account change retires that check. No manual override remains.

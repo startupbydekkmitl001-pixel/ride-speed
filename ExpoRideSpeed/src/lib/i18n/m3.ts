@@ -102,7 +102,7 @@ export const m3En = {
   "m3.retry": "Try again",
   "m3.movingTitle": "Focus on the road",
   "m3.movingBody":
-    "Vehicle editing is available when stopped. A passenger can use the override on the map.",
+    "Vehicle editing is available when stopped.",
   "m3.openMap": "Return to map",
   "m3.loading": "Opening your vehicles…",
   "m3.actionFailed": "That change could not be saved. Try again.",
@@ -237,7 +237,7 @@ export const m3Th: Record<keyof typeof m3En, string> = {
   "m3.retry": "ลองอีกครั้ง",
   "m3.movingTitle": "ตั้งใจขับก่อน",
   "m3.movingBody":
-    "แก้ไขรถได้เมื่อหยุดแล้ว ผู้โดยสารเปิดโหมดผู้โดยสารบนแผนที่ได้",
+    "แก้ไขรถได้เมื่อจอดแล้ว",
   "m3.openMap": "กลับไปที่แผนที่",
   "m3.loading": "กำลังเปิดรถของคุณ…",
   "m3.actionFailed": "บันทึกการเปลี่ยนแปลงไม่สำเร็จ ลองอีกครั้ง",

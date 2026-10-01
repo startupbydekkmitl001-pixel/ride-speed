@@ -52,29 +52,14 @@ Source: [Mapbox model layer example](https://docs.mapbox.com/ios/maps/examples/3
    private session authorization. Server-owned destination revisions, participant
    acceptance, accurate-fix arrival detection and idempotent results are required.
    Existing convoy locations are explicitly unverified and cannot decide winners.
-5. CarPlay research precedes native scene implementation; no entitlement is assumed.
+5. CarPlay was removed from scope at the user’s request on 1 October. No CarPlay scene, entitlement or bridge ships in the app.
 
-## CarPlay and external gates
+## External gates
 
-Candidate category: Driving Task for useful trip coordination. Navigation requires
-actual turn-by-turn navigation, not just a route line. Apple decides eligibility.
-Prepare team/app identity, bundle ID, a concrete driving-task explanation, intended
-templates/actions and screenshots/video of the core app for the entitlement request.
-Check the current request form for its exact fields; do not submit agreements for
-the user. [Apple CarPlay](https://developer.apple.com/carplay/) links the request,
-developer guide, design guidance and CarPlay simulator tools.
-
-No typed destination, feed, racing animation or avatar-heavy map in CarPlay. Use
-CPListTemplate/CPInformationTemplate and voice actions only within the approved
-category. A native bridge must share the authoritative session/consent snapshot,
-clear it on sign-out/end, and avoid starting JS-owned GPS from a disconnected scene.
-Test an enabled, provisioned development target on macOS with Xcode's CarPlay
-simulator, then a real head unit. This Windows session cannot certify those tests.
-
-Live pilot activation, retention operation, background capture, Apple entitlement
-and physical-device performance remain separate gates. Existing approval for the
-three photo worker gateway settings does not approve Cron/Vault changes or enable
-live races. iPhone 14 Plus is a 60 Hz device; ProMotion claims require other hardware.
+Live pilot activation, retention operation, background capture and physical-device
+performance remain separate gates. Existing approval for the three photo worker
+gateway settings does not approve Cron/Vault changes or enable live races.
+iPhone 14 Plus is a 60 Hz device; ProMotion claims require other hardware.
 
 ## Source delivery status
 
@@ -110,13 +95,12 @@ It has play/pause, hide/show and a camera-focus rail. Distribution builds redire
 away from it. The picker provides its entry point in development.
 
 Not implemented by this UI milestone: real peer avatar/speed/vehicle propagation,
-per-session speed visibility, destination stake/arrival-order challenge, and the
-CarPlay scene/voice bridge. Existing route search, saved routes and private convoy
+per-session speed visibility and destination stake/arrival-order challenge. Existing route search, saved routes and private convoy
 flows remain available. The v1 positions API cannot supply those new metadata
 fields or verify arrivals. The live pilot remains disabled pending its existing
 operational/device gates; no synthetic data was submitted to Supabase.
 
-No native FPS, battery, 30-minute memory, two-phone location or CarPlay entitlement
+No native FPS, battery, 30-minute memory, two-phone location
 claim follows from a web preview or successful bundle export. The previous IPA/APK
 release is unchanged; this source needs a new native build and on-device checks.
 

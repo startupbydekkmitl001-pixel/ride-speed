@@ -36,7 +36,7 @@ The user has authorized native implementation and chosen MapLibre/OpenFreeMap + 
 - [x] Map Home: recenter/layers/friends/history and route/challenge entry controls, compact HUD and expanded native landscape mode; actual search and peer positions follow in M4/M5.
 - [x] Reanimated shared-value needle/rolling digits preserving SpeedEngine quality/stale/zero/max semantics; never generate evidence from display interpolation.
 - [x] One ride provider above routes; durable SQLite/IndexedDB journal with owner/capture IDs, append/checkpoint, pause segments, crash recovery, saved summaries and compressed disconnected geometry. Provider limits remain explicit.
-- [x] Start/pause/resume/stop/save, keep awake, offline outbox and idempotent cloud ride summary sync; foreground interruption policy visible. Glance lock >10 km/h with passenger override.
+- [x] Start/pause/resume/stop/save, keep awake, offline outbox and idempotent cloud ride summary sync; foreground interruption policy visible. Glance lock >10 km/h. Passenger override removed at the user’s request; only measured stopping unlocks editing.
 - [x] Meaningful unit/adapter tests, browser map/HUD/history interactions, lint/typecheck and all-platform export. See `docs/design/m2-acceptance-v5.md` for exact evidence.
 - [ ] Fresh iOS/Android native CI compilation and physical GPS/50-marker/2 s map/FPS/battery acceptance. Source implementation is complete; these results must be measured separately.
 - [x] Commit M2; report five lines.
@@ -110,4 +110,12 @@ The user has authorized native implementation and chosen MapLibre/OpenFreeMap + 
 - [x] First source slice: consent-bound native/web peer interpolation, shared glass controls, friend focus rail, driving time/distance, generic rotatable Garage picker and category sprites, development-only simulated map. Original glTF/sprite provenance included.
 - [x] Fix duplicate-snapshot expiry renewal, mesh occlusion, false riding labels, guest Ranked navigation/stale error, and vehicle-picker movement/background/double-tap behavior. See `docs/design/live-friends-2026-10-01.md` for checks and limitations.
 - [ ] Recipient-authorized avatar/speed/model protocol, per-session speed visibility, shared destination revision and server-owned arrival-order challenge. Existing v1 convoy samples cannot provide these fields or establish arrival winners.
-- [ ] CarPlay entitlement request and provisioned native scene/voice bridge; paired native live-sharing and performance acceptance. Existing live/race policy remains disabled. The published IPA/APK still predates this extension.
+- [x] Remove CarPlay from scope and passenger override from the app at the user’s request.
+- [ ] Paired native live-sharing and performance acceptance. Existing live/race policy remains disabled. The published IPA/APK still predates this extension.
+
+## GPS response and zero-start follow-up — 1 October
+
+- [x] Separate responsive native velocity from conservative top-speed confirmation; trend-aware fallback, standstill hysteresis, bounded 260 ms HUD motion and coordinate validity checks. Raw evidence is unchanged.
+- [x] Initial zero is presentation-only. Measured speed remains null until a usable fix; weak/lost GPS after a valid speed remains unavailable.
+- [x] Delete passenger bypass state/API/buttons/translations. Paused recenter can confirm stopping from three accurate fresh separated fixes; it never starts a ride or publishes locations.
+- [ ] Final whole-suite/native build validation and installed-device outdoor GPS calibration. See `docs/design/gps-response-2026-10-01.md`.

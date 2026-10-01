@@ -79,7 +79,6 @@ function Navigation() {
         {ride.movingLocked&&pathname!=="/"&&pathname!=='/races'&&<View style={{position:'absolute',top:0,bottom:0,left:0,right:0,backgroundColor:colors.bg,justifyContent:'center',padding:24,gap:20}} accessibilityViewIsModal>
           <T size={24} weight="semibold">{t('m2.ride.movingLock')}</T>
           <Button label={t('nav.map')} onPress={()=>router.replace('/')}/>
-          <Button secondary label={t('m2.ride.passengerOverride')} onPress={ride.setPassengerOverride}/>
           {race.port.attempt?.state==='armed'&&<Button secondary label={t('m5c.stopAttempt')} onPress={()=>{void race.stopCompetitiveAttempt().catch(()=>{});}}/>}
         </View>}
       </View>

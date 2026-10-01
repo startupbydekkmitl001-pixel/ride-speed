@@ -30,7 +30,7 @@ function harness({ nativeAvailable = true,observer } = {}) {
   const imports = {
     react: React, 'react-native': { AppState, Platform: { OS: 'ios' } }, 'expo-crypto': { randomUUID: () => `capture-${++uuid}` },
     'expo-location': { requestForegroundPermissionsAsync: async () => behavior.pendingPermission ? behavior.pendingPermission.promise : behavior.permission,
-      hasServicesEnabledAsync: async () => true, watchPositionAsync: async (_options, listener,error) => { behavior.fallbackStarts++; expoListener = listener;expoError=error; return { remove() { expoListener = null;expoError=null; } }; }, Accuracy: { Highest: 6 } },
+      hasServicesEnabledAsync: async () => true, watchPositionAsync: async (_options, listener,error) => { behavior.fallbackStarts++; expoListener = listener;expoError=error; return { remove() { expoListener = null;expoError=null; } }; }, Accuracy: { Highest: 5, BestForNavigation: 6 } },
     '../modules/ride-location': { default: nativeAvailable ? native : null, __esModule: true },
     '../modules/ride-location/src/sessionSupport': sessionSupport, './speedEngine': speedEngine,
   };
@@ -136,7 +136,7 @@ test('native uncertainty ceiling includes zero and one, without rejecting an acc
   }
 });
 
-test('unreliable native speed breaks confirmation, preserves the previous max, and requires three fresh good samples', async () => {
+test('unreliable native speed breaks confirmation, preserves the previous max, and recovers live speed immediately while max requires three fresh good samples', async () => {
   const h = harness(); await h.render().start();
   const readings = Array.from({ length: 3 }, () => nativeReading(h, { speedMps: 8 }));
   assert.equal(h.render().snapshot.maxMps, 8);
@@ -146,7 +146,7 @@ test('unreliable native speed breaks confirmation, preserves the previous max, a
   assert.equal(ride.snapshot.maxMps, 8);
   for (let index = 0; index < 2; index++) {
     readings.push(nativeReading(h));
-    assert.equal(h.render().snapshot.liveMps, null); assert.equal(h.render().snapshot.maxMps, 8);
+    assert.equal(h.render().snapshot.liveMps, 12); assert.equal(h.render().snapshot.maxMps, 8);
   }
   readings.push(nativeReading(h)); ride = h.render();
   assert.equal(ride.snapshot.liveMps, 12); assert.equal(ride.snapshot.maxMps, 12);
@@ -186,4 +186,13 @@ test('Expo fallback rejects reported mock locations, preserves their fields, and
   assert.equal(ride.snapshot.quality, 'good'); assert.equal(ride.snapshot.liveMps, 12); assert.equal(ride.snapshot.maxMps, 12);
   assert.deepEqual(ride.getEvidence().samples, readings);
   ride.stop(); await flush();
+});
+
+
+test('one precise native fix reaches the HUD immediately but invalid coordinates only remain as raw evidence',async()=>{
+ const h=harness();await h.render().start();nativeReading(h,{speedMps:7});assert.equal(h.render().snapshot.liveMps,7);assert.equal(h.render().snapshot.maxMps,null);
+ for(const position of [{latitude:NaN},{latitude:91},{longitude:181},{longitude:Infinity}]){
+  const raw=nativeReading(h,position);assert.equal(h.render().snapshot.liveMps,null);assert.deepEqual(h.render().getEvidence().samples.at(-1),raw);
+ }
+ h.render().stop();await flush();
 });

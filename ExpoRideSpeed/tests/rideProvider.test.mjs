@@ -29,10 +29,10 @@ vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../src/lib/i18n/erro
 /** Executes the real provider and journal model. Only React, platform capture and disk are ports. */
 function harness({ stored = [], scopeId = 'A', signedIn = false } = {}) {
   const cells = [], effects = [], layouts = [], timers = new Map(), rows = new Map(stored.map(ride => [ride.id, copy(ride)])), receipts = new Map();
-  let index = 0, dirty = false, observer, timerId = 0, generation = 0;
+  let index = 0, dirty = false, observer, idleListener, timerId = 0, generation = 0;
   let scope = { userId: scopeId, generation: 1 };
   let session = signedIn ? { user: { id: scopeId }, access_token: `test-only-${scopeId}` } : null;
-  const behavior = { now: 1700000000000, mono: 0, failWrites: false, failStart: false, pendingWrite: null, pendingStop: null, pendingStart: null, pendingList: null, pendingLocatePermission: null, pendingSync: new Map(), syncFailure: new Map(), pendingCloud: new Map(), starts: 0, stops: 0, idleStarts: 0, idleStops: 0, saves: [], lists: [], syncCalls: [], cloudCalls: [], active: false };
+  const behavior = { now: 1700000000000, mono: 0, failWrites: false, failStart: false, pendingWrite: null, pendingStop: null, pendingStart: null, pendingList: null, pendingLocatePermission: null, locateAllowed: false, pendingSync: new Map(), syncFailure: new Map(), pendingCloud: new Map(), starts: 0, stops: 0, idleStarts: 0, idleStops: 0, saves: [], lists: [], syncCalls: [], cloudCalls: [], active: false };
   const idleCapture = new ExclusiveLocationCapture(), appListeners=new Set();
   const appState={currentState:'active',addEventListener(name,fn){appListeners.add(fn);return {remove(){appListeners.delete(fn);}};}};
   const emptySnapshot = { liveMps: null, maxMps: null, quality: 'noFix', horizontalAccuracyM: null };
@@ -81,9 +81,9 @@ function harness({ stored = [], scopeId = 'A', signedIn = false } = {}) {
   };
   const imports = {
     react: React, 'expo-location': {
-      getForegroundPermissionsAsync: async () => behavior.pendingLocatePermission ? behavior.pendingLocatePermission.promise : ({ granted: false }),
+      getForegroundPermissionsAsync: async () => behavior.pendingLocatePermission ? behavior.pendingLocatePermission.promise : ({ granted: behavior.locateAllowed }),
       Accuracy: { High: 4 },
-      async watchPositionAsync(options, accept) { behavior.idleStarts++; accept({ timestamp: behavior.now, coords: { latitude: 13, longitude: 100, accuracy: 5, heading: null } }); return { remove() { behavior.idleStops++; } }; },
+      async watchPositionAsync(options, accept) { behavior.idleStarts++; idleListener=accept; accept({ timestamp: behavior.now, coords: { latitude: 13, longitude: 100, accuracy: 5, heading: null } }); return { remove() { behavior.idleStops++; idleListener=null; } }; },
     },
     'expo-crypto': { randomUUID }, 'react-native': { Platform: { OS: 'ios' }, AppState: appState }, 'expo-keep-awake': { useKeepAwake() {} },
     '../../modules/ride-location': { default: {}, __esModule: true },
@@ -128,6 +128,7 @@ function harness({ stored = [], scopeId = 'A', signedIn = false } = {}) {
     async settle() { for (let n = 0; n < 12; n++) { await tick(); if (dirty) h.render(); } return h.render(); },
     switchAccount(id) { scope = { userId: id, generation: scope.generation + 1 }; session = signedIn ? { user: { id }, access_token: `test-only-${id}` } : null; return h.render(); },
     sample(extra = {}) { behavior.now += 1000; behavior.mono += 1000; const sample = { timestampMs: behavior.now, latitude: 13, longitude: 100 + behavior.mono / 10000000, speedMps: 10, horizontalAccuracyM: 5, speedAccuracyMps: .2, isSimulatedBySoftware: false, isProducedByAccessory: false, mocked: null, ...extra }; evidenceSamples.push(copy(sample)); observer?.onSample?.(sample, true); return sample; },
+    idleSample(extra={}) { behavior.now+=1000;idleListener?.({timestamp:behavior.now,coords:{latitude:13,longitude:100,accuracy:5,heading:null,speed:0},...extra}); },
     confirmedSpeed(value) { snapshot = { ...emptySnapshot, quality: 'good', liveMps: value, maxMps: value }; observer?.onSnapshot?.(snapshot); dirty = true; },
     signalLost() { snapshot = { ...emptySnapshot, maxMps: snapshot.maxMps }; observer?.onSnapshot?.(snapshot); dirty = true; },
     fatalStop() { stopCapture('TEST_FATAL_GPS'); },
@@ -396,11 +397,12 @@ test('a cloud response obtained before confirmed deletion cannot republish priva
   const result = await h.settle(); assert.equal(result.ready, false); assert.deepEqual(copy(result.cloudHistory), []); assert.equal(h.rows.size, 0);
 });
 
-test('pausing GPS cannot unlock interaction after measured movement without an explicit passenger override', async () => {
+test('pausing GPS cannot unlock interaction after measured movement and no passenger bypass remains', async () => {
   const h = harness(); let ride = await h.settle(); assert.ok(await ride.start()); await h.settle(); h.confirmedSpeed(8); ride = await h.settle();
   assert.equal(ride.movingLocked, true); await ride.pause(); ride = await h.settle();
   assert.equal(ride.active, false); assert.equal(ride.snapshot.liveMps, null); assert.equal(ride.movingLocked, true);
-  ride.setPassengerOverride(); assert.equal((await h.settle()).movingLocked, false);
+  assert.equal(ride.setPassengerOverride, undefined);
+  assert.ok(await ride.resume()); await h.settle(); h.confirmedSpeed(0); ride=await h.settle(); assert.equal(ride.movingLocked,false); await ride.pause();
 });
 
 test('fatal GPS failure retains the movement lock until a fresh capture confirms stationary speed', async () => {
@@ -422,4 +424,22 @@ test('retrying a failed durable acknowledgement cannot overwrite synced receipt 
   h.behavior.failWrites = false; await state.retrySave(); state = await h.settle();
   assert.equal(h.rows.get(stored.id).sync, 'synced'); assert.equal(h.rows.get(stored.id).revision, 1);
   assert.equal(state.history[0].sync, 'synced'); assert.equal(h.behavior.syncCalls.length, 1, 'Retry flushes the accepted acknowledgement without another cloud operation');
+});
+
+
+test('paused recenter unlocks only after three separated accurate stopped fixes and never records them',async()=>{
+ const h=harness();let ride=await h.settle();await ride.start();await h.settle();h.confirmedSpeed(8);ride=await h.settle();await ride.pause();ride=await h.settle();
+ const before=h.render().ride.rawCount;h.behavior.locateAllowed=true;const locating=ride.locate();await tick();await tick();
+ h.idleSample();await h.settle();assert.equal(h.render().movingLocked,true);
+ h.idleSample({mocked:true});await h.settle();assert.equal(h.render().movingLocked,true);
+ for(let i=0;i<2;i++){h.idleSample();await h.settle();assert.equal(h.render().movingLocked,true);}
+ h.idleSample();await locating;ride=await h.settle();
+ assert.equal(ride.movingLocked,false);assert.equal(ride.active,false);assert.equal(ride.ride.rawCount,before);assert.equal(h.behavior.idleStops,1);
+});
+test('cached zero callbacks and cancellation cannot release a retained movement lock',async()=>{
+ const h=harness();let ride=await h.settle();await ride.start();await h.settle();h.confirmedSpeed(8);ride=await h.settle();await ride.pause();ride=await h.settle();
+ h.behavior.locateAllowed=true;const controller=new AbortController(),locating=ride.locate(controller.signal);await tick();await tick();const timestamp=h.behavior.now;
+ for(let i=0;i<3;i++){h.idleSample({timestamp});await h.settle();}
+ assert.equal(h.render().movingLocked,true);controller.abort();await locating;
+ h.idleSample();assert.equal((await h.settle()).movingLocked,true);assert.equal(h.behavior.idleStops,1);
 });

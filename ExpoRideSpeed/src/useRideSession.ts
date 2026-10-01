@@ -176,9 +176,12 @@ export function useRideSession(observer?: {
           && (sample.speedAccuracyMps === null || !Number.isFinite(sample.speedAccuracyMps)
             || sample.speedAccuracyMps < 0 || sample.speedAccuracyMps > MAX_NATIVE_SPEED_ACCURACY_MPS);
         const simulated = sample.isSimulatedBySoftware === true || sample.mocked === true;
+        const invalidCoordinate = !Number.isFinite(sample.latitude) || Math.abs(sample.latitude) > 90
+          || !Number.isFinite(sample.longitude) || Math.abs(sample.longitude) > 180;
         // Reject only the display input: retain raw evidence and break confirmation.
         const nextSnapshot=engine.process({
-          speedMps: invalidNativeSpeed || simulated ? null : sample.speedMps,
+          speedMps: invalidNativeSpeed || simulated || invalidCoordinate ? null : sample.speedMps,
+          speedAccuracyMps: sample.speedAccuracyMps,
           horizontalAccuracyM: sample.horizontalAccuracyM,
           timestampMs: sample.timestampMs,
         }, Date.now());
@@ -229,7 +232,7 @@ export function useRideSession(observer?: {
           start: async () => {
             beginEvidence();
             expoSubscription = await Location.watchPositionAsync(
-              { accuracy: Location.Accuracy.Highest, distanceInterval: 0 },
+              { accuracy: Location.Accuracy.BestForNavigation, distanceInterval: 0, timeInterval: 1000 },
               location => accept({
                 timestampMs: location.timestamp,
                 latitude: location.coords.latitude,

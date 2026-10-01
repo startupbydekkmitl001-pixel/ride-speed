@@ -16,7 +16,7 @@ function process(engine, fix) {
   return engine.process(fix, fix.timestampMs);
 }
 
-test('three good fixes show median live speed and conservative max', () => {
+test('three consistent fallback fixes follow acceleration while max stays conservative', () => {
   const engine = new SpeedEngine();
   const first = process(engine, sample(10, 0));
   assert.equal(first.quality, 'good');
@@ -25,9 +25,44 @@ test('three good fixes show median live speed and conservative max', () => {
 
   assert.equal(process(engine, sample(11, 1)).liveMps, null);
   const third = process(engine, sample(12, 2));
-  assert.equal(third.liveMps, 11);
+  assert.equal(third.liveMps, 12);
   assert.equal(third.maxMps, 10);
   assert.equal(third.horizontalAccuracyM, 8);
+});
+
+const precise = (speed, second, accuracy = .25) => ({ ...sample(speed, second), speedAccuracyMps: accuracy });
+test('precise native velocity reaches the live display on the first fix without qualifying a maximum', () => {
+  const engine = new SpeedEngine();
+  assert.equal(engine.snapshot.hasSpeedFix, false);
+  const first = process(engine, precise(10, 0));
+  assert.equal(first.liveMps, 10); assert.equal(first.maxMps, null); assert.equal(first.hasSpeedFix, true);
+  assert.equal(process(engine, precise(14, 1)).liveMps, 14);
+  const third = process(engine, precise(18, 2));
+  assert.equal(third.liveMps, 18); assert.equal(third.maxMps, 10);
+  assert.equal(engine.markUnavailable().hasSpeedFix, true, 'loss after measurement must not look like the initial zero');
+  assert.equal(engine.resetSession().hasSpeedFix, false);
+});
+test('precise speed settles to zero without flutter and responds immediately when movement resumes', () => {
+  const engine = new SpeedEngine();
+  process(engine, precise(3, 0));
+  for (const [i, speed] of [.2, .38, .1, .5, 0].entries()) assert.equal(process(engine, precise(speed, i + 1)).liveMps, 0);
+  assert.equal(process(engine, precise(.8, 6)).liveMps, .8);
+  assert.equal(process(engine, precise(4, 7)).liveMps, 4);
+});
+test('fast native display still rejects poor precision, implausible jumps and stale data', () => {
+  for (const accuracy of [-1, NaN, Infinity, 1.01]) {
+    const engine = new SpeedEngine(); assert.equal(process(engine, precise(12, 0, accuracy)).liveMps, null);
+  }
+  const engine = new SpeedEngine(); process(engine, precise(12, 0));
+  assert.equal(process(engine, precise(100, 1)).quality, 'weak');
+  process(engine, precise(12, 2)); assert.equal(engine.tick(origin + 5001).liveMps, null);
+});
+test('fallback removes a full-fix lag on consistent braking but still filters an isolated spike', () => {
+  const engine = new SpeedEngine();
+  for (let i = 0; i < 3; i++) process(engine, sample(12, i));
+  assert.equal(process(engine, sample(25, 3)).liveMps, 12);
+  assert.equal(process(engine, sample(12, 4)).liveMps, 12);
+  process(engine, sample(9, 5)); assert.equal(process(engine, sample(6, 6)).liveMps, 6);
 });
 
 test('invalid speed with a usable position fix is weak and preserves confirmed max', () => {

@@ -1,6 +1,6 @@
 import { memo, useEffect, useId } from "react";
 import { ScrollView, StyleSheet, View, useWindowDimensions, type StyleProp, type ViewStyle } from "react-native";
-import Animated, { cancelAnimation, ReduceMotion, useAnimatedProps, useAnimatedStyle, useSharedValue, withSpring, type SharedValue } from "react-native-reanimated";
+import Animated, { cancelAnimation, ReduceMotion, useAnimatedProps, useAnimatedStyle, useSharedValue, withSpring, withTiming, type SharedValue } from "react-native-reanimated";
 import Svg, { Defs, Line, LinearGradient, Path, Stop } from "react-native-svg";
 import { GlassSurface } from "../../components/glass";
 import { IconButton, Row, Segments, T } from "../../components/ui";
@@ -94,9 +94,11 @@ function LiveInstrument({ speed, units, expanded, range, size }: { speed: number
   // This component mounts with the actual first valid fix. Null→good never counts up from invented zero.
   const digits = useSharedValue(Math.round(speed)), needle = useSharedValue(speed);
   useEffect(() => {
-    const options = { ...theme.motion.spring, overshootClamping: true, reduceMotion: ReduceMotion.System };
-    digits.value = motion ? withSpring(Math.round(speed), options) : Math.round(speed);
-    needle.value = motion ? withSpring(speed, options) : speed;
+    // A bounded transition finishes before the next GPS tick, without spring
+    // settling lag or overshoot. New fixes interrupt from the current value.
+    const options = { duration: theme.motion.stateMs, reduceMotion: ReduceMotion.System };
+    digits.value = motion ? withTiming(Math.round(speed), options) : Math.round(speed);
+    needle.value = motion ? withTiming(speed, options) : speed;
     return () => { cancelAnimation(digits); cancelAnimation(needle); };
   }, [speed, motion, digits, needle]);
   if (!expanded) return <View style={{ alignItems: "center" }}><RollingDigits value={digits} target={speed} size={size} /></View>;
@@ -109,9 +111,9 @@ function LiveInstrument({ speed, units, expanded, range, size }: { speed: number
   </View>;
 }
 
-function UnavailableInstrument({ expanded, units, range, size }: { expanded: boolean; units: SpeedUnits; range: number; size: number }) {
+function UnavailableInstrument({ expanded, units, range, size, initialZero }: { expanded: boolean; units: SpeedUnits; range: number; size: number; initialZero: boolean }) {
   const { t } = useI18n();
-  const content = <><T numeric size={size} allowFontScaling={false} muted>—</T>{expanded && <T numeric muted size={14}>{t(units === "mph" ? "common.mph" : "common.kmh")}</T>}</>;
+  const content = <><T numeric size={size} allowFontScaling={false} muted>{initialZero ? '0' : '—'}</T>{expanded && <T numeric muted size={14}>{t(units === "mph" ? "common.mph" : "common.kmh")}</T>}</>;
   if (!expanded) return <View style={{ alignItems: "center" }}>{content}</View>;
   return <View style={{ width: "100%", maxWidth: 360, alignSelf: "center" }}><Dial range={range} /><View style={styles.dialReadout}>{content}</View></View>;
 }
@@ -132,14 +134,14 @@ export const SpeedometerHUD = memo(function SpeedometerHUD({ snapshot, metrics, 
   const presentation = presentSpeed(snapshot, units), range = speedScale(presentation.live, presentation.maximum, units);
   const signalKey: TranslationKey = presentation.signal === "good" ? "m2.hud.gpsGood" : presentation.signal === "weak" ? "m2.hud.gpsWeak" : presentation.signal === "confirming" ? "m2.hud.gpsConfirming" : "m2.hud.gpsNoFix";
   const unitLabel = t(units === "mph" ? "common.mph" : "common.kmh");
-  const speedText = presentation.live === null ? t("m2.hud.unavailable") : String(Math.round(presentation.live));
+  const speedText = presentation.live === null ? (presentation.initialZero ? "0" : t("m2.hud.unavailable")) : String(Math.round(presentation.live));
   const size = Math.min(expanded ? 76 : 49, (expanded ? width * (landscape ? 0.48 : 0.85) : width * 0.43) / (0.68 * 4)) * Math.min(fontScale, 1.3);
   const maximum = presentation.maximum === null ? "—" : presentation.maximum.toFixed(1);
   const average = metrics.averageMps !== null && Number.isFinite(metrics.averageMps) && metrics.averageMps >= 0 ? (metrics.averageMps * speedFactor(units)).toFixed(1) : "—";
   const distance = metricDistance(metrics.distanceMeters, units);
   const distanceText = distance ? new Intl.NumberFormat(locale, { maximumFractionDigits: 2, minimumFractionDigits: distance.value < 1 ? 2 : 1 }).format(distance.value) : "—";
   const instrument = <View accessible accessibilityRole="text" accessibilityLabel={t("m2.hud.readout", { speed: speedText, unit: unitLabel, signal: t(signalKey) })} accessibilityLiveRegion="none">
-    {presentation.live === null ? <UnavailableInstrument expanded={expanded} units={units} range={range} size={size} /> : <LiveInstrument key={units} speed={presentation.live} units={units} expanded={expanded} range={range} size={size} />}
+    {presentation.live === null ? <UnavailableInstrument initialZero={presentation.initialZero} expanded={expanded} units={units} range={range} size={size} /> : <LiveInstrument key={units} speed={presentation.live} units={units} expanded={expanded} range={range} size={size} />}
   </View>;
   const signal = <Row style={{ gap: 6, flexWrap: "wrap" }}><View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: presentation.signal === "good" ? colors.good : colors.muted }} /><T muted size={11}>{t(signalKey)}</T></Row>;
   if (!expanded && glanceOnly) return <GlassSurface style={[{ paddingHorizontal: 16, paddingVertical: 12, gap: 8 }, style]}>

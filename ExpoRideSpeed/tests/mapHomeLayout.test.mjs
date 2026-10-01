@@ -17,8 +17,8 @@ function fixture({width=932,height=430,fontScale=1,os='web',moving=false,active=
   useRef(initial){const index=cursor++;return fibre[index]??(fibre[index]={current:initial});},useMemo:fn=>{cursor++;return fn();},useCallback:fn=>{cursor++;return fn;},useEffect:()=>{cursor++;}};
  const jsx=(type,props)=>({type,props}),shared=value=>({value,get(){return this.value;},set(next){this.value=next;}});
  const pushes=[],ride={movingLocked:moving,ready:true,busy:false,error,message:null,locating:false,active,ride:active?{status:'recording',fragments:[]}:null,
-  snapshot:{liveMps:moving?20:null,maxMps:moving?20:null,quality:moving?'good':'noFix',horizontalAccuracyM:moving?5:null},metrics:{distanceMeters:0,durationSeconds:0,averageMps:null},
-  start:async()=>{},pause:async()=>{},finish:async()=>{},retrySave:async()=>{},locate:async()=>{},setPassengerOverride:()=>{}};
+  snapshot:{liveMps:moving?20:null,maxMps:moving?20:null,quality:moving?'good':'noFix',horizontalAccuracyM:moving?5:null,hasSpeedFix:moving},metrics:{distanceMeters:0,durationSeconds:0,averageMps:null},
+  start:async()=>{},pause:async()=>{},finish:async()=>{},retrySave:async()=>{},locate:async()=>{}};
  const app={ready:true,data:{unit:'kmh'},dark:true,motion,glass:false,colors:{},update:()=>true},insets={top:0,bottom:0,left:0,right:0};
  let copy;const translate=(key,values={})=>(copy[key]??key).replace(/{{(\w+)}}/g,(_,name)=>String(values[name]??''));
  const Stack=()=>jsx('Navigator',{children:pathname==='/'?jsx(Screen,{}):null});Stack.Screen=()=>null;
@@ -100,12 +100,12 @@ test('camera reserves the actual side pane and leaves useful pan and attribution
 });
 test('moving large text keeps the full compact readout and primary controls outside locked details',()=>{
  for(const language of ['en','th'])for(const width of [932,720])for(const fontScale of [2,3]){
- const f=fixture({moving:true,active:true,fontScale,language,width}),tree=f.render(),pause=control(tree,f.t('m2.ride.pause')),finish=control(tree,f.t('m2.ride.finish')),passenger=control(tree,f.t('m2.ride.passengerOverride'));
+ const f=fixture({moving:true,active:true,fontScale,language,width}),tree=f.render(),pause=control(tree,f.t('m2.ride.pause')),finish=control(tree,f.t('m2.ride.finish'));
  const panel=absoluteAncestor(finish),scroll=find(tree,node=>node.type==='ScrollView');
- assert.ok(pause&&finish&&passenger);assert.equal(scroll.node.props.scrollEnabled,false);
- for(const action of [pause,finish,passenger])assert.equal(action.ancestors.some(node=>node.type==='ScrollView'),false,'a disabled scroll cannot hide a terminal action');
+ assert.ok(pause&&finish);assert.equal(scroll.node.props.scrollEnabled,false);
+ for(const action of [pause,finish])assert.equal(action.ancestors.some(node=>node.type==='ScrollView'),false,'a disabled scroll cannot hide a terminal action');
  if(width===720||fontScale>2){assert.equal(style(pause.node.props.style).width,52);assert.equal(style(pause.node.props.style).height,52);assert.equal(pause.node.props.accessibilityRole,'button');}
- if(fontScale>2){for(const action of [finish,passenger]){assert.equal(style(action.node.props.style).width,52);assert.equal(style(action.node.props.style).height,52);assert.equal(action.node.props.accessibilityRole,'button');}assert.equal(style(finish.node.props.style).backgroundColor,f.app.colors.accent);}
+ if(fontScale>2){for(const action of [finish]){assert.equal(style(action.node.props.style).width,52);assert.equal(style(action.node.props.style).height,52);assert.equal(action.node.props.accessibilityRole,'button');}assert.equal(style(finish.node.props.style).backgroundColor,f.app.colors.accent);}
  const actualFooter=[...finish.ancestors].reverse().find(node=>style(node.props.style).flexShrink===0);
  const footerHeight=minimumHeight(actualFooter,f.fontScale),panelBox=bounds(panel,f.width,f.height,f.fontScale);
  const hud=find(panel,node=>node.props?.accessibilityRole==='text');
@@ -130,17 +130,17 @@ test('stationary scroll state cannot retain ownership of the readout after movem
  assert.ok(hud.ancestors.some(node=>node.type==='ScrollView'));
  assert.equal(find(tree,node=>node.type==='ScrollView').node.props.scrollEnabled,true);
 });
-test('paused or interrupted capture retains reachable Finish and passenger controls under the movement lock',()=>{
+test('paused or interrupted capture retains reachable Finish and Resume controls under the movement lock',()=>{
  for(const status of ['paused','interrupted'])for(const fontScale of [2,3]){
   const f=fixture({moving:true,fontScale,width:720});f.ride.ride={status,fragments:[]};f.ride.error=status==='interrupted'?'errors.gpsStart':null;
-  const tree=f.render(),resume=control(tree,f.t('m2.ride.resume')),finish=control(tree,f.t('m2.ride.finish')),passenger=control(tree,f.t('m2.ride.passengerOverride'));
-  assert.ok(resume&&finish&&passenger);assert.equal(style(finish.node.props.style).height,52);
-  assert.equal(style(passenger.node.props.style).height,52);assert.equal(finish.node.props.disabled,false);
+  const tree=f.render(),resume=control(tree,f.t('m2.ride.resume')),finish=control(tree,f.t('m2.ride.finish'));
+  assert.ok(resume&&finish);assert.equal(style(finish.node.props.style).height,52);
+  assert.equal(finish.node.props.disabled,false);
   assert.equal(resume.node.props.disabled,status==='interrupted');
   const panel=absoluteAncestor(finish),footer=[...finish.ancestors].reverse().find(node=>style(node.props.style).flexShrink===0),hud=find(panel,node=>node.props?.accessibilityRole==='text');
   const material=[...hud.ancestors].reverse().find(node=>style(node.props.style).paddingVertical===12);
   assert.ok(minimumHeight(footer,fontScale)+minimumHeight(material,fontScale)<=bounds(panel,f.width,f.height,fontScale).height);
-  assert.equal(readouts(tree),1);for(const action of [resume,finish,passenger])assert.equal(action.ancestors.some(node=>node.type==='ScrollView'),false);
+  assert.equal(readouts(tree),1);for(const action of [resume,finish])assert.equal(action.ancestors.some(node=>node.type==='ScrollView'),false);
  }
 });
 test('short moving glance prioritizes primary speed and GPS while secondary stats remain stationary',()=>{
@@ -187,4 +187,28 @@ test('all responsive native view children remain nodes rather than raw JSX white
   assertChildren(node.props?.children);
  }
  for(const moving of [false,true])for(const fontScale of [1,2,3])assertChildren(fixture({active:true,moving,fontScale}).render());
+});
+
+
+test('initial speed renders zero in both languages without claiming a measured fix; loss after measurement stays unavailable',()=>{
+ for(const language of ['en','th']){
+  const f=fixture({width:428,height:926,language});let tree=f.render();
+  assert.ok(find(tree,node=>node.type==='Text'&&node.props.children==='0'));
+  const readout=find(tree,node=>node.props?.accessibilityRole==='text');
+  assert.equal(readout.node.props.accessibilityLabel,f.t('m2.hud.readout',{speed:'0',unit:f.t('common.kmh'),signal:f.t('m2.hud.gpsNoFix')}));
+  f.ride.snapshot.hasSpeedFix=true;tree=f.render();
+  assert.equal(find(tree,node=>node.props?.accessibilityRole==='text').node.props.accessibilityLabel,f.t('m2.hud.readout',{speed:f.t('m2.hud.unavailable'),unit:f.t('common.kmh'),signal:f.t('m2.hud.gpsNoFix')}));
+ }
+});
+test('movement lock has no passenger bypass, including the root cover; paused recenter checks GPS',()=>{
+ for(const language of ['en','th']){
+  const f=fixture({moving:true,active:true,language,shell:true});let tree=f.render();
+  for(const label of ['I’m a passenger','ฉันเป็นผู้โดยสาร'])assert.equal(control(tree,label),null);
+  f.navigate('/garage');tree=f.render();
+  assert.ok(control(tree,f.t('nav.map')));
+  for(const label of ['I’m a passenger','ฉันเป็นผู้โดยสาร'])assert.equal(control(tree,label),null);
+  f.navigate('/');f.ride.active=false;let checks=0;f.ride.locate=async()=>{checks++;};tree=f.render();
+  control(tree,f.t('m2.ride.checkStopped')).node.props.onPress();assert.equal(checks,1);
+  assert.equal(f.ride.movingLocked,true,'the button itself never unlocks editing');
+ }
 });

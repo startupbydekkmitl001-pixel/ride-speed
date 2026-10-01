@@ -11,7 +11,7 @@ export function presentSpeed(snapshot: SpeedSnapshot, units: SpeedUnits) {
   const live = snapshot.quality === "good" && converted !== null && converted <= 9999 ? converted : null;
   const maximum = nonnegative(snapshot.maxMps) && snapshot.maxMps! * factor <= 9999 ? snapshot.maxMps! * factor : null;
   const signal = snapshot.quality === "noFix" ? "noFix" : snapshot.quality === "weak" ? "weak" : live === null ? "confirming" : "good";
-  return { live, maximum, signal } as const;
+  return { live, maximum, signal, initialZero: live === null && snapshot.hasSpeedFix === false } as const;
 }
 export function speedScale(live: number | null, maximum: number | null, units: SpeedUnits): number {
   const step = units === "mph" ? 40 : 60, base = units === "mph" ? 160 : 240;
