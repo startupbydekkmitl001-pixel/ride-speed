@@ -144,6 +144,14 @@ test('an older owner route can be loaded and selected from the invitation editor
  let tree=f.render();await press(tree,'m5a.create');await Promise.resolve();await Promise.resolve();tree=f.render();assert.equal(all(tree,'Button').some(value=>value.props.label==='Route 31'),false);
  await press(tree,'m5a.loadMoreRoutes');tree=f.render();await press(tree,'Route 31');await press(tree,'Rider One · @rider_one');tree=f.render();all(tree,'Field').find(value=>value.props.label==='m5a.startTime').props.onChangeText('2030-10-01 12:00');tree=f.render();await press(tree,'m5a.review');assert.equal(f.source.reviews[0].route.id,makeRoute(31).id);
 });
+test('review and cancel discard an older held route page and release its spinner for a deliberate retry',async()=>{
+ const f=fixture('InvitationsScreen');f.source.social.friends=[{...friend,state:'accepted'}];const route={id:'00000000-0000-4000-8000-000000000030',owner_id:'00000000-0000-4000-8000-000000000003',title:'Selected route',revision:3,category:'scooter',approved_course_id:null,approved_revision:null,updated_at:'2026-10-01T02:00:00.123456+00:00'},older={...route,id:'00000000-0000-4000-8000-000000000031',title:'Older route'};
+ f.source.choices={routes:[route],courses:[],sessions:[],routeCursor:{id:route.id,updated_at:route.updated_at}};let resolvePage;f.source.nextRoutes=new Promise(done=>{resolvePage=done;});
+ let tree=f.render();await press(tree,'m5a.create');await Promise.resolve();await Promise.resolve();tree=f.render();await press(tree,route.title);await press(tree,'Rider One · @rider_one');tree=f.render();all(tree,'Field').find(value=>value.props.label==='m5a.startTime').props.onChangeText('2030-10-01 12:00');tree=f.render();
+ const oldPage=press(tree,'m5a.loadMoreRoutes');tree=f.render();assert.equal(all(tree,'Button').find(node=>node.props.label==='m5a.loadMoreRoutes').props.busy,true);await press(tree,'m5a.review');tree=f.render();assert.ok(all(tree,'Button').some(node=>node.props.label==='m5a.sendInvite'));await press(tree,'m5a.cancel');resolvePage({routes:[older],nextCursor:null});await oldPage;tree=f.render();
+ const more=all(tree,'Button').find(node=>node.props.label==='m5a.loadMoreRoutes');assert.ok(more);assert.equal(more.props.disabled,false);assert.equal(more.props.busy,false);assert.equal(all(tree,'Button').some(node=>node.props.label===older.title),false,'invalidated page must not enter the editor');assert.equal(f.calls.length,0);
+ f.source.nextRoutes={routes:[older],nextCursor:null};await more.props.onPress();tree=f.render();assert.ok(all(tree,'Button').some(node=>node.props.label===older.title));
+});
 test('a failed or stale empty social page never asserts no friends/invitations and keeps error recovery available',()=>{
  for(const component of ['FriendsScreen','InvitationsScreen']){
   const f=fixture(component),bucket=component==='FriendsScreen'?'friends':'invitations';f.source.social.friends=[];f.source.social.pages[bucket].error='SOCIAL_UNAVAILABLE';

@@ -36,11 +36,14 @@ export default function InvitationsScreen({embedded=false}:{embedded?:boolean}){
  }},[screen.moving,screen.focused,screen.active]);
  const allowed=screen.enabled&&!busy;
  const failure=(value:unknown)=>{if(screen.current())setError(t(errorKey(value,'social')));};
+ // A fresh choice read or final review supersedes pagination. Release its UI
+ // lease now; the older response remains fenced by the advanced request epoch.
+ const startRequest=()=>{pageLock.current=null;setPaging(null);return ++request.current;};
  const closeCreate=()=>{request.current++;pageLock.current=null;setCreate(false);setReview(null);setBusy(false);setLoading(false);setPaging(null);};
  const dates=(start:string,end:string)=>t('m5a.window',{start:new Date(start).toLocaleString(locale,{dateStyle:'medium',timeStyle:'short'}),end:new Date(end).toLocaleString(locale,{dateStyle:'medium',timeStyle:'short'})});
  const send=async(build:()=>SocialRequest)=>{try{const result=await screen.run(async()=>{const value=build();setBusy(true);setError(null);return await screen.live.current.social.mutate(value);});if(result&&screen.current()){setOperationId(result);closeCreate();setView(null);setConfirm(null);}}catch(value){failure(value);}finally{if(screen.current())setBusy(false);}};
  const act=(row:InvitationRow,verb:InvitationVerb)=>send(()=>invitationRequest(row,verb,screen.live.current.social.invitations,wallNow()));
- const loadChoices=async()=>{const sequence=++request.current;try{screen.guard();const {scope,session}=screen.live.current.auth;if(!session)throw Error('SOCIAL_AUTH_REQUIRED');setLoading(true);setError(null);const value=await getInvitationChoices(scope,session);screen.guard();if(sequence!==request.current)return;setChoices(value);setChoicesLoaded(true);}catch(value){if(sequence===request.current)failure(value);}finally{if(sequence===request.current&&screen.current())setLoading(false);}};
+ const loadChoices=async()=>{const sequence=startRequest();try{screen.guard();const {scope,session}=screen.live.current.auth;if(!session)throw Error('SOCIAL_AUTH_REQUIRED');setLoading(true);setError(null);const value=await getInvitationChoices(scope,session);screen.guard();if(sequence!==request.current)return;setChoices(value);setChoicesLoaded(true);}catch(value){if(sequence===request.current)failure(value);}finally{if(sequence===request.current&&screen.current())setLoading(false);}};
  const moreChoices=async(kind:'routes'|'courses'|'sessions')=>{
   const sequence=request.current,lease={epoch:sequence};try{screen.guard();if(pageLock.current)return;pageLock.current=lease;setPaging(kind);const {scope,session}=screen.live.current.auth;if(!session)throw Error('SOCIAL_AUTH_REQUIRED');
    const merge=<T extends {id:string}>(old:readonly T[],next:readonly T[])=>[...new Map([...old,...next].map(value=>[value.id,value])).values()];
@@ -51,7 +54,7 @@ export default function InvitationsScreen({embedded=false}:{embedded?:boolean}){
  };
  const openCreate=()=>{try{screen.guard();setBusy(false);setCreate(true);setReview(null);setChoicesLoaded(false);setChoices(emptyChoices);setRouteId(null);setFriendId(null);setSessionId(null);setConsent(false);setMode('group_ride');void loadChoices();}catch(value){failure(value);}};
  const buildReview=async()=>{
-  const sequence=++request.current;try{screen.guard();const {auth,social}=screen.live.current,route=choices.routes.find(value=>value.id===routeId),friend=social.friends.find(value=>value.user_id===friendId&&value.state==='accepted');
+  const sequence=startRequest();try{screen.guard();const {auth,social}=screen.live.current,route=choices.routes.find(value=>value.id===routeId),friend=social.friends.find(value=>value.user_id===friendId&&value.state==='accepted');
    if(!route)throw Error('SOCIAL_ROUTE_CHANGED');if(!friend)throw Error('FRIEND_CHANGED');if(!auth.session)throw Error('SOCIAL_AUTH_REQUIRED');
    const session=choices.sessions.find(value=>value.id===sessionId);if(mode==='timed_race'&&(!consent||!session))throw Error('SOCIAL_COURSE_CHANGED');
    const window=mode==='timed_race'?approvedSessionWindow(start,session!,wallNow()):localWindow(start,wallNow());setBusy(true);setError(null);
