@@ -28,6 +28,8 @@ export type SpeedometerHUDProps = {
   metrics: RideMetrics;
   units: SpeedUnits;
   expanded?: boolean;
+  /** Compact primary readout for a moving, height-constrained web map. */
+  glanceOnly?: boolean;
   backgroundMotionAllowed?: boolean;
   onToggleExpanded: () => void;
   onUnitsChange?: (value: SpeedUnits) => void;
@@ -122,7 +124,7 @@ function Metric({ label, value, unit }: { label: TranslationKey; value: string; 
   </View>;
 }
 
-export const SpeedometerHUD = memo(function SpeedometerHUD({ snapshot, metrics, units, expanded = false, backgroundMotionAllowed = false, onToggleExpanded, onUnitsChange, style }: SpeedometerHUDProps) {
+export const SpeedometerHUD = memo(function SpeedometerHUD({ snapshot, metrics, units, expanded = false, glanceOnly = false, backgroundMotionAllowed = false, onToggleExpanded, onUnitsChange, style }: SpeedometerHUDProps) {
   const { colors, dark } = useApp(), { t, locale } = useI18n();
   const { active } = useScreenActivity();
   const { width, height, fontScale } = useWindowDimensions();
@@ -140,6 +142,10 @@ export const SpeedometerHUD = memo(function SpeedometerHUD({ snapshot, metrics, 
     {presentation.live === null ? <UnavailableInstrument expanded={expanded} units={units} range={range} size={size} /> : <LiveInstrument key={units} speed={presentation.live} units={units} expanded={expanded} range={range} size={size} />}
   </View>;
   const signal = <Row style={{ gap: 6, flexWrap: "wrap" }}><View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: presentation.signal === "good" ? colors.good : colors.muted }} /><T muted size={11}>{t(signalKey)}</T></Row>;
+  if (!expanded && glanceOnly) return <GlassSurface style={[{ paddingHorizontal: 16, paddingVertical: 12, gap: 8 }, style]}>
+    <Row style={{ alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>{instrument}<T numeric size={12} muted>{unitLabel}</T></Row>
+    <Row style={{ justifyContent: "space-between", gap: 8 }}><View style={{ flex: 1, minWidth: 0 }}>{signal}</View><IconButton name="expand-outline" label={t("m2.hud.expand")} onPress={onToggleExpanded} /></Row>
+  </GlassSurface>;
   if (!expanded) return <GlassSurface style={[{ paddingHorizontal: 16, paddingVertical: 12 }, style]}>
     <Row style={{ justifyContent: "space-between", gap: 8 }}>
       <View style={{ alignItems: "center", flexShrink: 1 }}>{instrument}<T numeric size={12} muted>{unitLabel}</T></View>

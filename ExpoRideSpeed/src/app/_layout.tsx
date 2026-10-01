@@ -43,7 +43,7 @@ function Navigation() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <View
-        style={{ flex: 1, width: "100%", maxWidth: Platform.OS === "web" ? 560 : undefined, alignSelf: "center" }}
+        style={{ flex: 1, width: "100%", maxWidth: Platform.OS === "web" && pathname !== "/" ? 560 : undefined, alignSelf: "center" }}
       >
         <StatusBar style={dark ? "light" : "dark"} />
         {!!storageError && (

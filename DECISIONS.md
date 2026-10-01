@@ -109,3 +109,8 @@
 - Fresh hosted catalog/ACL-only checks found Cron/net APIs absent, unsafe service_role Vault access and neither required Vault name. Use the guarded fresh-only extension/bootstrap and a private operator-invoker job; preserve unrelated integrations and fail closed on unknown identities.
 - Bound one request/minute,1440/rolling day,≤20 eligible binaries/call and only its own seven-day metadata/history. Pending queues block, unknown completion waits180s from observed queue absence; transport success never substitutes for canonical Storage→ACK. The eighteen local PostgreSQL facade tests prove source guards, not hosted service execution. See backend/ops/M7_COMMUNITY_CLEANUP.md.
 - Publish exact7bb3665 compiled preview packages with public checksums and separate install instructions. Subsequent web-only/operator-source commits are not silently attributed to those packages. Unsigned iOS and public-template-signed Android require physical acceptance; no store or performance claim follows from compilation.
+
+## Web MapHome follow-up
+
+- Remove the560px web shell cap only for the home map. Short-wide browser maps use a side instrument panel and camera/credits insets; native/tall defaults and other web routes retain their existing layout.
+- Keep the single moving speed/GPS HUD outside the scroll lane, and terminal controls fixed/reachable even after a stationary scroll or retained moving lock on pause/interruption. Extreme text uses labeled52px terminal icons without font caps; stationary detail remains readable/scrollable. Source component budgets and real default-scale browser rectangles are distinct from native glyph/performance acceptance. See docs/design/map-web-layout-v5.md.
